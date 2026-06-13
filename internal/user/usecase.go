@@ -57,3 +57,11 @@ func (u *Usecase) RegisterUser(ctx context.Context, id string, email, phone *str
 
 	return newUser, nil
 }
+
+// GetUserProfile retrieves the profile of a user by ID.
+func (u *Usecase) GetUserProfile(ctx context.Context, id string) (*User, error) {
+	if id == "" {
+		return nil, errors.New("id is required")
+	}
+	return u.finder.GetByID(ctx, id)
+}

@@ -22,7 +22,8 @@ func NewHandler(uc *Usecase) *Handler {
 func (h *Handler) RegisterRoutes(r chi.Router, authMiddleware func(http.Handler) http.Handler) {
 	r.Route("/users", func(r chi.Router) {
 		r.Use(authMiddleware)
-		r.Post("/register", h.Register)
+		r.Post("/", h.Register)
+		r.Get("/me", h.GetMe)
 	})
 }
 
@@ -67,5 +68,27 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	_ = json.NewEncoder(w).Encode(u)
+}
+
+// GetMe retrieves the profile of the currently authenticated user.
+func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
+	identity := auth.IdentityFrom(r.Context())
+	if identity == nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	u, err := h.uc.GetUserProfile(r.Context(), identity.UserID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if u == nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(u)
 }
