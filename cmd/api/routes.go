@@ -19,6 +19,9 @@ func (app *application) routes(deps *dependencies) http.Handler {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
 
+	// Health check route
+	r.Get("/health", app.healthCheckHandler)
+
 	// Register domain-specific routes
 	deps.userHandler.RegisterRoutes(r, deps.authMiddleware.Authenticate)
 

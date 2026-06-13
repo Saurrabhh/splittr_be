@@ -10,9 +10,8 @@ import (
 
 // Config holds environment configurations for the application.
 type Config struct {
-	Port              string `env:"PORT" envDefault:"8080"`
-	DatabaseURL       string `env:"DATABASE_URL,required"`
-	FirebaseProjectID string `env:"FIREBASE_PROJECT_ID,required"`
+	Port        string `env:"PORT" envDefault:"8080"`
+	DatabaseURL string `env:"DATABASE_URL,required"`
 }
 
 // Load reads config from environment variables.

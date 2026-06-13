@@ -13,9 +13,8 @@ type FirebaseVerifier struct {
 }
 
 // NewFirebaseVerifier initializes a Firebase Admin Auth client.
-func NewFirebaseVerifier(ctx context.Context, projectID string) (*FirebaseVerifier, error) {
-	cfg := &firebase.Config{ProjectID: projectID}
-	app, err := firebase.NewApp(ctx, cfg)
+func NewFirebaseVerifier(ctx context.Context) (*FirebaseVerifier, error) {
+	app, err := firebase.NewApp(ctx, nil)
 	if err != nil {
 		return nil, err
 	}

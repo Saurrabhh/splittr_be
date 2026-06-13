@@ -24,3 +24,6 @@ tmp/
 # OS-specific files
 .DS_Store
 Thumbs.db
+
+# Firebase credentials
+firebase-key.json

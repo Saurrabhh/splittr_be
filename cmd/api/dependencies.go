@@ -22,7 +22,7 @@ func initDependencies(ctx context.Context, app *application) (*dependencies, err
 
 	// Initialize Firebase Auth verifier and middleware
 	app.logger.Info("initializing firebase admin sdk...")
-	verifier, err := auth.NewFirebaseVerifier(ctx, app.config.FirebaseProjectID)
+	verifier, err := auth.NewFirebaseVerifier(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize firebase: %w", err)
 	}

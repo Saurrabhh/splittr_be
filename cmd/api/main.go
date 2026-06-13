@@ -11,7 +11,7 @@ import (
 
 func main() {
 	// Configure logging
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
 	// Load configuration
