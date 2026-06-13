@@ -11,12 +11,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Saurrabhh/splittr_be/internal/auth"
 	"github.com/Saurrabhh/splittr_be/internal/config"
 	"github.com/Saurrabhh/splittr_be/internal/db"
-	"github.com/Saurrabhh/splittr_be/internal/user"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 )
 
 type application struct {
@@ -26,34 +22,14 @@ type application struct {
 }
 
 func (app *application) mount(ctx context.Context) (http.Handler, error) {
-	// Initialize transaction manager
-	tm := db.NewTransactionManager(app.db)
-
-	// Initialize Firebase Auth
-	app.logger.Info("initializing firebase admin sdk...")
-	verifier, err := auth.NewFirebaseVerifier(ctx, app.config.FirebaseProjectID)
+	// Initialize dependencies
+	deps, err := initDependencies(ctx, app)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize firebase: %w", err)
+		return nil, err
 	}
-	authMiddleware := auth.NewMiddleware(verifier)
 
-	// Wire dependencies manually
-	userRepo := user.NewRepository(app.db, tm)
-	userUsecase := user.NewUsecase(userRepo, userRepo)
-	userHandler := user.NewHandler(userUsecase)
-
-	// Setup routing
-	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
-	r.Use(middleware.ClientIPFromRemoteAddr)
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(60 * time.Second))
-
-	// Register routes
-	userHandler.RegisterRoutes(r, authMiddleware.Authenticate)
-
-	return r, nil
+	// Setup and return routing handler
+	return app.routes(deps), nil
 }
 
 func (app *application) run(ctx context.Context) error {

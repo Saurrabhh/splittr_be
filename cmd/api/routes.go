@@ -1,0 +1,29 @@
+package main
+
+import (
+	"net/http"
+	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+)
+
+// routes configures global middlewares, defines route groups, and mounts handlers.
+func (app *application) routes(deps *dependencies) http.Handler {
+	r := chi.NewRouter()
+
+	// Global Middleware
+	r.Use(middleware.RequestID)
+	r.Use(middleware.ClientIPFromRemoteAddr)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(60 * time.Second))
+
+	// Register domain-specific routes
+	deps.userHandler.RegisterRoutes(r, deps.authMiddleware.Authenticate)
+
+	// Future routes can be registered here:
+	// deps.groupHandler.RegisterRoutes(r, deps.authMiddleware.Authenticate)
+
+	return r
+}
