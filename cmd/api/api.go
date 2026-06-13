@@ -46,7 +46,8 @@ func (app *application) run(ctx context.Context) error {
 	// Channel to listen for errors from ListenAndServe
 	serverErrorChan := make(chan error, 1)
 	go func() {
-		app.logger.Info("starting server", "port", app.config.Port)
+		healthURL := fmt.Sprintf("http://localhost:%s/health", app.config.Port)
+		app.logger.Info("starting server", "port", app.config.Port, "health_url", healthURL)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErrorChan <- err
 		}
