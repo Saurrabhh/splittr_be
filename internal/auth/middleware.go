@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	firebaseAuth "firebase.google.com/go/v4/auth"
+	"github.com/Saurrabhh/splittr_be/internal/response"
 )
 
 // TokenVerifier defines the interface for verifying auth tokens.
@@ -28,20 +29,20 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			http.Error(w, "missing authorization header", http.StatusUnauthorized)
+			response.Unauthorized(w, response.ErrUnauthorized, "missing authorization header")
 			return
 		}
 
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
-			http.Error(w, "invalid authorization header format", http.StatusUnauthorized)
+			response.Unauthorized(w, response.ErrUnauthorized, "invalid authorization header format")
 			return
 		}
 
 		idToken := parts[1]
 		token, err := m.verifier.VerifyIDToken(r.Context(), idToken)
 		if err != nil {
-			http.Error(w, "invalid token", http.StatusUnauthorized)
+			response.Unauthorized(w, response.ErrUnauthorized, "invalid token")
 			return
 		}
 

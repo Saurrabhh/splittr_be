@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Saurrabhh/splittr_be/internal/auth"
+	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -35,18 +36,18 @@ type registerRequest struct {
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	identity := auth.IdentityFrom(r.Context())
 	if identity == nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized")
 		return
 	}
 
 	var req registerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		response.BadRequest(w, response.ErrInvalidBody, "invalid request body")
 		return
 	}
 
 	if req.Name == "" {
-		http.Error(w, "name is required", http.StatusBadRequest)
+		response.BadRequest(w, response.ErrNameRequired, "name is required")
 		return
 	}
 
@@ -62,33 +63,30 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	u, err := h.uc.RegisterUser(r.Context(), identity.UserID, emailPtr, phonePtr, req.Name)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(u)
+	response.JSON(w, http.StatusCreated, u)
 }
 
 // GetMe retrieves the profile of the currently authenticated user.
 func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 	identity := auth.IdentityFrom(r.Context())
 	if identity == nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized")
 		return
 	}
 
 	u, err := h.uc.GetUserProfile(r.Context(), identity.UserID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
 		return
 	}
 	if u == nil {
-		http.Error(w, "user not found", http.StatusNotFound)
+		response.NotFound(w, response.ErrUserNotFound, "user not found")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(u)
+	response.JSON(w, http.StatusOK, u)
 }
