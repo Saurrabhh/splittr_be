@@ -5,14 +5,16 @@
 package dbgen
 
 import (
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type User struct {
-	ID        string
-	Email     pgtype.Text
-	Phone     pgtype.Text
-	Name      string
-	CreatedAt pgtype.Timestamptz
-	UpdatedAt pgtype.Timestamptz
+	ID          uuid.UUID
+	FirebaseUid string
+	Email       pgtype.Text
+	Phone       pgtype.Text
+	Name        string
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
 }

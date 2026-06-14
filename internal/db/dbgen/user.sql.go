@@ -8,25 +8,28 @@ package dbgen
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, email, phone, name, created_at, updated_at)
-VALUES ($1, $2, $3, $4, NOW(), NOW())
-RETURNING id, email, phone, name, created_at, updated_at
+INSERT INTO users (id, firebase_uid, email, phone, name, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+RETURNING id, firebase_uid, email, phone, name, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	ID    string
-	Email pgtype.Text
-	Phone pgtype.Text
-	Name  string
+	ID          uuid.UUID
+	FirebaseUid string
+	Email       pgtype.Text
+	Phone       pgtype.Text
+	Name        string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, createUser,
 		arg.ID,
+		arg.FirebaseUid,
 		arg.Email,
 		arg.Phone,
 		arg.Name,
@@ -34,6 +37,28 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.FirebaseUid,
+		&i.Email,
+		&i.Phone,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserByFirebaseUID = `-- name: GetUserByFirebaseUID :one
+SELECT id, firebase_uid, email, phone, name, created_at, updated_at
+FROM users
+WHERE firebase_uid = $1
+`
+
+func (q *Queries) GetUserByFirebaseUID(ctx context.Context, firebaseUid string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByFirebaseUID, firebaseUid)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FirebaseUid,
 		&i.Email,
 		&i.Phone,
 		&i.Name,
@@ -44,16 +69,17 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, phone, name, created_at, updated_at
+SELECT id, firebase_uid, email, phone, name, created_at, updated_at
 FROM users
 WHERE id = $1
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
+func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByID, id)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.FirebaseUid,
 		&i.Email,
 		&i.Phone,
 		&i.Name,

@@ -78,7 +78,7 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := h.uc.GetUserProfile(r.Context(), identity.UserID)
+	u, err := h.uc.GetUserByFirebaseUID(r.Context(), identity.UserID)
 	if err != nil {
 		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
 		return
