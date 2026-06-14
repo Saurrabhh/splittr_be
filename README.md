@@ -127,12 +127,12 @@ Authorization: Bearer <FIREBASE_ID_TOKEN>
 | Method | Endpoint | Description | Auth Required | Request Body |
 | :--- | :--- | :--- | :---: | :--- |
 | **GET** | `/health` | Server health status | No | N/A |
-| **POST** | `/users` | Registers/creates a new user profile | Yes | `{"name": "John Doe"}` |
-| **GET** | `/users/me` | Retrieves the profile of the current user | Yes | N/A |
+| **POST** | `/v1/users` | Registers/creates a new user profile | Yes | `{"name": "John Doe"}` |
+| **GET** | `/v1/users/me` | Retrieves the profile of the current user | Yes | N/A |
 
 ### Example Request (Registration):
 ```bash
-curl -X POST http://localhost:8080/users \
+curl -X POST http://localhost:8080/v1/users \
   -H "Authorization: Bearer YOUR_FIREBASE_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name": "Saurabh"}'

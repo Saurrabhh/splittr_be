@@ -22,11 +22,14 @@ func (app *application) routes(deps *dependencies) http.Handler {
 	// Health check route
 	r.Get("/health", app.healthCheckHandler)
 
-	// Register domain-specific routes
-	deps.userHandler.RegisterRoutes(r, deps.authMiddleware.Authenticate)
+	// API version 1 routes
+	r.Route("/v1", func(r chi.Router) {
+		// Register domain-specific routes
+		deps.userHandler.RegisterRoutes(r, deps.authMiddleware.Authenticate)
 
-	// Future routes can be registered here:
-	// deps.groupHandler.RegisterRoutes(r, deps.authMiddleware.Authenticate)
+		// Future routes can be registered here:
+		// deps.groupHandler.RegisterRoutes(r, deps.authMiddleware.Authenticate)
+	})
 
 	return r
 }
