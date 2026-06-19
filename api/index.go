@@ -42,8 +42,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		firebaseKeyJSON := os.Getenv("FIREBASE_KEY_JSON")
 		if firebaseKeyJSON != "" {
 			credentialsPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-			if credentialsPath == "" {
-				credentialsPath = "./firebase-key.json"
+			if credentialsPath == "" || credentialsPath == "./firebase-key.json" {
+				credentialsPath = "/tmp/firebase-key.json"
 				os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", credentialsPath)
 			}
 			logger.Info("writing firebase credentials from env var...", "path", credentialsPath)
