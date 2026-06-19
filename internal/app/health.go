@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"encoding/json"
@@ -12,13 +12,13 @@ type healthResponse struct {
 	Checks    map[string]string `json:"checks,omitempty"`
 }
 
-func (app *application) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+func (app *Application) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	status := "UP"
 	checks := make(map[string]string)
 
 	// Check Database
-	if err := app.db.Ping(r.Context()); err != nil {
-		app.logger.Error("database health check failed", "error", err)
+	if err := app.DB.Ping(r.Context()); err != nil {
+		app.Logger.Error("database health check failed", "error", err)
 		status = "DOWN"
 		checks["database"] = "DOWN"
 	} else {

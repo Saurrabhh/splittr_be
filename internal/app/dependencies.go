@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"context"
@@ -16,12 +16,12 @@ type dependencies struct {
 }
 
 // initDependencies bootstraps and wires all application dependencies.
-func initDependencies(ctx context.Context, app *application) (*dependencies, error) {
+func initDependencies(ctx context.Context, app *Application) (*dependencies, error) {
 	// Initialize transaction manager
-	tm := db.NewTransactionManager(app.db)
+	tm := db.NewTransactionManager(app.DB)
 
 	// Initialize Firebase Auth verifier and middleware
-	app.logger.Info("initializing firebase admin sdk...")
+	app.Logger.Info("initializing firebase admin sdk...")
 	verifier, err := auth.NewFirebaseVerifier(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize firebase: %w", err)
@@ -29,7 +29,7 @@ func initDependencies(ctx context.Context, app *application) (*dependencies, err
 	authMiddleware := auth.NewMiddleware(verifier)
 
 	// User domain wiring
-	userRepo := user.NewRepository(app.db, tm)
+	userRepo := user.NewRepository(app.DB, tm)
 	userUsecase := user.NewUsecase(userRepo, userRepo)
 	userHandler := user.NewHandler(userUsecase)
 

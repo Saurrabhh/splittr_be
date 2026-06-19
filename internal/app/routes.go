@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"net/http"
@@ -9,7 +9,7 @@ import (
 )
 
 // routes configures global middlewares, defines route groups, and mounts handlers.
-func (app *application) routes(deps *dependencies) http.Handler {
+func (app *Application) routes(deps *dependencies) http.Handler {
 	r := chi.NewRouter()
 
 	// Global Middleware
@@ -26,9 +26,6 @@ func (app *application) routes(deps *dependencies) http.Handler {
 	r.Route("/v1", func(r chi.Router) {
 		// Register domain-specific routes
 		deps.userHandler.RegisterRoutes(r, deps.authMiddleware.Authenticate)
-
-		// Future routes can be registered here:
-		// deps.groupHandler.RegisterRoutes(r, deps.authMiddleware.Authenticate)
 	})
 
 	return r

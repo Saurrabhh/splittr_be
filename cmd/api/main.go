@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/Saurrabhh/splittr_be/internal/app"
 	"github.com/Saurrabhh/splittr_be/internal/config"
 	"github.com/Saurrabhh/splittr_be/internal/db"
 )
@@ -35,14 +36,10 @@ func main() {
 	logger.Info("database connection established")
 
 	// Initialize application
-	app := &application{
-		config: cfg,
-		logger: logger,
-		db:     database,
-	}
+	application := app.NewApplication(cfg, logger, database)
 
 	// Run application
-	if err := app.run(ctx); err != nil {
+	if err := application.Run(ctx); err != nil {
 		logger.Error("application error", "error", err)
 		os.Exit(1)
 	}

@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"context"
@@ -15,13 +15,21 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/db"
 )
 
-type application struct {
-	config *config.Config
-	logger *slog.Logger
-	db     *db.DB
+type Application struct {
+	Config *config.Config
+	Logger *slog.Logger
+	DB     *db.DB
 }
 
-func (app *application) mount(ctx context.Context) (http.Handler, error) {
+func NewApplication(cfg *config.Config, logger *slog.Logger, database *db.DB) *Application {
+	return &Application{
+		Config: cfg,
+		Logger: logger,
+		DB:     database,
+	}
+}
+
+func (app *Application) Mount(ctx context.Context) (http.Handler, error) {
 	// Initialize dependencies
 	deps, err := initDependencies(ctx, app)
 	if err != nil {
@@ -32,22 +40,22 @@ func (app *application) mount(ctx context.Context) (http.Handler, error) {
 	return app.routes(deps), nil
 }
 
-func (app *application) run(ctx context.Context) error {
-	handler, err := app.mount(ctx)
+func (app *Application) Run(ctx context.Context) error {
+	handler, err := app.Mount(ctx)
 	if err != nil {
 		return err
 	}
 
 	server := &http.Server{
-		Addr:    ":" + app.config.Port,
+		Addr:    ":" + app.Config.Port,
 		Handler: handler,
 	}
 
 	// Channel to listen for errors from ListenAndServe
 	serverErrorChan := make(chan error, 1)
 	go func() {
-		healthURL := fmt.Sprintf("http://localhost:%s/health", app.config.Port)
-		app.logger.Info("starting server", "port", app.config.Port, "health_url", healthURL)
+		healthURL := fmt.Sprintf("http://localhost:%s/health", app.Config.Port)
+		app.Logger.Info("starting server", "port", app.Config.Port, "health_url", healthURL)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErrorChan <- err
 		}
@@ -61,7 +69,7 @@ func (app *application) run(ctx context.Context) error {
 	case err := <-serverErrorChan:
 		return fmt.Errorf("server error: %w", err)
 	case sig := <-sigChan:
-		app.logger.Info("shutting down server...", "signal", sig.String())
+		app.Logger.Info("shutting down server...", "signal", sig.String())
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer shutdownCancel()
 
@@ -70,6 +78,6 @@ func (app *application) run(ctx context.Context) error {
 		}
 	}
 
-	app.logger.Info("server stopped gracefully")
+	app.Logger.Info("server stopped gracefully")
 	return nil
 }
