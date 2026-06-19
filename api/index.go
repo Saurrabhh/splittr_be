@@ -38,6 +38,22 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Write Firebase credentials to file if supplied via environment variable
+		firebaseKeyJSON := os.Getenv("FIREBASE_KEY_JSON")
+		if firebaseKeyJSON != "" {
+			credentialsPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+			if credentialsPath == "" {
+				credentialsPath = "./firebase-key.json"
+				os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", credentialsPath)
+			}
+			logger.Info("writing firebase credentials from env var...", "path", credentialsPath)
+			if err := os.WriteFile(credentialsPath, []byte(firebaseKeyJSON), 0600); err != nil {
+				logger.Error("failed to write firebase credentials file", "error", err)
+				initErr = err
+				return
+			}
+		}
+
 		// Connect to PostgreSQL database (Supabase)
 		logger.Info("connecting to database...")
 		database, err := db.Connect(ctx, cfg.DatabaseURL)
