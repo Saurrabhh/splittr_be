@@ -32,6 +32,17 @@ jobs:
             echo "SECRET_NAME=firebase-key-dev" >> $GITHUB_ENV
           fi
 
+      # Debug step to print non-sensitive environment configuration
+      - name: Echo Environment Config
+        run: |
+          echo "=================== ENVIRONMENT INFO ==================="
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Resolved GitHub Environment: ${{ github.ref_name == 'master' && 'prod' || 'dev' }}"
+          echo "Cloud Run Service Name: ${{ env.SERVICE_NAME }}"
+          echo "Firebase Secret Name: ${{ env.SECRET_NAME }}"
+          echo "GCP Project ID (from secrets): ${{ secrets.GCP_PROJECT }}"
+          echo "========================================================"
+
       # Authenticate to Google Cloud using Workload Identity Federation (Keyless)
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
