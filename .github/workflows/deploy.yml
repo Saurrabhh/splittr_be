@@ -1,0 +1,55 @@
+name: Deploy to Cloud Run
+
+on:
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    
+    # Dynamically target the GitHub Environment based on selected branch
+    environment:
+      name: ${{ github.ref_name == 'master' && 'prod' || 'dev' }}
+
+    # Required permissions for Workload Identity Federation OIDC token request
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Set Service and GCP Secret names depending on target environment/branch
+      - name: Configure Environment Names
+        run: |
+          if [ "${{ github.ref_name }}" = "master" ]; then
+            echo "SERVICE_NAME=splittr-be-prod" >> $GITHUB_ENV
+            echo "SECRET_NAME=firebase-key-prod" >> $GITHUB_ENV
+          else
+            echo "SERVICE_NAME=splittr-be-dev" >> $GITHUB_ENV
+            echo "SECRET_NAME=firebase-key-dev" >> $GITHUB_ENV
+          fi
+
+      # Authenticate to Google Cloud using Workload Identity Federation (Keyless)
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIP_PROVIDER }}
+          service_account: ${{ secrets.WIP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --source . \
+            --region asia-south1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars="PORT=8080,DATABASE_URL=${{ secrets.DATABASE_URL }}" \
+            --set-env-vars="GOOGLE_APPLICATION_CREDENTIALS=/secrets/firebase-key.json" \
+            --update-secrets="/secrets/firebase-key.json=${{ env.SECRET_NAME }}:latest" \
+            --project=${{ secrets.GCP_PROJECT }}
