@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/google/uuid"
 )
 
@@ -47,15 +48,45 @@ func (u *Usecase) CreateAlert(ctx context.Context, userID string, actorID *strin
 
 // ListNotifications lists all notifications for a user.
 func (u *Usecase) ListNotifications(ctx context.Context, userID string) ([]Notification, error) {
-	return u.repo.ListUserNotifications(ctx, userID)
+	notifs, err := u.repo.ListUserNotifications(ctx, userID)
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve notifications",
+			Err:     err,
+		}
+	}
+	return notifs, nil
 }
 
 // MarkAsRead marks a single notification as read.
 func (u *Usecase) MarkAsRead(ctx context.Context, id, userID string) error {
-	return u.repo.MarkNotificationAsRead(ctx, id, userID)
+	if id == "" {
+		return &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "notification id is required",
+		}
+	}
+	err := u.repo.MarkNotificationAsRead(ctx, id, userID)
+	if err != nil {
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to mark notification as read",
+			Err:     err,
+		}
+	}
+	return nil
 }
 
 // MarkAllAsRead marks all notifications as read for a user.
 func (u *Usecase) MarkAllAsRead(ctx context.Context, userID string) error {
-	return u.repo.MarkAllNotificationsAsRead(ctx, userID)
+	err := u.repo.MarkAllNotificationsAsRead(ctx, userID)
+	if err != nil {
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to mark all notifications as read",
+			Err:     err,
+		}
+	}
+	return nil
 }

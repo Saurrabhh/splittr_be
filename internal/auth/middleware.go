@@ -29,20 +29,20 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			response.Unauthorized(w, response.ErrUnauthorized, "missing authorization header")
+			response.Unauthorized(w, "missing authorization header")
 			return
 		}
 
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
-			response.Unauthorized(w, response.ErrUnauthorized, "invalid authorization header format")
+			response.Unauthorized(w, "invalid authorization header format")
 			return
 		}
 
 		idToken := parts[1]
 		token, err := m.verifier.VerifyIDToken(r.Context(), idToken)
 		if err != nil {
-			response.Unauthorized(w, response.ErrUnauthorized, "invalid token")
+			response.Unauthorized(w, "invalid token")
 			return
 		}
 

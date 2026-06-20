@@ -3,7 +3,6 @@ package group
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/Saurrabhh/splittr_be/internal/user"
@@ -56,23 +55,22 @@ type joinGroupRequest struct {
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	var req createGroupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.BadRequest(w, response.ErrInvalidBody, "invalid request body")
+		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
 		return
 	}
 
 	g, err := h.uc.CreateGroup(r.Context(), req.Name, req.Description, currUser.ID)
 	if err != nil {
-		if strings.Contains(err.Error(), "required") {
-			response.BadRequest(w, response.ErrBadRequest, err.Error())
-			return
-		}
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -83,24 +81,30 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	var req joinGroupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.BadRequest(w, response.ErrInvalidBody, "invalid request body")
+		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
 		return
 	}
 
 	if req.InviteCode == "" {
-		response.BadRequest(w, response.ErrBadRequest, "inviteCode is required")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "inviteCode is required",
+		})
 		return
 	}
 
 	g, err := h.uc.JoinGroup(r.Context(), req.InviteCode, currUser.ID)
 	if err != nil {
-		response.BadRequest(w, response.ErrBadRequest, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -111,13 +115,16 @@ func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	groups, err := h.uc.ListUserGroups(r.Context(), currUser.ID)
 	if err != nil {
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -133,27 +140,25 @@ type groupDetailsResponse struct {
 func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "id")
 	if groupID == "" {
-		response.BadRequest(w, response.ErrBadRequest, "group id is required")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "group id is required",
+		})
 		return
 	}
 
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	g, members, err := h.uc.GetGroupDetails(r.Context(), groupID, currUser.ID)
 	if err != nil {
-		if strings.Contains(err.Error(), "access denied") {
-			response.Forbidden(w, response.ErrForbidden, err.Error())
-			return
-		}
-		if strings.Contains(err.Error(), "not found") {
-			response.NotFound(w, response.ErrNotFound, err.Error())
-			return
-		}
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -171,34 +176,39 @@ type addMemberRequest struct {
 func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "id")
 	if groupID == "" {
-		response.BadRequest(w, response.ErrBadRequest, "group id is required")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "group id is required",
+		})
 		return
 	}
 
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	var req addMemberRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.BadRequest(w, response.ErrInvalidBody, "invalid request body")
+		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
 		return
 	}
 
 	if req.UserID == "" {
-		response.BadRequest(w, response.ErrBadRequest, "userId is required")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "userId is required",
+		})
 		return
 	}
 
 	err := h.uc.AddMember(r.Context(), groupID, req.UserID, currUser.ID)
 	if err != nil {
-		if strings.Contains(err.Error(), "only admins") {
-			response.Forbidden(w, response.ErrForbidden, err.Error())
-			return
-		}
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -210,27 +220,25 @@ func (h *Handler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "id")
 	targetUserID := chi.URLParam(r, "userId")
 	if groupID == "" || targetUserID == "" {
-		response.BadRequest(w, response.ErrBadRequest, "group id and user id are required")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "group id and user id are required",
+		})
 		return
 	}
 
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	err := h.uc.RemoveMember(r.Context(), groupID, targetUserID, currUser.ID)
 	if err != nil {
-		if strings.Contains(err.Error(), "unauthorized") {
-			response.Forbidden(w, response.ErrForbidden, err.Error())
-			return
-		}
-		if strings.Contains(err.Error(), "cannot remove") || strings.Contains(err.Error(), "not a member") {
-			response.BadRequest(w, response.ErrBadRequest, err.Error())
-			return
-		}
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -246,33 +254,31 @@ func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "id")
 	targetUserID := chi.URLParam(r, "userId")
 	if groupID == "" || targetUserID == "" {
-		response.BadRequest(w, response.ErrBadRequest, "group id and user id are required")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "group id and user id are required",
+		})
 		return
 	}
 
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	var req updateRoleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.BadRequest(w, response.ErrInvalidBody, "invalid request body")
+		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
 		return
 	}
 
 	err := h.uc.UpdateMemberRole(r.Context(), groupID, targetUserID, req.Role, currUser.ID)
 	if err != nil {
-		if strings.Contains(err.Error(), "unauthorized") {
-			response.Forbidden(w, response.ErrForbidden, err.Error())
-			return
-		}
-		if strings.Contains(err.Error(), "invalid role") || strings.Contains(err.Error(), "cannot demote") {
-			response.BadRequest(w, response.ErrBadRequest, err.Error())
-			return
-		}
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -283,23 +289,25 @@ func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Archive(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "id")
 	if groupID == "" {
-		response.BadRequest(w, response.ErrBadRequest, "group id is required")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "group id is required",
+		})
 		return
 	}
 
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	err := h.uc.ArchiveGroup(r.Context(), groupID, currUser.ID)
 	if err != nil {
-		if strings.Contains(err.Error(), "unauthorized") {
-			response.Forbidden(w, response.ErrForbidden, err.Error())
-			return
-		}
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 

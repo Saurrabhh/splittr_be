@@ -27,13 +27,16 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	activities, err := h.uc.ListActivities(r.Context(), currUser.ID)
 	if err != nil {
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 

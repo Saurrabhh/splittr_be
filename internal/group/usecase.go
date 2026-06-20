@@ -2,12 +2,12 @@ package group
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Saurrabhh/splittr_be/internal/activity"
 	"github.com/Saurrabhh/splittr_be/internal/db"
 	"github.com/Saurrabhh/splittr_be/internal/notification"
+	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/google/uuid"
 )
 
@@ -55,10 +55,16 @@ func NewUsecase(repo Repository, tx db.Transactor, activitySvc ActivityLogger, n
 // CreateGroup creates a new group and adds the creator as the first admin.
 func (u *Usecase) CreateGroup(ctx context.Context, name, description string, creatorID string) (*Group, error) {
 	if name == "" {
-		return nil, errors.New("group name is required")
+		return nil, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "group name is required",
+		}
 	}
 	if creatorID == "" {
-		return nil, errors.New("creator ID is required")
+		return nil, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "creator ID is required",
+		}
 	}
 
 	newGroup := &Group{
@@ -85,7 +91,11 @@ func (u *Usecase) CreateGroup(ctx context.Context, name, description string, cre
 		return err
 	})
 	if err != nil {
-		return nil, fmt.Errorf("create group transaction: %w", err)
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to create group",
+			Err:     err,
+		}
 	}
 
 	return newGroup, nil
@@ -94,29 +104,49 @@ func (u *Usecase) CreateGroup(ctx context.Context, name, description string, cre
 // GetGroupDetails retrieves a group and its members, verifying the requester belongs to it.
 func (u *Usecase) GetGroupDetails(ctx context.Context, groupID, userID string) (*Group, []GroupMember, error) {
 	if groupID == "" || userID == "" {
-		return nil, nil, errors.New("group ID and user ID are required")
+		return nil, nil, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "group ID and user ID are required",
+		}
 	}
 
-	// Access control: check if requester is a member of the group
 	member, err := u.repo.GetGroupMember(ctx, groupID, userID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("verify membership: %w", err)
+		return nil, nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to verify group membership status",
+			Err:     err,
+		}
 	}
 	if member == nil {
-		return nil, nil, errors.New("access denied: not a group member")
+		return nil, nil, &response.AppError{
+			Type:    response.TypeForbidden,
+			Message: "access denied: not a group member",
+		}
 	}
 
 	g, err := u.repo.GetByID(ctx, groupID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("get group metadata: %w", err)
+		return nil, nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve group details",
+			Err:     err,
+		}
 	}
 	if g == nil {
-		return nil, nil, errors.New("group not found or archived")
+		return nil, nil, &response.AppError{
+			Type:    response.TypeNotFound,
+			Message: "group not found or archived",
+		}
 	}
 
 	members, err := u.repo.ListGroupMembers(ctx, groupID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("list group members: %w", err)
+		return nil, nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve group members",
+			Err:     err,
+		}
 	}
 
 	return g, members, nil
@@ -125,35 +155,58 @@ func (u *Usecase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 // ListUserGroups returns all groups the user is a member of.
 func (u *Usecase) ListUserGroups(ctx context.Context, userID string) ([]Group, error) {
 	if userID == "" {
-		return nil, errors.New("user ID is required")
+		return nil, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "user ID is required",
+		}
 	}
-	return u.repo.ListUserGroups(ctx, userID)
+	groups, err := u.repo.ListUserGroups(ctx, userID)
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve user groups",
+			Err:     err,
+		}
+	}
+	return groups, nil
 }
 
 // AddMember adds a new user to the group. Requires requester to be an admin.
 func (u *Usecase) AddMember(ctx context.Context, groupID, targetUserID, actionByUserID string) error {
 	if groupID == "" || targetUserID == "" || actionByUserID == "" {
-		return errors.New("missing required fields")
+		return &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "missing required fields",
+		}
 	}
 
-	// Verify requester is admin
 	isAdmin, err := u.checkIsAdmin(ctx, groupID, actionByUserID)
 	if err != nil {
 		return err
 	}
 	if !isAdmin {
-		return errors.New("only admins can add members to the group")
+		return &response.AppError{
+			Type:    response.TypeForbidden,
+			Message: "only admins can add members to the group",
+		}
 	}
 
 	g, err := u.repo.GetByID(ctx, groupID)
 	if err != nil {
-		return err
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve group details",
+			Err:     err,
+		}
 	}
 	if g == nil {
-		return errors.New("group not found")
+		return &response.AppError{
+			Type:    response.TypeNotFound,
+			Message: "group not found",
+		}
 	}
 
-	return u.tx.RunInTx(ctx, func(txCtx context.Context) error {
+	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
 		if err := u.repo.AddGroupMember(txCtx, groupID, targetUserID, "member"); err != nil {
 			return err
 		}
@@ -174,24 +227,41 @@ func (u *Usecase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 		)
 		return err
 	})
+	if err != nil {
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to add member",
+			Err:     err,
+		}
+	}
+	return nil
 }
 
 // RemoveMember removes a user from the group.
 // A user can remove themselves (leave). Admins can remove anyone.
 func (u *Usecase) RemoveMember(ctx context.Context, groupID, targetUserID, actionByUserID string) error {
 	if groupID == "" || targetUserID == "" || actionByUserID == "" {
-		return errors.New("missing required fields")
+		return &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "missing required fields",
+		}
 	}
 
 	g, err := u.repo.GetByID(ctx, groupID)
 	if err != nil {
-		return err
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve group details",
+			Err:     err,
+		}
 	}
 	if g == nil {
-		return errors.New("group not found")
+		return &response.AppError{
+			Type:    response.TypeNotFound,
+			Message: "group not found",
+		}
 	}
 
-	// Check permissions
 	isSelf := targetUserID == actionByUserID
 	isAdmin, err := u.checkIsAdmin(ctx, groupID, actionByUserID)
 	if err != nil {
@@ -199,22 +269,35 @@ func (u *Usecase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 	}
 
 	if !isSelf && !isAdmin {
-		return errors.New("unauthorized: only admins can remove other members")
+		return &response.AppError{
+			Type:    response.TypeForbidden,
+			Message: "unauthorized: only admins can remove other members",
+		}
 	}
 
-	// Safe-guard: Check if we are removing an admin, and ensure there's at least one admin left.
 	targetMember, err := u.repo.GetGroupMember(ctx, groupID, targetUserID)
 	if err != nil {
-		return err
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve member status",
+			Err:     err,
+		}
 	}
 	if targetMember == nil {
-		return errors.New("user is not a member of the group")
+		return &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "user is not a member of the group",
+		}
 	}
 
 	if targetMember.Role == "admin" {
 		members, err := u.repo.ListGroupMembers(ctx, groupID)
 		if err != nil {
-			return err
+			return &response.AppError{
+				Type:    response.TypeInternal,
+				Message: "failed to list members",
+				Err:     err,
+			}
 		}
 
 		adminCount := 0
@@ -226,7 +309,10 @@ func (u *Usecase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 
 		if adminCount == 1 {
 			if len(members) > 1 {
-				return errors.New("cannot remove the sole admin of a group containing other members. Promote another user to admin first")
+				return &response.AppError{
+					Type:    response.TypeValidation,
+					Message: "cannot remove the sole admin of a group containing other members. Promote another user to admin first",
+				}
 			}
 			return u.tx.RunInTx(ctx, func(txCtx context.Context) error {
 				if err := u.repo.RemoveGroupMember(txCtx, groupID, targetUserID); err != nil {
@@ -241,7 +327,7 @@ func (u *Usecase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 		}
 	}
 
-	return u.tx.RunInTx(ctx, func(txCtx context.Context) error {
+	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
 		if err := u.repo.RemoveGroupMember(txCtx, groupID, targetUserID); err != nil {
 			return err
 		}
@@ -270,44 +356,74 @@ func (u *Usecase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 		}
 		return nil
 	})
+	if err != nil {
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to remove member from group",
+			Err:     err,
+		}
+	}
+	return nil
 }
 
 // UpdateMemberRole changes a member's role (admin <-> member).
 func (u *Usecase) UpdateMemberRole(ctx context.Context, groupID, targetUserID, role, actionByUserID string) error {
 	if role != "admin" && role != "member" {
-		return errors.New("invalid role: must be admin or member")
+		return &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "invalid role: must be admin or member",
+		}
 	}
 
 	g, err := u.repo.GetByID(ctx, groupID)
 	if err != nil {
-		return err
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve group details",
+			Err:     err,
+		}
 	}
 	if g == nil {
-		return errors.New("group not found")
+		return &response.AppError{
+			Type:    response.TypeNotFound,
+			Message: "group not found",
+		}
 	}
 
-	// Verify requester is admin
 	isAdmin, err := u.checkIsAdmin(ctx, groupID, actionByUserID)
 	if err != nil {
 		return err
 	}
 	if !isAdmin {
-		return errors.New("unauthorized: only admins can manage member roles")
+		return &response.AppError{
+			Type:    response.TypeForbidden,
+			Message: "unauthorized: only admins can manage member roles",
+		}
 	}
 
-	// Check if demoting the last admin to member
 	targetMember, err := u.repo.GetGroupMember(ctx, groupID, targetUserID)
 	if err != nil {
-		return err
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve member status",
+			Err:     err,
+		}
 	}
 	if targetMember == nil {
-		return errors.New("user is not a member of the group")
+		return &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "user is not a member of the group",
+		}
 	}
 
 	if targetMember.Role == "admin" && role == "member" {
 		members, err := u.repo.ListGroupMembers(ctx, groupID)
 		if err != nil {
-			return err
+			return &response.AppError{
+				Type:    response.TypeInternal,
+				Message: "failed to retrieve members",
+				Err:     err,
+			}
 		}
 
 		adminCount := 0
@@ -318,11 +434,14 @@ func (u *Usecase) UpdateMemberRole(ctx context.Context, groupID, targetUserID, r
 		}
 
 		if adminCount == 1 {
-			return errors.New("cannot demote the sole admin of the group. Promote another user to admin first")
+			return &response.AppError{
+				Type:    response.TypeValidation,
+				Message: "cannot demote the sole admin of the group. Promote another user to admin first",
+			}
 		}
 	}
 
-	return u.tx.RunInTx(ctx, func(txCtx context.Context) error {
+	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
 		if err := u.repo.UpdateGroupMemberRole(txCtx, groupID, targetUserID, role); err != nil {
 			return err
 		}
@@ -343,6 +462,14 @@ func (u *Usecase) UpdateMemberRole(ctx context.Context, groupID, targetUserID, r
 		)
 		return err
 	})
+	if err != nil {
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to update member role",
+			Err:     err,
+		}
+	}
+	return nil
 }
 
 // ArchiveGroup soft-deletes the group. Requires requester to be an admin.
@@ -352,36 +479,60 @@ func (u *Usecase) ArchiveGroup(ctx context.Context, groupID, actionByUserID stri
 		return err
 	}
 	if !isAdmin {
-		return errors.New("unauthorized: only admins can archive the group")
+		return &response.AppError{
+			Type:    response.TypeForbidden,
+			Message: "unauthorized: only admins can archive the group",
+		}
 	}
 
-	return u.tx.RunInTx(ctx, func(txCtx context.Context) error {
+	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
 		if err := u.repo.Archive(txCtx, groupID); err != nil {
 			return err
 		}
 		_, err := u.activity.LogActivity(txCtx, actionByUserID, &groupID, "GROUP_ARCHIVED", "archived the group", nil)
 		return err
 	})
+	if err != nil {
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to archive group",
+			Err:     err,
+		}
+	}
+	return nil
 }
 
 // JoinGroup matches a group by invite code and adds the user as a member.
 func (u *Usecase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Group, error) {
 	if inviteCode == "" || userID == "" {
-		return nil, errors.New("invite code and user ID are required")
+		return nil, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "invite code and user ID are required",
+		}
 	}
 
 	g, err := u.repo.GetByInviteCode(ctx, inviteCode)
 	if err != nil {
-		return nil, err
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to look up group by invite code",
+			Err:     err,
+		}
 	}
 	if g == nil {
-		return nil, errors.New("invalid or expired invite code")
+		return nil, &response.AppError{
+			Type:    response.TypeNotFound,
+			Message: "invalid or expired invite code",
+		}
 	}
 
-	// Check if already a member
 	existing, err := u.repo.GetGroupMember(ctx, g.ID, userID)
 	if err != nil {
-		return nil, err
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to verify membership status",
+			Err:     err,
+		}
 	}
 	if existing != nil {
 		return g, nil
@@ -395,7 +546,11 @@ func (u *Usecase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Gr
 		return err
 	})
 	if err != nil {
-		return nil, err
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to join group",
+			Err:     err,
+		}
 	}
 
 	return g, nil
@@ -405,7 +560,11 @@ func (u *Usecase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Gr
 func (u *Usecase) checkIsAdmin(ctx context.Context, groupID, userID string) (bool, error) {
 	member, err := u.repo.GetGroupMember(ctx, groupID, userID)
 	if err != nil {
-		return false, fmt.Errorf("check membership: %w", err)
+		return false, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to verify member role",
+			Err:     err,
+		}
 	}
 	if member == nil {
 		return false, nil

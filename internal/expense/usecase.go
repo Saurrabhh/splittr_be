@@ -11,6 +11,7 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/db"
 	"github.com/Saurrabhh/splittr_be/internal/group"
 	"github.com/Saurrabhh/splittr_be/internal/notification"
+	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/google/uuid"
 )
 
@@ -65,13 +66,22 @@ func NewUsecase(repo Repository, tx db.Transactor, groupSvc GroupService, activi
 // CreateExpense calculates splits, validates constraints, and inserts the expense inside a transaction.
 func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64, currency string, category string, groupID *string, paidBy string, splitType SplitType, inputs []InputSplit, createdBy string) (*Expense, []ExpenseSplit, error) {
 	if desc == "" {
-		return nil, nil, errors.New("description is required")
+		return nil, nil, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "description is required",
+		}
 	}
 	if amount <= 0 {
-		return nil, nil, errors.New("amount must be greater than zero")
+		return nil, nil, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "amount must be greater than zero",
+		}
 	}
 	if len(inputs) == 0 {
-		return nil, nil, errors.New("expense must be split with at least one user")
+		return nil, nil, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "expense must be split with at least one user",
+		}
 	}
 	if currency == "" {
 		currency = "INR"
@@ -81,7 +91,7 @@ func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64
 	if groupID != nil && *groupID != "" {
 		_, members, err := u.groupSvc.GetGroupDetails(ctx, *groupID, createdBy)
 		if err != nil {
-			return nil, nil, fmt.Errorf("group access validation failed: %w", err)
+			return nil, nil, err // bubble up group access validation error
 		}
 
 		// Ensure paidBy is in the group
@@ -91,13 +101,19 @@ func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64
 		}
 
 		if !memberMap[paidBy] {
-			return nil, nil, errors.New("payer must be a member of the group")
+			return nil, nil, &response.AppError{
+				Type:    response.TypeValidation,
+				Message: "payer must be a member of the group",
+			}
 		}
 
 		// Ensure all split users are in the group
 		for _, split := range inputs {
 			if !memberMap[split.UserID] {
-				return nil, nil, fmt.Errorf("split user %s is not a member of the group", split.UserID)
+				return nil, nil, &response.AppError{
+					Type:    response.TypeValidation,
+					Message: fmt.Sprintf("split user %s is not a member of the group", split.UserID),
+				}
 			}
 		}
 	}
@@ -105,7 +121,10 @@ func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64
 	// 2. Perform Split Calculations (using cent-level integers to avoid floats precision bugs)
 	calculatedSplits, err := calculateSplits(amount, splitType, inputs)
 	if err != nil {
-		return nil, nil, fmt.Errorf("split calculation error: %w", err)
+		return nil, nil, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: err.Error(),
+		}
 	}
 
 	newExpense := &Expense{
@@ -180,7 +199,11 @@ func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64
 		return nil
 	})
 	if err != nil {
-		return nil, nil, fmt.Errorf("create expense transaction failed: %w", err)
+		return nil, nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "create expense transaction failed",
+			Err:     err,
+		}
 	}
 
 	// Fetch enriched splits with user names and profiles for the response
@@ -195,10 +218,16 @@ func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64
 // SettleUp creates a payment record to clear or reduce debt between a payer and a payee.
 func (u *Usecase) SettleUp(ctx context.Context, amount float64, currency string, groupID *string, paidBy string, receivedBy string, createdBy string) (*Expense, *ExpenseSplit, error) {
 	if amount <= 0 {
-		return nil, nil, errors.New("settlement amount must be greater than zero")
+		return nil, nil, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "settlement amount must be greater than zero",
+		}
 	}
 	if paidBy == receivedBy {
-		return nil, nil, errors.New("payer and payee must be different users")
+		return nil, nil, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "payer and payee must be different users",
+		}
 	}
 	if currency == "" {
 		currency = "INR"
@@ -208,7 +237,7 @@ func (u *Usecase) SettleUp(ctx context.Context, amount float64, currency string,
 	if groupID != nil && *groupID != "" {
 		_, members, err := u.groupSvc.GetGroupDetails(ctx, *groupID, createdBy)
 		if err != nil {
-			return nil, nil, fmt.Errorf("group access validation failed: %w", err)
+			return nil, nil, err // bubble up group access validation error
 		}
 
 		memberMap := make(map[string]bool)
@@ -217,7 +246,10 @@ func (u *Usecase) SettleUp(ctx context.Context, amount float64, currency string,
 		}
 
 		if !memberMap[paidBy] || !memberMap[receivedBy] {
-			return nil, nil, errors.New("both payer and payee must be members of the group")
+			return nil, nil, &response.AppError{
+				Type:    response.TypeValidation,
+				Message: "both payer and payee must be members of the group",
+			}
 		}
 	}
 
@@ -274,7 +306,11 @@ func (u *Usecase) SettleUp(ctx context.Context, amount float64, currency string,
 		return nil
 	})
 	if err != nil {
-		return nil, nil, fmt.Errorf("settle up transaction failed: %w", err)
+		return nil, nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "settle up transaction failed",
+			Err:     err,
+		}
 	}
 
 	// Fetch enriched splits details
@@ -290,15 +326,26 @@ func (u *Usecase) SettleUp(ctx context.Context, amount float64, currency string,
 func (u *Usecase) GetExpenseDetails(ctx context.Context, expenseID, userID string) (*Expense, []ExpenseSplit, error) {
 	e, err := u.repo.GetExpenseByID(ctx, expenseID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve expense details",
+			Err:     err,
+		}
 	}
 	if e == nil {
-		return nil, nil, errors.New("expense not found")
+		return nil, nil, &response.AppError{
+			Type:    response.TypeNotFound,
+			Message: "expense not found",
+		}
 	}
 
 	splits, err := u.repo.ListExpenseSplits(ctx, expenseID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("list splits: %w", err)
+		return nil, nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve expense splits",
+			Err:     err,
+		}
 	}
 
 	// Access control check: requester must be paidBy, creator, or a split participant
@@ -313,7 +360,10 @@ func (u *Usecase) GetExpenseDetails(ctx context.Context, expenseID, userID strin
 	}
 
 	if !hasAccess {
-		return nil, nil, errors.New("access denied: not a participant of this expense")
+		return nil, nil, &response.AppError{
+			Type:    response.TypeForbidden,
+			Message: "access denied: not a participant of this expense",
+		}
 	}
 
 	return e, splits, nil
@@ -322,37 +372,66 @@ func (u *Usecase) GetExpenseDetails(ctx context.Context, expenseID, userID strin
 // ListExpenses returns a list of expenses filtered by group or personal type.
 func (u *Usecase) ListExpenses(ctx context.Context, filterType, filterID, userID string) ([]Expense, error) {
 	if filterType == "group" {
-		// Verify membership first
 		_, _, err := u.groupSvc.GetGroupDetails(ctx, filterID, userID)
 		if err != nil {
-			return nil, fmt.Errorf("group access denied: %w", err)
+			return nil, err // bubble up group access validation error
 		}
-		return u.repo.ListExpensesByGroup(ctx, filterID)
+		expenses, err := u.repo.ListExpensesByGroup(ctx, filterID)
+		if err != nil {
+			return nil, &response.AppError{
+				Type:    response.TypeInternal,
+				Message: "failed to list group expenses",
+				Err:     err,
+			}
+		}
+		return expenses, nil
 	}
 
 	if filterType == "personal" {
-		return u.repo.ListUserPersonalExpenses(ctx, userID)
+		expenses, err := u.repo.ListUserPersonalExpenses(ctx, userID)
+		if err != nil {
+			return nil, &response.AppError{
+				Type:    response.TypeInternal,
+				Message: "failed to list personal expenses",
+				Err:     err,
+			}
+		}
+		return expenses, nil
 	}
 
 	if filterType == "friend" {
-		return u.repo.ListUserFriendExpenses(ctx, userID)
+		expenses, err := u.repo.ListUserFriendExpenses(ctx, userID)
+		if err != nil {
+			return nil, &response.AppError{
+				Type:    response.TypeInternal,
+				Message: "failed to list friend expenses",
+				Err:     err,
+			}
+		}
+		return expenses, nil
 	}
 
-	return nil, errors.New("invalid filter type: must be group, personal, or friend")
+	return nil, &response.AppError{
+		Type:    response.TypeValidation,
+		Message: "invalid filter type: must be group, personal, or friend",
+	}
 }
 
 // GetBalances returns direct or group balances and recommended settlements.
 func (u *Usecase) GetBalances(ctx context.Context, groupID *string, userID string, simplified bool) (*BalanceResponse, error) {
 	if groupID != nil && *groupID != "" {
-		// Verify group membership
 		_, _, err := u.groupSvc.GetGroupDetails(ctx, *groupID, userID)
 		if err != nil {
-			return nil, fmt.Errorf("group access denied: %w", err)
+			return nil, err // bubble up group access validation error
 		}
 
 		balances, err := u.repo.GetGroupBalances(ctx, *groupID)
 		if err != nil {
-			return nil, err
+			return nil, &response.AppError{
+				Type:    response.TypeInternal,
+				Message: "failed to calculate group balances",
+				Err:     err,
+			}
 		}
 
 		var settlements []Settlement
@@ -361,7 +440,11 @@ func (u *Usecase) GetBalances(ctx context.Context, groupID *string, userID strin
 		} else {
 			pairwise, err := u.repo.GetGroupPairwiseDebts(ctx, *groupID)
 			if err != nil {
-				return nil, err
+				return nil, &response.AppError{
+					Type:    response.TypeInternal,
+					Message: "failed to calculate pairwise debts",
+					Err:     err,
+				}
 			}
 			settlements = directDebts(pairwise)
 		}
@@ -374,7 +457,11 @@ func (u *Usecase) GetBalances(ctx context.Context, groupID *string, userID strin
 
 	balances, err := u.repo.GetFriendBalances(ctx, userID)
 	if err != nil {
-		return nil, err
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to calculate friend balances",
+			Err:     err,
+		}
 	}
 
 	// Map direct friend balances to settlements
@@ -382,7 +469,6 @@ func (u *Usecase) GetBalances(ctx context.Context, groupID *string, userID strin
 	for _, b := range balances {
 		cents := int64(math.Round(b.NetBalance * 100))
 		if cents > 0 {
-			// Friend owes current user
 			settlements = append(settlements, Settlement{
 				FromUserID:   b.UserID,
 				FromUserName: b.UserName,
@@ -391,7 +477,6 @@ func (u *Usecase) GetBalances(ctx context.Context, groupID *string, userID strin
 				Amount:       float64(cents) / 100.0,
 			})
 		} else if cents < 0 {
-			// Current user owes friend
 			settlements = append(settlements, Settlement{
 				FromUserID:   userID,
 				FromUserName: "You",
@@ -412,17 +497,34 @@ func (u *Usecase) GetBalances(ctx context.Context, groupID *string, userID strin
 func (u *Usecase) DeleteExpense(ctx context.Context, expenseID, userID string) error {
 	e, err := u.repo.GetExpenseByID(ctx, expenseID)
 	if err != nil {
-		return err
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve expense details",
+			Err:     err,
+		}
 	}
 	if e == nil {
-		return errors.New("expense not found")
+		return &response.AppError{
+			Type:    response.TypeNotFound,
+			Message: "expense not found",
+		}
 	}
 
 	if e.CreatedBy != userID {
-		return errors.New("unauthorized: only the creator can delete this expense")
+		return &response.AppError{
+			Type:    response.TypeForbidden,
+			Message: "unauthorized: only the creator can delete this expense",
+		}
 	}
 
-	return u.repo.DeleteExpense(ctx, expenseID)
+	if err := u.repo.DeleteExpense(ctx, expenseID); err != nil {
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to delete expense",
+			Err:     err,
+		}
+	}
+	return nil
 }
 
 // Helper to compute dynamic splits

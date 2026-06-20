@@ -62,7 +62,7 @@ func (app *Application) routes(deps *dependencies) http.Handler {
 
 	// Custom 404 Not Found handler using response package
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		response.NotFound(w, response.ErrNotFound, "endpoint not found")
+		response.NotFound(w, "endpoint not found")
 	})
 
 	return r

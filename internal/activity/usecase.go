@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/google/uuid"
 )
 
@@ -54,5 +55,13 @@ func (u *Usecase) LogActivity(ctx context.Context, actorID string, groupID *stri
 
 // ListActivities returns all activities visible to a user.
 func (u *Usecase) ListActivities(ctx context.Context, userID string) ([]Activity, error) {
-	return u.repo.ListUserActivities(ctx, userID)
+	activities, err := u.repo.ListUserActivities(ctx, userID)
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve activities",
+			Err:     err,
+		}
+	}
+	return activities, nil
 }

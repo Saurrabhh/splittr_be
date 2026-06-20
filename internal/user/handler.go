@@ -58,18 +58,21 @@ type addFriendRequest struct {
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	identity := auth.IdentityFrom(r.Context())
 	if identity == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing auth credentials",
+		})
 		return
 	}
 
 	var req registerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.BadRequest(w, response.ErrInvalidBody, "invalid request body")
+		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
 		return
 	}
 
 	if req.Name == "" {
-		response.BadRequest(w, response.ErrNameRequired, "name is required")
+		response.Error(w, http.StatusBadRequest, response.ErrNameRequired, "name is required")
 		return
 	}
 
@@ -85,7 +88,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	u, err := h.uc.RegisterUser(r.Context(), identity.UserID, emailPtr, phonePtr, req.Name)
 	if err != nil {
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -96,7 +99,10 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 	u := UserFrom(r.Context())
 	if u == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 	response.JSON(w, http.StatusOK, u)
@@ -106,19 +112,22 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	currUser := UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	var req updateProfileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.BadRequest(w, response.ErrInvalidBody, "invalid request body")
+		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
 		return
 	}
 
 	u, err := h.uc.UpdateProfile(r.Context(), currUser.ID, req.Name, req.DefaultCurrency)
 	if err != nil {
-		response.BadRequest(w, response.ErrBadRequest, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -129,19 +138,22 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) AddFriend(w http.ResponseWriter, r *http.Request) {
 	currUser := UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	var req addFriendRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.BadRequest(w, response.ErrInvalidBody, "invalid request body")
+		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
 		return
 	}
 
 	friend, err := h.uc.AddFriendByEmailOrPhone(r.Context(), currUser.ID, req.FriendEmail, req.FriendPhone)
 	if err != nil {
-		response.BadRequest(w, response.ErrBadRequest, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -152,13 +164,16 @@ func (h *Handler) AddFriend(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetFriends(w http.ResponseWriter, r *http.Request) {
 	currUser := UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	friends, err := h.uc.ListFriends(r.Context(), currUser.ID)
 	if err != nil {
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -169,19 +184,25 @@ func (h *Handler) GetFriends(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) RemoveFriend(w http.ResponseWriter, r *http.Request) {
 	currUser := UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	friendID := chi.URLParam(r, "friendId")
 	if friendID == "" {
-		response.BadRequest(w, response.ErrBadRequest, "friendId is required")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "friendId is required",
+		})
 		return
 	}
 
 	err := h.uc.RemoveFriend(r.Context(), currUser.ID, friendID)
 	if err != nil {
-		response.BadRequest(w, response.ErrBadRequest, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 

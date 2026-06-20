@@ -30,17 +30,17 @@ func (h *Handler) UserContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		identity := auth.IdentityFrom(r.Context())
 		if identity == nil {
-			response.Unauthorized(w, response.ErrUnauthorized, "unauthorized")
+			response.Unauthorized(w, "unauthorized")
 			return
 		}
 
 		u, err := h.uc.GetUserByFirebaseUID(r.Context(), identity.UserID)
 		if err != nil {
-			response.InternalServerError(w, response.ErrInternalServerError, "failed to resolve local user: "+err.Error())
+			response.InternalServerError(w, "failed to resolve local user: "+err.Error())
 			return
 		}
 		if u == nil {
-			response.Forbidden(w, response.ErrUserNotFound, "user registration required")
+			response.Error(w, http.StatusForbidden, response.ErrUserNotFound, "user registration required")
 			return
 		}
 

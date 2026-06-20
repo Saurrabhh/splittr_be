@@ -31,13 +31,16 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	notifs, err := h.uc.ListNotifications(r.Context(), currUser.ID)
 	if err != nil {
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -48,19 +51,25 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	id := chi.URLParam(r, "id")
 	if id == "" {
-		response.BadRequest(w, response.ErrBadRequest, "notification id is required")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "notification id is required",
+		})
 		return
 	}
 
 	err := h.uc.MarkAsRead(r.Context(), id, currUser.ID)
 	if err != nil {
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -71,13 +80,16 @@ func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) MarkAllAsRead(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	err := h.uc.MarkAllAsRead(r.Context(), currUser.ID)
 	if err != nil {
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/Saurrabhh/splittr_be/internal/user"
@@ -58,13 +57,16 @@ type settleExpenseRequest struct {
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	var req createExpenseRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.BadRequest(w, response.ErrInvalidBody, "invalid request body")
+		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
 		return
 	}
 
@@ -93,15 +95,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		currUser.ID,
 	)
 	if err != nil {
-		if strings.Contains(err.Error(), "required") || strings.Contains(err.Error(), "must be") || strings.Contains(err.Error(), "split calculation") {
-			response.BadRequest(w, response.ErrBadRequest, err.Error())
-			return
-		}
-		if strings.Contains(err.Error(), "access validation") || strings.Contains(err.Error(), "member") {
-			response.Forbidden(w, response.ErrForbidden, err.Error())
-			return
-		}
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -115,13 +109,16 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Settle(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	var req settleExpenseRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.BadRequest(w, response.ErrInvalidBody, "invalid request body")
+		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
 		return
 	}
 
@@ -141,15 +138,7 @@ func (h *Handler) Settle(w http.ResponseWriter, r *http.Request) {
 		currUser.ID,
 	)
 	if err != nil {
-		if strings.Contains(err.Error(), "required") || strings.Contains(err.Error(), "must be") || strings.Contains(err.Error(), "different users") {
-			response.BadRequest(w, response.ErrBadRequest, err.Error())
-			return
-		}
-		if strings.Contains(err.Error(), "access validation") || strings.Contains(err.Error(), "members") {
-			response.Forbidden(w, response.ErrForbidden, err.Error())
-			return
-		}
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -163,7 +152,10 @@ func (h *Handler) Settle(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
@@ -183,17 +175,16 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		filterType = "friend"
 		filterID = friendID
 	} else {
-		response.BadRequest(w, response.ErrBadRequest, "missing filter parameter: must supply groupId, personal=true, or friendId")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "missing filter parameter: must supply groupId, personal=true, or friendId",
+		})
 		return
 	}
 
 	expenses, err := h.uc.ListExpenses(r.Context(), filterType, filterID, currUser.ID)
 	if err != nil {
-		if strings.Contains(err.Error(), "denied") {
-			response.Forbidden(w, response.ErrForbidden, err.Error())
-			return
-		}
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -204,27 +195,25 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 	expenseID := chi.URLParam(r, "id")
 	if expenseID == "" {
-		response.BadRequest(w, response.ErrBadRequest, "expense id is required")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "expense id is required",
+		})
 		return
 	}
 
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	exp, splits, err := h.uc.GetExpenseDetails(r.Context(), expenseID, currUser.ID)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			response.NotFound(w, response.ErrNotFound, err.Error())
-			return
-		}
-		if strings.Contains(err.Error(), "access denied") {
-			response.Forbidden(w, response.ErrForbidden, err.Error())
-			return
-		}
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -238,27 +227,25 @@ func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	expenseID := chi.URLParam(r, "id")
 	if expenseID == "" {
-		response.BadRequest(w, response.ErrBadRequest, "expense id is required")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "expense id is required",
+		})
 		return
 	}
 
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
 	err := h.uc.DeleteExpense(r.Context(), expenseID, currUser.ID)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			response.NotFound(w, response.ErrNotFound, err.Error())
-			return
-		}
-		if strings.Contains(err.Error(), "unauthorized") {
-			response.Forbidden(w, response.ErrForbidden, err.Error())
-			return
-		}
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
@@ -269,7 +256,10 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetBalances(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
-		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeUnauthorized,
+			Message: "unauthorized: missing user profile",
+		})
 		return
 	}
 
@@ -284,11 +274,7 @@ func (h *Handler) GetBalances(w http.ResponseWriter, r *http.Request) {
 
 	balances, err := h.uc.GetBalances(r.Context(), groupID, currUser.ID, simplified)
 	if err != nil {
-		if strings.Contains(err.Error(), "denied") {
-			response.Forbidden(w, response.ErrForbidden, err.Error())
-			return
-		}
-		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		response.HandleError(w, err)
 		return
 	}
 
