@@ -9,6 +9,29 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Expense struct {
+	ID          uuid.UUID
+	Description string
+	Amount      pgtype.Numeric
+	Currency    string
+	GroupID     pgtype.UUID
+	PaidBy      uuid.UUID
+	CreatedBy   uuid.UUID
+	IsPayment   bool
+	SpentAt     pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	DeletedAt   pgtype.Timestamptz
+}
+
+type ExpenseSplit struct {
+	ExpenseID  uuid.UUID
+	UserID     uuid.UUID
+	Amount     pgtype.Numeric
+	SplitType  string
+	SplitValue pgtype.Numeric
+}
+
 type Group struct {
 	ID          uuid.UUID
 	Name        string

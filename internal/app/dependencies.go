@@ -6,6 +6,7 @@ import (
 
 	"github.com/Saurrabhh/splittr_be/internal/auth"
 	"github.com/Saurrabhh/splittr_be/internal/db"
+	"github.com/Saurrabhh/splittr_be/internal/expense"
 	"github.com/Saurrabhh/splittr_be/internal/group"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 )
@@ -15,6 +16,7 @@ type dependencies struct {
 	authMiddleware *auth.Middleware
 	userHandler    *user.Handler
 	groupHandler   *group.Handler
+	expenseHandler *expense.Handler
 }
 
 // initDependencies bootstraps and wires all application dependencies.
@@ -40,9 +42,15 @@ func initDependencies(ctx context.Context, app *Application) (*dependencies, err
 	groupUsecase := group.NewUsecase(groupRepo, tm)
 	groupHandler := group.NewHandler(groupUsecase)
 
+	// Expense domain wiring
+	expenseRepo := expense.NewRepository(app.DB, tm)
+	expenseUsecase := expense.NewUsecase(expenseRepo, tm, groupUsecase)
+	expenseHandler := expense.NewHandler(expenseUsecase)
+
 	return &dependencies{
 		authMiddleware: authMiddleware,
 		userHandler:    userHandler,
 		groupHandler:   groupHandler,
+		expenseHandler: expenseHandler,
 	}, nil
 }
