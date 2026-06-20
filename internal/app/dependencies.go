@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/Saurrabhh/splittr_be/internal/auth"
 	"github.com/Saurrabhh/splittr_be/internal/db"
@@ -20,20 +19,6 @@ type dependencies struct {
 func initDependencies(ctx context.Context, app *Application) (*dependencies, error) {
 	// Initialize transaction manager
 	tm := db.NewTransactionManager(app.DB)
-
-	// Write Firebase credentials to file if supplied via environment variable
-	firebaseKeyJSON := os.Getenv("FIREBASE_KEY_JSON")
-	if firebaseKeyJSON != "" {
-		credentialsPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-		if credentialsPath == "" || credentialsPath == "./firebase-key.json" {
-			credentialsPath = "/tmp/firebase-key.json"
-			os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", credentialsPath)
-		}
-		app.Logger.Info("writing firebase credentials from env var...", "path", credentialsPath)
-		if err := os.WriteFile(credentialsPath, []byte(firebaseKeyJSON), 0600); err != nil {
-			return nil, fmt.Errorf("failed to write firebase credentials: %w", err)
-		}
-	}
 
 	// Initialize Firebase Auth verifier and middleware
 	app.Logger.Info("initializing firebase admin sdk...")
