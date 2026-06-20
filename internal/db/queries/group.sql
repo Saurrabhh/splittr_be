@@ -49,3 +49,8 @@ SELECT g.id, g.name, g.description, g.invite_code, g.created_by, g.created_at, g
 FROM groups g
 JOIN group_members gm ON g.id = gm.group_id
 WHERE gm.user_id = $1 AND g.archived_at IS NULL;
+
+-- name: GetGroupByInviteCode :one
+SELECT id, name, description, invite_code, created_by, created_at, updated_at, archived_at
+FROM groups
+WHERE invite_code = $1 AND archived_at IS NULL;

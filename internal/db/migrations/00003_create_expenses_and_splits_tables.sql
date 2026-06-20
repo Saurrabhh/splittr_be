@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS expenses (
     description VARCHAR(255) NOT NULL,
     amount NUMERIC(12, 2) NOT NULL CHECK (amount > 0),
     currency VARCHAR(3) NOT NULL DEFAULT 'INR',
+    category VARCHAR(50) NOT NULL DEFAULT 'Other',
     group_id UUID REFERENCES groups(id) ON DELETE SET NULL, -- Nullable for personal/friend splits
     paid_by UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     created_by UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,

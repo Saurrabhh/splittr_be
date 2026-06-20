@@ -9,11 +9,26 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Activity struct {
+	ID          uuid.UUID
+	GroupID     pgtype.UUID
+	ActorID     pgtype.UUID
+	ActionType  string
+	Description string
+	CreatedAt   pgtype.Timestamptz
+}
+
+type ActivityVisibility struct {
+	ActivityID uuid.UUID
+	UserID     uuid.UUID
+}
+
 type Expense struct {
 	ID          uuid.UUID
 	Description string
 	Amount      pgtype.Numeric
 	Currency    string
+	Category    string
 	GroupID     pgtype.UUID
 	PaidBy      uuid.UUID
 	CreatedBy   uuid.UUID
@@ -30,6 +45,12 @@ type ExpenseSplit struct {
 	Amount     pgtype.Numeric
 	SplitType  string
 	SplitValue pgtype.Numeric
+}
+
+type Friendship struct {
+	UserID    uuid.UUID
+	FriendID  uuid.UUID
+	CreatedAt pgtype.Timestamptz
 }
 
 type Group struct {
@@ -50,12 +71,24 @@ type GroupMember struct {
 	JoinedAt pgtype.Timestamptz
 }
 
+type Notification struct {
+	ID         uuid.UUID
+	UserID     uuid.UUID
+	ActorID    pgtype.UUID
+	ActivityID pgtype.UUID
+	Title      string
+	Content    string
+	IsRead     bool
+	CreatedAt  pgtype.Timestamptz
+}
+
 type User struct {
-	ID          uuid.UUID
-	FirebaseUid string
-	Email       pgtype.Text
-	Phone       pgtype.Text
-	Name        string
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
+	ID              uuid.UUID
+	FirebaseUid     string
+	Email           pgtype.Text
+	Phone           pgtype.Text
+	Name            string
+	DefaultCurrency string
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
 }

@@ -98,6 +98,28 @@ func (q *Queries) GetGroupByID(ctx context.Context, id uuid.UUID) (Group, error)
 	return i, err
 }
 
+const getGroupByInviteCode = `-- name: GetGroupByInviteCode :one
+SELECT id, name, description, invite_code, created_by, created_at, updated_at, archived_at
+FROM groups
+WHERE invite_code = $1 AND archived_at IS NULL
+`
+
+func (q *Queries) GetGroupByInviteCode(ctx context.Context, inviteCode pgtype.Text) (Group, error) {
+	row := q.db.QueryRow(ctx, getGroupByInviteCode, inviteCode)
+	var i Group
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.InviteCode,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ArchivedAt,
+	)
+	return i, err
+}
+
 const getGroupMember = `-- name: GetGroupMember :one
 SELECT group_id, user_id, role, joined_at
 FROM group_members

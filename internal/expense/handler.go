@@ -39,6 +39,7 @@ type createExpenseRequest struct {
 	Description string       `json:"description"`
 	Amount      float64      `json:"amount"`
 	Currency    string       `json:"currency"`
+	Category    string       `json:"category"`
 	GroupID     *string      `json:"groupId"`
 	PaidBy      string       `json:"paidBy"`
 	SplitType   SplitType    `json:"splitType"`
@@ -73,11 +74,18 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		paidBy = currUser.ID
 	}
 
+	// Default category to 'Other' if not supplied
+	category := req.Category
+	if category == "" {
+		category = "Other"
+	}
+
 	exp, splits, err := h.uc.CreateExpense(
 		r.Context(),
 		req.Description,
 		req.Amount,
 		req.Currency,
+		category,
 		req.GroupID,
 		paidBy,
 		req.SplitType,

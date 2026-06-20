@@ -12,18 +12,34 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createFriendship = `-- name: CreateFriendship :exec
+INSERT INTO friendships (user_id, friend_id)
+VALUES ($1, $2)
+`
+
+type CreateFriendshipParams struct {
+	UserID   uuid.UUID
+	FriendID uuid.UUID
+}
+
+func (q *Queries) CreateFriendship(ctx context.Context, arg CreateFriendshipParams) error {
+	_, err := q.db.Exec(ctx, createFriendship, arg.UserID, arg.FriendID)
+	return err
+}
+
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, firebase_uid, email, phone, name, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-RETURNING id, firebase_uid, email, phone, name, created_at, updated_at
+INSERT INTO users (id, firebase_uid, email, phone, name, default_currency, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+RETURNING id, firebase_uid, email, phone, name, default_currency, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	ID          uuid.UUID
-	FirebaseUid string
-	Email       pgtype.Text
-	Phone       pgtype.Text
-	Name        string
+	ID              uuid.UUID
+	FirebaseUid     string
+	Email           pgtype.Text
+	Phone           pgtype.Text
+	Name            string
+	DefaultCurrency string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -33,6 +49,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Email,
 		arg.Phone,
 		arg.Name,
+		arg.DefaultCurrency,
 	)
 	var i User
 	err := row.Scan(
@@ -41,6 +58,67 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Email,
 		&i.Phone,
 		&i.Name,
+		&i.DefaultCurrency,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const deleteFriendship = `-- name: DeleteFriendship :exec
+DELETE FROM friendships
+WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)
+`
+
+type DeleteFriendshipParams struct {
+	UserID   uuid.UUID
+	FriendID uuid.UUID
+}
+
+func (q *Queries) DeleteFriendship(ctx context.Context, arg DeleteFriendshipParams) error {
+	_, err := q.db.Exec(ctx, deleteFriendship, arg.UserID, arg.FriendID)
+	return err
+}
+
+const getFriendship = `-- name: GetFriendship :one
+SELECT user_id, friend_id, created_at
+FROM friendships
+WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)
+`
+
+type GetFriendshipParams struct {
+	UserID   uuid.UUID
+	FriendID uuid.UUID
+}
+
+func (q *Queries) GetFriendship(ctx context.Context, arg GetFriendshipParams) (Friendship, error) {
+	row := q.db.QueryRow(ctx, getFriendship, arg.UserID, arg.FriendID)
+	var i Friendship
+	err := row.Scan(&i.UserID, &i.FriendID, &i.CreatedAt)
+	return i, err
+}
+
+const getUserByEmailOrPhone = `-- name: GetUserByEmailOrPhone :one
+SELECT id, firebase_uid, email, phone, name, default_currency, created_at, updated_at
+FROM users
+WHERE email = $1 OR phone = $2
+`
+
+type GetUserByEmailOrPhoneParams struct {
+	Email pgtype.Text
+	Phone pgtype.Text
+}
+
+func (q *Queries) GetUserByEmailOrPhone(ctx context.Context, arg GetUserByEmailOrPhoneParams) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByEmailOrPhone, arg.Email, arg.Phone)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FirebaseUid,
+		&i.Email,
+		&i.Phone,
+		&i.Name,
+		&i.DefaultCurrency,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -48,7 +126,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getUserByFirebaseUID = `-- name: GetUserByFirebaseUID :one
-SELECT id, firebase_uid, email, phone, name, created_at, updated_at
+SELECT id, firebase_uid, email, phone, name, default_currency, created_at, updated_at
 FROM users
 WHERE firebase_uid = $1
 `
@@ -62,6 +140,7 @@ func (q *Queries) GetUserByFirebaseUID(ctx context.Context, firebaseUid string) 
 		&i.Email,
 		&i.Phone,
 		&i.Name,
+		&i.DefaultCurrency,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -69,7 +148,7 @@ func (q *Queries) GetUserByFirebaseUID(ctx context.Context, firebaseUid string) 
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, firebase_uid, email, phone, name, created_at, updated_at
+SELECT id, firebase_uid, email, phone, name, default_currency, created_at, updated_at
 FROM users
 WHERE id = $1
 `
@@ -83,6 +162,75 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.Email,
 		&i.Phone,
 		&i.Name,
+		&i.DefaultCurrency,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const listFriends = `-- name: ListFriends :many
+SELECT u.id, u.firebase_uid, u.email, u.phone, u.name, u.default_currency, u.created_at, u.updated_at
+FROM users u
+WHERE u.id IN (
+    SELECT f.friend_id FROM friendships f WHERE f.user_id = $1
+    UNION
+    SELECT f.user_id FROM friendships f WHERE f.friend_id = $1
+)
+`
+
+func (q *Queries) ListFriends(ctx context.Context, userID uuid.UUID) ([]User, error) {
+	rows, err := q.db.Query(ctx, listFriends, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.FirebaseUid,
+			&i.Email,
+			&i.Phone,
+			&i.Name,
+			&i.DefaultCurrency,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateUser = `-- name: UpdateUser :one
+UPDATE users
+SET name = $2, default_currency = $3, updated_at = NOW()
+WHERE id = $1
+RETURNING id, firebase_uid, email, phone, name, default_currency, created_at, updated_at
+`
+
+type UpdateUserParams struct {
+	ID              uuid.UUID
+	Name            string
+	DefaultCurrency string
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateUser, arg.ID, arg.Name, arg.DefaultCurrency)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FirebaseUid,
+		&i.Email,
+		&i.Phone,
+		&i.Name,
+		&i.DefaultCurrency,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

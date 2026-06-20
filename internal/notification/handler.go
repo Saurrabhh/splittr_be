@@ -1,0 +1,85 @@
+package notification
+
+import (
+	"net/http"
+
+	"github.com/Saurrabhh/splittr_be/internal/response"
+	"github.com/Saurrabhh/splittr_be/internal/user"
+	"github.com/go-chi/chi/v5"
+)
+
+// Handler handles HTTP requests for notifications.
+type Handler struct {
+	uc *Usecase
+}
+
+// NewHandler creates a new Handler instance.
+func NewHandler(uc *Usecase) *Handler {
+	return &Handler{uc: uc}
+}
+
+// RegisterRoutes registers endpoints on the router.
+func (h *Handler) RegisterRoutes(r chi.Router) {
+	r.Route("/notifications", func(r chi.Router) {
+		r.Get("/", h.List)
+		r.Post("/{id}/read", h.MarkAsRead)
+		r.Post("/read-all", h.MarkAllAsRead)
+	})
+}
+
+// List lists all notifications for the current user.
+func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
+	currUser := user.UserFrom(r.Context())
+	if currUser == nil {
+		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		return
+	}
+
+	notifs, err := h.uc.ListNotifications(r.Context(), currUser.ID)
+	if err != nil {
+		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		return
+	}
+
+	response.JSON(w, http.StatusOK, notifs)
+}
+
+// MarkAsRead marks a specific notification as read.
+func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
+	currUser := user.UserFrom(r.Context())
+	if currUser == nil {
+		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		return
+	}
+
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		response.BadRequest(w, response.ErrBadRequest, "notification id is required")
+		return
+	}
+
+	err := h.uc.MarkAsRead(r.Context(), id, currUser.ID)
+	if err != nil {
+		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		return
+	}
+
+	response.JSON(w, http.StatusOK, map[string]string{"message": "notification marked as read"})
+}
+
+// MarkAllAsRead marks all notifications as read.
+func (h *Handler) MarkAllAsRead(w http.ResponseWriter, r *http.Request) {
+	currUser := user.UserFrom(r.Context())
+	if currUser == nil {
+		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		return
+	}
+
+	err := h.uc.MarkAllAsRead(r.Context(), currUser.ID)
+	if err != nil {
+		response.InternalServerError(w, response.ErrInternalServerError, err.Error())
+		return
+	}
+
+	response.JSON(w, http.StatusOK, map[string]string{"message": "all notifications marked as read"})
+}

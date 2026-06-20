@@ -25,6 +25,7 @@ func NewHandler(uc *Usecase) *Handler {
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Route("/groups", func(r chi.Router) {
 		r.Post("/", h.Create)
+		r.Post("/join", h.Join)
 		r.Get("/", h.List)
 		
 		r.Route("/{id}", func(r chi.Router) {
@@ -45,6 +46,10 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 type createGroupRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+}
+
+type joinGroupRequest struct {
+	InviteCode string `json:"inviteCode"`
 }
 
 // Create creates a new group.
@@ -72,6 +77,34 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusCreated, g)
+}
+
+// Join joins a group via its invite code.
+func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
+	currUser := user.UserFrom(r.Context())
+	if currUser == nil {
+		response.Unauthorized(w, response.ErrUnauthorized, "unauthorized: missing user profile")
+		return
+	}
+
+	var req joinGroupRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.BadRequest(w, response.ErrInvalidBody, "invalid request body")
+		return
+	}
+
+	if req.InviteCode == "" {
+		response.BadRequest(w, response.ErrBadRequest, "inviteCode is required")
+		return
+	}
+
+	g, err := h.uc.JoinGroup(r.Context(), req.InviteCode, currUser.ID)
+	if err != nil {
+		response.BadRequest(w, response.ErrBadRequest, err.Error())
+		return
+	}
+
+	response.JSON(w, http.StatusOK, g)
 }
 
 // List retrieves all groups the user is a member of.

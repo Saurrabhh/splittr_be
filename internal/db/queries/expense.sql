@@ -1,14 +1,14 @@
 -- name: CreateExpense :one
-INSERT INTO expenses (id, description, amount, currency, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
-RETURNING id, description, amount, currency, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at, deleted_at;
+INSERT INTO expenses (id, description, amount, currency, category, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+RETURNING id, description, amount, currency, category, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at, deleted_at;
 
 -- name: CreateExpenseSplit :exec
 INSERT INTO expense_splits (expense_id, user_id, amount, split_type, split_value)
 VALUES ($1, $2, $3, $4, $5);
 
 -- name: GetExpenseByID :one
-SELECT id, description, amount, currency, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at, deleted_at
+SELECT id, description, amount, currency, category, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at, deleted_at
 FROM expenses
 WHERE id = $1 AND deleted_at IS NULL;
 
@@ -19,14 +19,14 @@ JOIN users u ON es.user_id = u.id
 WHERE es.expense_id = $1;
 
 -- name: ListExpensesByGroup :many
-SELECT id, description, amount, currency, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at
+SELECT id, description, amount, currency, category, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at
 FROM expenses
 WHERE group_id = $1 AND deleted_at IS NULL
 ORDER BY spent_at DESC;
 
 -- name: ListUserPersonalExpenses :many
 -- Retrieve expenses logged purely for personal budgeting (paid by user, and user is the ONLY split member)
-SELECT e.id, e.description, e.amount, e.currency, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
+SELECT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
 FROM expenses e
 WHERE e.paid_by = $1 
   AND e.group_id IS NULL 
@@ -40,7 +40,7 @@ ORDER BY e.spent_at DESC;
 
 -- name: ListUserFriendExpenses :many
 -- Retrieve direct (non-group) splits between current user and any other user
-SELECT DISTINCT e.id, e.description, e.amount, e.currency, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
+SELECT DISTINCT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
 FROM expenses e
 JOIN expense_splits es ON e.id = es.expense_id
 WHERE e.group_id IS NULL 

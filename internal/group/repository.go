@@ -87,6 +87,26 @@ func (r *DBRepository) GetByID(ctx context.Context, id string) (*Group, error) {
 	return toDomainGroup(dbGroup), nil
 }
 
+// GetByInviteCode retrieves a group by its invite code.
+func (r *DBRepository) GetByInviteCode(ctx context.Context, inviteCode string) (*Group, error) {
+	if inviteCode == "" {
+		return nil, errors.New("invite code is required")
+	}
+
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+
+	dbGroup, err := q.GetGroupByInviteCode(ctx, ptrToText(&inviteCode))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("query group by invite code: %w", err)
+	}
+
+	return toDomainGroup(dbGroup), nil
+}
+
 // Update updates group name and description.
 func (r *DBRepository) Update(ctx context.Context, g *Group) error {
 	parsedID, err := uuid.Parse(g.ID)

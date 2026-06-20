@@ -13,9 +13,9 @@ import (
 )
 
 const createExpense = `-- name: CreateExpense :one
-INSERT INTO expenses (id, description, amount, currency, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
-RETURNING id, description, amount, currency, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at, deleted_at
+INSERT INTO expenses (id, description, amount, currency, category, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+RETURNING id, description, amount, currency, category, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at, deleted_at
 `
 
 type CreateExpenseParams struct {
@@ -23,6 +23,7 @@ type CreateExpenseParams struct {
 	Description string
 	Amount      pgtype.Numeric
 	Currency    string
+	Category    string
 	GroupID     pgtype.UUID
 	PaidBy      uuid.UUID
 	CreatedBy   uuid.UUID
@@ -36,6 +37,7 @@ func (q *Queries) CreateExpense(ctx context.Context, arg CreateExpenseParams) (E
 		arg.Description,
 		arg.Amount,
 		arg.Currency,
+		arg.Category,
 		arg.GroupID,
 		arg.PaidBy,
 		arg.CreatedBy,
@@ -48,6 +50,7 @@ func (q *Queries) CreateExpense(ctx context.Context, arg CreateExpenseParams) (E
 		&i.Description,
 		&i.Amount,
 		&i.Currency,
+		&i.Category,
 		&i.GroupID,
 		&i.PaidBy,
 		&i.CreatedBy,
@@ -96,7 +99,7 @@ func (q *Queries) DeleteExpense(ctx context.Context, id uuid.UUID) error {
 }
 
 const getExpenseByID = `-- name: GetExpenseByID :one
-SELECT id, description, amount, currency, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at, deleted_at
+SELECT id, description, amount, currency, category, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at, deleted_at
 FROM expenses
 WHERE id = $1 AND deleted_at IS NULL
 `
@@ -109,6 +112,7 @@ func (q *Queries) GetExpenseByID(ctx context.Context, id uuid.UUID) (Expense, er
 		&i.Description,
 		&i.Amount,
 		&i.Currency,
+		&i.Category,
 		&i.GroupID,
 		&i.PaidBy,
 		&i.CreatedBy,
@@ -315,7 +319,7 @@ func (q *Queries) ListExpenseSplits(ctx context.Context, expenseID uuid.UUID) ([
 }
 
 const listExpensesByGroup = `-- name: ListExpensesByGroup :many
-SELECT id, description, amount, currency, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at
+SELECT id, description, amount, currency, category, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at
 FROM expenses
 WHERE group_id = $1 AND deleted_at IS NULL
 ORDER BY spent_at DESC
@@ -326,6 +330,7 @@ type ListExpensesByGroupRow struct {
 	Description string
 	Amount      pgtype.Numeric
 	Currency    string
+	Category    string
 	GroupID     pgtype.UUID
 	PaidBy      uuid.UUID
 	CreatedBy   uuid.UUID
@@ -349,6 +354,7 @@ func (q *Queries) ListExpensesByGroup(ctx context.Context, groupID pgtype.UUID) 
 			&i.Description,
 			&i.Amount,
 			&i.Currency,
+			&i.Category,
 			&i.GroupID,
 			&i.PaidBy,
 			&i.CreatedBy,
@@ -368,7 +374,7 @@ func (q *Queries) ListExpensesByGroup(ctx context.Context, groupID pgtype.UUID) 
 }
 
 const listUserFriendExpenses = `-- name: ListUserFriendExpenses :many
-SELECT DISTINCT e.id, e.description, e.amount, e.currency, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
+SELECT DISTINCT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
 FROM expenses e
 JOIN expense_splits es ON e.id = es.expense_id
 WHERE e.group_id IS NULL 
@@ -387,6 +393,7 @@ type ListUserFriendExpensesRow struct {
 	Description string
 	Amount      pgtype.Numeric
 	Currency    string
+	Category    string
 	GroupID     pgtype.UUID
 	PaidBy      uuid.UUID
 	CreatedBy   uuid.UUID
@@ -411,6 +418,7 @@ func (q *Queries) ListUserFriendExpenses(ctx context.Context, paidBy uuid.UUID) 
 			&i.Description,
 			&i.Amount,
 			&i.Currency,
+			&i.Category,
 			&i.GroupID,
 			&i.PaidBy,
 			&i.CreatedBy,
@@ -430,7 +438,7 @@ func (q *Queries) ListUserFriendExpenses(ctx context.Context, paidBy uuid.UUID) 
 }
 
 const listUserPersonalExpenses = `-- name: ListUserPersonalExpenses :many
-SELECT e.id, e.description, e.amount, e.currency, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
+SELECT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
 FROM expenses e
 WHERE e.paid_by = $1 
   AND e.group_id IS NULL 
@@ -448,6 +456,7 @@ type ListUserPersonalExpensesRow struct {
 	Description string
 	Amount      pgtype.Numeric
 	Currency    string
+	Category    string
 	GroupID     pgtype.UUID
 	PaidBy      uuid.UUID
 	CreatedBy   uuid.UUID
@@ -472,6 +481,7 @@ func (q *Queries) ListUserPersonalExpenses(ctx context.Context, paidBy uuid.UUID
 			&i.Description,
 			&i.Amount,
 			&i.Currency,
+			&i.Category,
 			&i.GroupID,
 			&i.PaidBy,
 			&i.CreatedBy,

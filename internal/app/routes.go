@@ -44,6 +44,20 @@ func (app *Application) routes(deps *dependencies) http.Handler {
 			r.Use(deps.userHandler.UserContext)
 			deps.expenseHandler.RegisterRoutes(r)
 		})
+
+		// Activity routes (requires authentication & local user resolution)
+		r.Group(func(r chi.Router) {
+			r.Use(deps.authMiddleware.Authenticate)
+			r.Use(deps.userHandler.UserContext)
+			deps.activityHandler.RegisterRoutes(r)
+		})
+
+		// Notification routes (requires authentication & local user resolution)
+		r.Group(func(r chi.Router) {
+			r.Use(deps.authMiddleware.Authenticate)
+			r.Use(deps.userHandler.UserContext)
+			deps.notificationHandler.RegisterRoutes(r)
+		})
 	})
 
 	// Custom 404 Not Found handler using response package

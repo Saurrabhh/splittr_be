@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 	"math"
+	"time"
 
+	"github.com/Saurrabhh/splittr_be/internal/activity"
 	"github.com/Saurrabhh/splittr_be/internal/db"
 	"github.com/Saurrabhh/splittr_be/internal/group"
+	"github.com/Saurrabhh/splittr_be/internal/notification"
 	"github.com/google/uuid"
 )
 
@@ -32,24 +34,36 @@ type GroupService interface {
 	GetGroupDetails(ctx context.Context, groupID, userID string) (*group.Group, []group.GroupMember, error)
 }
 
+type ActivityLogger interface {
+	LogActivity(ctx context.Context, actorID string, groupID *string, actionType string, description string, visibleToUserIDs []string) (*activity.Activity, error)
+}
+
+type NotificationSender interface {
+	CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) (*notification.Notification, error)
+}
+
 // Usecase manages business logic for expenses, splits, and balances.
 type Usecase struct {
-	repo     Repository
-	tx       db.Transactor
-	groupSvc GroupService
+	repo         Repository
+	tx           db.Transactor
+	groupSvc     GroupService
+	activity     ActivityLogger
+	notification NotificationSender
 }
 
 // NewUsecase instantiates a new Usecase.
-func NewUsecase(repo Repository, tx db.Transactor, groupSvc GroupService) *Usecase {
+func NewUsecase(repo Repository, tx db.Transactor, groupSvc GroupService, activitySvc ActivityLogger, notificationSvc NotificationSender) *Usecase {
 	return &Usecase{
-		repo:     repo,
-		tx:       tx,
-		groupSvc: groupSvc,
+		repo:         repo,
+		tx:           tx,
+		groupSvc:     groupSvc,
+		activity:     activitySvc,
+		notification: notificationSvc,
 	}
 }
 
 // CreateExpense calculates splits, validates constraints, and inserts the expense inside a transaction.
-func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64, currency string, groupID *string, paidBy string, splitType SplitType, inputs []InputSplit, createdBy string) (*Expense, []ExpenseSplit, error) {
+func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64, currency string, category string, groupID *string, paidBy string, splitType SplitType, inputs []InputSplit, createdBy string) (*Expense, []ExpenseSplit, error) {
 	if desc == "" {
 		return nil, nil, errors.New("description is required")
 	}
@@ -99,6 +113,7 @@ func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64
 		Description: desc,
 		Amount:      amount,
 		Currency:    currency,
+		Category:    category,
 		GroupID:     groupID,
 		PaidBy:      paidBy,
 		CreatedBy:   createdBy,
@@ -119,6 +134,49 @@ func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64
 				return err
 			}
 		}
+
+		// Log Activity
+		activityDesc := fmt.Sprintf("added expense '%s' of %.2f %s", desc, amount, currency)
+		var visibleTo []string
+		if groupID == nil || *groupID == "" {
+			visibilityMap := make(map[string]bool)
+			visibilityMap[paidBy] = true
+			visibilityMap[createdBy] = true
+			for _, sp := range inputs {
+				visibilityMap[sp.UserID] = true
+			}
+			visibleTo = make([]string, 0, len(visibilityMap))
+			for uID := range visibilityMap {
+				visibleTo = append(visibleTo, uID)
+			}
+		}
+
+		act, err := u.activity.LogActivity(txCtx, createdBy, groupID, "EXPENSE_CREATED", activityDesc, visibleTo)
+		if err != nil {
+			return err
+		}
+
+		// Trigger Notifications
+		notificationTitle := "New Expense"
+		notificationContent := fmt.Sprintf("New expense '%s' of %.2f %s added", desc, amount, currency)
+
+		if groupID != nil && *groupID != "" {
+			_, members, err := u.groupSvc.GetGroupDetails(txCtx, *groupID, createdBy)
+			if err == nil {
+				for _, m := range members {
+					if m.UserID != createdBy {
+						_, _ = u.notification.CreateAlert(txCtx, m.UserID, &createdBy, &act.ID, notificationTitle, notificationContent)
+					}
+				}
+			}
+		} else {
+			for _, sp := range inputs {
+				if sp.UserID != createdBy {
+					_, _ = u.notification.CreateAlert(txCtx, sp.UserID, &createdBy, &act.ID, notificationTitle, notificationContent)
+				}
+			}
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -168,6 +226,7 @@ func (u *Usecase) SettleUp(ctx context.Context, amount float64, currency string,
 		Description: "Settle Up",
 		Amount:      amount,
 		Currency:    currency,
+		Category:    "Payment",
 		GroupID:     groupID,
 		PaidBy:      paidBy,
 		CreatedBy:   createdBy,
@@ -186,7 +245,33 @@ func (u *Usecase) SettleUp(ctx context.Context, amount float64, currency string,
 		if err := u.repo.CreateExpense(txCtx, newExpense); err != nil {
 			return err
 		}
-		return u.repo.CreateExpenseSplit(txCtx, split)
+		if err := u.repo.CreateExpenseSplit(txCtx, split); err != nil {
+			return err
+		}
+
+		// Log Activity
+		activityDesc := fmt.Sprintf("settled %.2f %s", amount, currency)
+		var visibleTo []string
+		if groupID == nil || *groupID == "" {
+			visibleTo = []string{paidBy, receivedBy, createdBy}
+		}
+
+		act, err := u.activity.LogActivity(txCtx, createdBy, groupID, "SETTLEMENT", activityDesc, visibleTo)
+		if err != nil {
+			return err
+		}
+
+		// Notify payee
+		_, _ = u.notification.CreateAlert(
+			txCtx,
+			receivedBy,
+			&paidBy,
+			&act.ID,
+			"Payment Received",
+			fmt.Sprintf("Payment of %.2f %s received", amount, currency),
+		)
+
+		return nil
 	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("settle up transaction failed: %w", err)

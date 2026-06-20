@@ -5,13 +5,16 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/Saurrabhh/splittr_be/internal/activity"
 	"github.com/Saurrabhh/splittr_be/internal/db"
+	"github.com/Saurrabhh/splittr_be/internal/notification"
 	"github.com/google/uuid"
 )
 
 // Repository defines the storage contract for groups and memberships.
 type Repository interface {
 	GetByID(ctx context.Context, id string) (*Group, error)
+	GetByInviteCode(ctx context.Context, inviteCode string) (*Group, error)
 	GetGroupMember(ctx context.Context, groupID, userID string) (*GroupMember, error)
 	ListGroupMembers(ctx context.Context, groupID string) ([]GroupMember, error)
 	ListUserGroups(ctx context.Context, userID string) ([]Group, error)
@@ -23,17 +26,29 @@ type Repository interface {
 	UpdateGroupMemberRole(ctx context.Context, groupID, userID, role string) error
 }
 
+type ActivityLogger interface {
+	LogActivity(ctx context.Context, actorID string, groupID *string, actionType string, description string, visibleToUserIDs []string) (*activity.Activity, error)
+}
+
+type NotificationSender interface {
+	CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) (*notification.Notification, error)
+}
+
 // Usecase manages business workflows for the group domain.
 type Usecase struct {
-	repo Repository
-	tx   db.Transactor
+	repo         Repository
+	tx           db.Transactor
+	activity     ActivityLogger
+	notification NotificationSender
 }
 
 // NewUsecase instantiates a new Usecase.
-func NewUsecase(repo Repository, tx db.Transactor) *Usecase {
+func NewUsecase(repo Repository, tx db.Transactor, activitySvc ActivityLogger, notificationSvc NotificationSender) *Usecase {
 	return &Usecase{
-		repo: repo,
-		tx:   tx,
+		repo:         repo,
+		tx:           tx,
+		activity:     activitySvc,
+		notification: notificationSvc,
 	}
 }
 
@@ -55,7 +70,7 @@ func (u *Usecase) CreateGroup(ctx context.Context, name, description string, cre
 		newGroup.Description = &description
 	}
 
-	// Generate invite code (optional, placeholder for future integration)
+	// Generate invite code
 	inviteCode := "invite-" + uuid.New().String()[:8]
 	newGroup.InviteCode = &inviteCode
 
@@ -63,7 +78,11 @@ func (u *Usecase) CreateGroup(ctx context.Context, name, description string, cre
 		if err := u.repo.CreateGroup(txCtx, newGroup); err != nil {
 			return err
 		}
-		return u.repo.AddGroupMember(txCtx, newGroup.ID, creatorID, "admin")
+		if err := u.repo.AddGroupMember(txCtx, newGroup.ID, creatorID, "admin"); err != nil {
+			return err
+		}
+		_, err := u.activity.LogActivity(txCtx, creatorID, &newGroup.ID, "GROUP_CREATED", "created the group", nil)
+		return err
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create group transaction: %w", err)
@@ -126,8 +145,35 @@ func (u *Usecase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 		return errors.New("only admins can add members to the group")
 	}
 
-	// Add member as "member" by default
-	return u.repo.AddGroupMember(ctx, groupID, targetUserID, "member")
+	g, err := u.repo.GetByID(ctx, groupID)
+	if err != nil {
+		return err
+	}
+	if g == nil {
+		return errors.New("group not found")
+	}
+
+	return u.tx.RunInTx(ctx, func(txCtx context.Context) error {
+		if err := u.repo.AddGroupMember(txCtx, groupID, targetUserID, "member"); err != nil {
+			return err
+		}
+
+		desc := fmt.Sprintf("added user %s to the group", targetUserID)
+		act, err := u.activity.LogActivity(txCtx, actionByUserID, &groupID, "MEMBER_ADDED", desc, nil)
+		if err != nil {
+			return err
+		}
+
+		_, err = u.notification.CreateAlert(
+			txCtx,
+			targetUserID,
+			&actionByUserID,
+			&act.ID,
+			"Added to Group",
+			fmt.Sprintf("You were added to group %s", g.Name),
+		)
+		return err
+	})
 }
 
 // RemoveMember removes a user from the group.
@@ -135,6 +181,14 @@ func (u *Usecase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 func (u *Usecase) RemoveMember(ctx context.Context, groupID, targetUserID, actionByUserID string) error {
 	if groupID == "" || targetUserID == "" || actionByUserID == "" {
 		return errors.New("missing required fields")
+	}
+
+	g, err := u.repo.GetByID(ctx, groupID)
+	if err != nil {
+		return err
+	}
+	if g == nil {
+		return errors.New("group not found")
 	}
 
 	// Check permissions
@@ -171,7 +225,6 @@ func (u *Usecase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 		}
 
 		if adminCount == 1 {
-			// If this is the last admin and they are leaving the group
 			if len(members) > 1 {
 				return errors.New("cannot remove the sole admin of a group containing other members. Promote another user to admin first")
 			}
@@ -179,18 +232,58 @@ func (u *Usecase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 				if err := u.repo.RemoveGroupMember(txCtx, groupID, targetUserID); err != nil {
 					return err
 				}
+				_, err := u.activity.LogActivity(txCtx, actionByUserID, &groupID, "MEMBER_LEFT", "left the group", nil)
+				if err != nil {
+					return err
+				}
 				return u.repo.Archive(txCtx, groupID)
 			})
 		}
 	}
 
-	return u.repo.RemoveGroupMember(ctx, groupID, targetUserID)
+	return u.tx.RunInTx(ctx, func(txCtx context.Context) error {
+		if err := u.repo.RemoveGroupMember(txCtx, groupID, targetUserID); err != nil {
+			return err
+		}
+
+		actionType := "MEMBER_LEFT"
+		desc := "left the group"
+		if !isSelf {
+			actionType = "MEMBER_KICKED"
+			desc = fmt.Sprintf("removed user %s from the group", targetUserID)
+		}
+
+		act, err := u.activity.LogActivity(txCtx, actionByUserID, &groupID, actionType, desc, nil)
+		if err != nil {
+			return err
+		}
+
+		if !isSelf {
+			_, _ = u.notification.CreateAlert(
+				txCtx,
+				targetUserID,
+				&actionByUserID,
+				&act.ID,
+				"Removed from Group",
+				fmt.Sprintf("You were removed from group %s by an admin", g.Name),
+			)
+		}
+		return nil
+	})
 }
 
 // UpdateMemberRole changes a member's role (admin <-> member).
 func (u *Usecase) UpdateMemberRole(ctx context.Context, groupID, targetUserID, role, actionByUserID string) error {
 	if role != "admin" && role != "member" {
 		return errors.New("invalid role: must be admin or member")
+	}
+
+	g, err := u.repo.GetByID(ctx, groupID)
+	if err != nil {
+		return err
+	}
+	if g == nil {
+		return errors.New("group not found")
 	}
 
 	// Verify requester is admin
@@ -229,7 +322,27 @@ func (u *Usecase) UpdateMemberRole(ctx context.Context, groupID, targetUserID, r
 		}
 	}
 
-	return u.repo.UpdateGroupMemberRole(ctx, groupID, targetUserID, role)
+	return u.tx.RunInTx(ctx, func(txCtx context.Context) error {
+		if err := u.repo.UpdateGroupMemberRole(txCtx, groupID, targetUserID, role); err != nil {
+			return err
+		}
+
+		desc := fmt.Sprintf("updated user %s's role to %s", targetUserID, role)
+		act, err := u.activity.LogActivity(txCtx, actionByUserID, &groupID, "MEMBER_ROLE_UPDATED", desc, nil)
+		if err != nil {
+			return err
+		}
+
+		_, err = u.notification.CreateAlert(
+			txCtx,
+			targetUserID,
+			&actionByUserID,
+			&act.ID,
+			"Role Updated",
+			fmt.Sprintf("Your role in group %s was updated to %s", g.Name, role),
+		)
+		return err
+	})
 }
 
 // ArchiveGroup soft-deletes the group. Requires requester to be an admin.
@@ -242,7 +355,50 @@ func (u *Usecase) ArchiveGroup(ctx context.Context, groupID, actionByUserID stri
 		return errors.New("unauthorized: only admins can archive the group")
 	}
 
-	return u.repo.Archive(ctx, groupID)
+	return u.tx.RunInTx(ctx, func(txCtx context.Context) error {
+		if err := u.repo.Archive(txCtx, groupID); err != nil {
+			return err
+		}
+		_, err := u.activity.LogActivity(txCtx, actionByUserID, &groupID, "GROUP_ARCHIVED", "archived the group", nil)
+		return err
+	})
+}
+
+// JoinGroup matches a group by invite code and adds the user as a member.
+func (u *Usecase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Group, error) {
+	if inviteCode == "" || userID == "" {
+		return nil, errors.New("invite code and user ID are required")
+	}
+
+	g, err := u.repo.GetByInviteCode(ctx, inviteCode)
+	if err != nil {
+		return nil, err
+	}
+	if g == nil {
+		return nil, errors.New("invalid or expired invite code")
+	}
+
+	// Check if already a member
+	existing, err := u.repo.GetGroupMember(ctx, g.ID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
+		return g, nil
+	}
+
+	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
+		if err := u.repo.AddGroupMember(txCtx, g.ID, userID, "member"); err != nil {
+			return err
+		}
+		_, err := u.activity.LogActivity(txCtx, userID, &g.ID, "MEMBER_JOINED", "joined the group via invite code", nil)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return g, nil
 }
 
 // checkIsAdmin is a helper to verify a user's admin status in a group.
