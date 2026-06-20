@@ -8,8 +8,6 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/app"
 	"github.com/Saurrabhh/splittr_be/internal/config"
 	"github.com/Saurrabhh/splittr_be/internal/db"
-
-	_ "github.com/Saurrabhh/splittr_be/docs"
 )
 
 // @title           Splittr API
