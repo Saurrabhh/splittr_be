@@ -1,9 +1,10 @@
 package app
 
 import (
-	"encoding/json"
 	"net/http"
 	"time"
+
+	"github.com/Saurrabhh/splittr_be/internal/response"
 )
 
 type healthResponse struct {
@@ -31,12 +32,9 @@ func (app *Application) healthCheckHandler(w http.ResponseWriter, r *http.Reques
 		Checks:    checks,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	if status == "DOWN" {
-		w.WriteHeader(http.StatusServiceUnavailable)
+		response.JSON(w, http.StatusServiceUnavailable, res)
 	} else {
-		w.WriteHeader(http.StatusOK)
+		response.JSON(w, http.StatusOK, res)
 	}
-
-	_ = json.NewEncoder(w).Encode(res)
 }
