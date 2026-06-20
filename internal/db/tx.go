@@ -19,6 +19,11 @@ type DBTX interface {
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 }
 
+// Transactor defines the interface for database transaction boundaries.
+type Transactor interface {
+	RunInTx(ctx context.Context, fn func(ctx context.Context) error) error
+}
+
 // TransactionManager handles database transaction boundaries.
 type TransactionManager struct {
 	db *DB

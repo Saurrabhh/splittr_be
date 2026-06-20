@@ -9,6 +9,24 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Group struct {
+	ID          uuid.UUID
+	Name        string
+	Description pgtype.Text
+	InviteCode  pgtype.Text
+	CreatedBy   pgtype.UUID
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	ArchivedAt  pgtype.Timestamptz
+}
+
+type GroupMember struct {
+	GroupID  uuid.UUID
+	UserID   uuid.UUID
+	Role     string
+	JoinedAt pgtype.Timestamptz
+}
+
 type User struct {
 	ID          uuid.UUID
 	FirebaseUid string

@@ -8,28 +8,22 @@ import (
 	"github.com/google/uuid"
 )
 
-// UserFinder defines the consumer-side interface for retrieving users.
-type UserFinder interface {
+// Repository defines the storage contract for users.
+type Repository interface {
 	GetByID(ctx context.Context, id string) (*User, error)
 	GetByFirebaseUID(ctx context.Context, firebaseUID string) (*User, error)
-}
-
-// UserCreator defines the consumer-side interface for creating users.
-type UserCreator interface {
 	Create(ctx context.Context, u *User) error
 }
 
 // Usecase handles business operations for users.
 type Usecase struct {
-	finder  UserFinder
-	creator UserCreator
+	repo Repository
 }
 
 // NewUsecase creates a new Usecase instance.
-func NewUsecase(finder UserFinder, creator UserCreator) *Usecase {
+func NewUsecase(repo Repository) *Usecase {
 	return &Usecase{
-		finder:  finder,
-		creator: creator,
+		repo: repo,
 	}
 }
 
@@ -42,7 +36,7 @@ func (u *Usecase) RegisterUser(ctx context.Context, firebaseUID string, email, p
 		return nil, errors.New("either email or phone is required")
 	}
 
-	existing, err := u.finder.GetByFirebaseUID(ctx, firebaseUID)
+	existing, err := u.repo.GetByFirebaseUID(ctx, firebaseUID)
 	if err == nil && existing != nil {
 		return existing, nil
 	}
@@ -55,7 +49,7 @@ func (u *Usecase) RegisterUser(ctx context.Context, firebaseUID string, email, p
 		Name:        name,
 	}
 
-	if err := u.creator.Create(ctx, newUser); err != nil {
+	if err := u.repo.Create(ctx, newUser); err != nil {
 		return nil, fmt.Errorf("create user: %w", err)
 	}
 
@@ -67,7 +61,7 @@ func (u *Usecase) GetUserProfile(ctx context.Context, id string) (*User, error) 
 	if id == "" {
 		return nil, errors.New("id is required")
 	}
-	return u.finder.GetByID(ctx, id)
+	return u.repo.GetByID(ctx, id)
 }
 
 // GetUserByFirebaseUID retrieves the profile of a user by Firebase UID.
@@ -75,6 +69,7 @@ func (u *Usecase) GetUserByFirebaseUID(ctx context.Context, firebaseUID string) 
 	if firebaseUID == "" {
 		return nil, errors.New("firebaseUID is required")
 	}
-	return u.finder.GetByFirebaseUID(ctx, firebaseUID)
+	return u.repo.GetByFirebaseUID(ctx, firebaseUID)
 }
+
 

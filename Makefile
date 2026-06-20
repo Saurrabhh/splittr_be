@@ -32,10 +32,10 @@ build-and-run: check-env
 
 # Targets for Goose database migrations
 migrate-status: check-env
-	goose -dir $(GOOSE_MIGRATION_DIR) $(GOOSE_DRIVER) "$(GOOSE_DBSTRING)" status
+	goose status
 
 migrate-up: check-env
-	goose -dir $(GOOSE_MIGRATION_DIR) $(GOOSE_DRIVER) "$(GOOSE_DBSTRING)" up
+	goose up
 
 migrate-down: check-env
-	goose -dir $(GOOSE_MIGRATION_DIR) $(GOOSE_DRIVER) "$(GOOSE_DBSTRING)" down
+	goose down

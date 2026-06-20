@@ -30,6 +30,13 @@ func (app *Application) routes(deps *dependencies) http.Handler {
 	r.Route("/v1", func(r chi.Router) {
 		// Register domain-specific routes
 		deps.userHandler.RegisterRoutes(r, deps.authMiddleware.Authenticate)
+
+		// Group routes (requires authentication & local user resolution)
+		r.Group(func(r chi.Router) {
+			r.Use(deps.authMiddleware.Authenticate)
+			r.Use(deps.userHandler.UserContext)
+			deps.groupHandler.RegisterRoutes(r)
+		})
 	})
 
 	// Custom 404 Not Found handler using response package

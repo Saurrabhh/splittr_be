@@ -12,22 +12,22 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-// Repository handles database operations for users.
-type Repository struct {
+// DBRepository handles database operations for users.
+type DBRepository struct {
 	db *db.DB
 	tm *db.TransactionManager
 }
 
-// NewRepository creates a new Repository instance.
-func NewRepository(database *db.DB, tm *db.TransactionManager) *Repository {
-	return &Repository{
+// NewRepository creates a new DBRepository instance.
+func NewRepository(database *db.DB, tm *db.TransactionManager) *DBRepository {
+	return &DBRepository{
 		db: database,
 		tm: tm,
 	}
 }
 
 // GetByID retrieves a user by ID.
-func (r *Repository) GetByID(ctx context.Context, id string) (*User, error) {
+func (r *DBRepository) GetByID(ctx context.Context, id string) (*User, error) {
 	parsedID, err := uuid.Parse(id)
 	if err != nil {
 		return nil, fmt.Errorf("invalid uuid: %w", err)
@@ -56,7 +56,7 @@ func (r *Repository) GetByID(ctx context.Context, id string) (*User, error) {
 }
 
 // GetByFirebaseUID retrieves a user by Firebase UID.
-func (r *Repository) GetByFirebaseUID(ctx context.Context, firebaseUID string) (*User, error) {
+func (r *DBRepository) GetByFirebaseUID(ctx context.Context, firebaseUID string) (*User, error) {
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)
 
@@ -80,7 +80,7 @@ func (r *Repository) GetByFirebaseUID(ctx context.Context, firebaseUID string) (
 }
 
 // Create inserts a new user.
-func (r *Repository) Create(ctx context.Context, u *User) error {
+func (r *DBRepository) Create(ctx context.Context, u *User) error {
 	parsedID, err := uuid.Parse(u.ID)
 	if err != nil {
 		return fmt.Errorf("invalid uuid: %w", err)
