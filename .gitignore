@@ -20,10 +20,13 @@ tmp/
 
 # Environment variables (Never commit secrets)
 .env
+.env.*
+env/**/*.env
+env/**/*.json
 
 # OS-specific files
 .DS_Store
 Thumbs.db
 
-# Firebase credentials
+# Firebase credentials (fallback for root folder)
 firebase-key.json

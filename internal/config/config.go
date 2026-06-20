@@ -16,9 +16,24 @@ type Config struct {
 
 // Load reads config from environment variables.
 func Load() (*Config, error) {
-	// Attempt to load .env file, but ignore error if file is missing (e.g. in production)
-	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
-		return nil, fmt.Errorf("load .env file: %w", err)
+	appEnv := os.Getenv("APP_ENV")
+	if appEnv == "" {
+		return nil, fmt.Errorf("APP_ENV environment variable is not set")
+	}
+
+	// Validate APP_ENV
+	switch appEnv {
+	case "local", "dev", "prod":
+		// Valid environments
+	default:
+		return nil, fmt.Errorf("invalid APP_ENV %q: must be one of 'local', 'dev', or 'prod'", appEnv)
+	}
+
+	envFile := fmt.Sprintf("env/%s/.env", appEnv)
+	if _, err := os.Stat(envFile); err == nil {
+		if err := godotenv.Load(envFile); err != nil {
+			return nil, fmt.Errorf("load env file %s: %w", envFile, err)
+		}
 	}
 
 	var cfg Config
