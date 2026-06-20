@@ -54,6 +54,18 @@ type settleExpenseRequest struct {
 }
 
 // Create logs a new expense and distributes the splits.
+// @Summary      Create expense
+// @Description  Create a new expense with equal/exact/percentage splits.
+// @Tags         expenses
+// @Accept       json
+// @Produce      json
+// @Param        request body createExpenseRequest true "Expense details and splits structure"
+// @Success      201  {object}  CreateExpenseResponse
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /expenses [post]
+// @Security     Bearer
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
@@ -99,13 +111,25 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, map[string]any{
-		"expense": exp,
-		"splits":  splits,
+	response.JSON(w, http.StatusCreated, CreateExpenseResponse{
+		Expense: exp,
+		Splits:  splits,
 	})
 }
 
 // Settle creates a payment record to clear or reduce debt.
+// @Summary      Settle balance
+// @Description  Create a settlement payment between two users.
+// @Tags         expenses
+// @Accept       json
+// @Produce      json
+// @Param        request body settleExpenseRequest true "Settlement details"
+// @Success      201  {object}  SettleExpenseResponse
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /expenses/settle [post]
+// @Security     Bearer
 func (h *Handler) Settle(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
@@ -142,13 +166,26 @@ func (h *Handler) Settle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, map[string]any{
-		"expense": exp,
-		"split":   split,
+	response.JSON(w, http.StatusCreated, SettleExpenseResponse{
+		Expense: exp,
+		Split:   split,
 	})
 }
 
 // List lists expenses based on filters (group, personal, or friend).
+// @Summary      List expenses
+// @Description  Retrieve a list of expenses filtered by group, personal=true, or friendId.
+// @Tags         expenses
+// @Produce      json
+// @Param        groupId query string false "Filter by Group ID"
+// @Param        personal query boolean false "Filter for personal only (true/false)"
+// @Param        friendId query string false "Filter by Friend ID"
+// @Success      200  {array}   Expense
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /expenses [get]
+// @Security     Bearer
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
@@ -192,6 +229,17 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetDetails retrieves a specific expense and its details.
+// @Summary      Get expense details
+// @Description  Get a specific expense's details including all splits.
+// @Tags         expenses
+// @Produce      json
+// @Param        id path string true "Expense ID"
+// @Success      200  {object}  GetExpenseDetailsResponse
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /expenses/{id} [get]
+// @Security     Bearer
 func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 	expenseID := chi.URLParam(r, "id")
 	if expenseID == "" {
@@ -217,13 +265,23 @@ func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, map[string]any{
-		"expense": exp,
-		"splits":  splits,
+	response.JSON(w, http.StatusOK, GetExpenseDetailsResponse{
+		Expense: exp,
+		Splits:  splits,
 	})
 }
 
 // Delete soft deletes an expense.
+// @Summary      Delete expense
+// @Description  Soft-delete an expense by ID.
+// @Tags         expenses
+// @Param        id path string true "Expense ID"
+// @Success      204  "No Content"
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /expenses/{id} [delete]
+// @Security     Bearer
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	expenseID := chi.URLParam(r, "id")
 	if expenseID == "" {
@@ -253,6 +311,18 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetBalances calculates balances either inside a group or globally.
+// @Summary      Get user balances
+// @Description  Calculate net balances and recommended settlement transactions.
+// @Tags         expenses
+// @Produce      json
+// @Param        groupId query string false "Filter by Group ID. If omitted, returns global balances."
+// @Param        simplified query boolean false "Simplify debts algorithm (true/false)"
+// @Success      200  {object}  BalanceResponse
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /balances [get]
+// @Security     Bearer
 func (h *Handler) GetBalances(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {

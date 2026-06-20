@@ -28,6 +28,15 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 }
 
 // List lists all notifications for the current user.
+// @Summary      List notifications
+// @Description  Get all notifications in the tray for the current user.
+// @Tags         notifications
+// @Produce      json
+// @Success      200  {array}   Notification
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /notifications [get]
+// @Security     Bearer
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
@@ -48,6 +57,17 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 // MarkAsRead marks a specific notification as read.
+// @Summary      Mark notification as read
+// @Description  Mark a specific notification as read by ID.
+// @Tags         notifications
+// @Produce      json
+// @Param        id path string true "Notification ID"
+// @Success      200  {object}  map[string]string "Success message"
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /notifications/{id}/read [post]
+// @Security     Bearer
 func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
@@ -77,6 +97,15 @@ func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 }
 
 // MarkAllAsRead marks all notifications as read.
+// @Summary      Mark all notifications as read
+// @Description  Mark all unread notifications as read for the current user.
+// @Tags         notifications
+// @Produce      json
+// @Success      200  {object}  map[string]string "Success message"
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /notifications/read-all [post]
+// @Security     Bearer
 func (h *Handler) MarkAllAsRead(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {

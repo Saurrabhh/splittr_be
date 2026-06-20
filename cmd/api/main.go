@@ -10,6 +10,16 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/db"
 )
 
+// @title           Splittr API
+// @version         1.0
+// @description     Backend API service for Splittr bill splitting.
+// @host            localhost:8080
+// @BasePath        /v1
+//
+// @securityDefinitions.apikey Bearer
+// @in header
+// @name Authorization
+// @description Type "Bearer <your_token>"
 func main() {
 	// Configure logging
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))

@@ -52,6 +52,18 @@ type joinGroupRequest struct {
 }
 
 // Create creates a new group.
+// @Summary      Create group
+// @Description  Create a new bill-splitting group.
+// @Tags         groups
+// @Accept       json
+// @Produce      json
+// @Param        request body createGroupRequest true "Group creation data"
+// @Success      201  {object}  Group
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /groups [post]
+// @Security     Bearer
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
@@ -78,6 +90,18 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // Join joins a group via its invite code.
+// @Summary      Join group
+// @Description  Join an existing group using its unique invite code.
+// @Tags         groups
+// @Accept       json
+// @Produce      json
+// @Param        request body joinGroupRequest true "Group join data"
+// @Success      200  {object}  Group
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /groups/join [post]
+// @Security     Bearer
 func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
@@ -112,6 +136,15 @@ func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 }
 
 // List retrieves all groups the user is a member of.
+// @Summary      List groups
+// @Description  Retrieve all bill-splitting groups the current user belongs to.
+// @Tags         groups
+// @Produce      json
+// @Success      200  {array}   Group
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /groups [get]
+// @Security     Bearer
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
@@ -137,6 +170,17 @@ type groupDetailsResponse struct {
 }
 
 // GetDetails returns the group metadata and its members list.
+// @Summary      Get group details
+// @Description  Get a group's metadata and a list of all its members.
+// @Tags         groups
+// @Produce      json
+// @Param        id path string true "Group ID"
+// @Success      200  {object}  groupDetailsResponse
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /groups/{id} [get]
+// @Security     Bearer
 func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "id")
 	if groupID == "" {
@@ -173,6 +217,19 @@ type addMemberRequest struct {
 }
 
 // AddMember adds a user to the group.
+// @Summary      Add group member
+// @Description  Add a user to a group by their User ID. Only admins can add members.
+// @Tags         groups
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "Group ID"
+// @Param        request body addMemberRequest true "User ID of the member to add"
+// @Success      200  {object}  map[string]string "Success message"
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /groups/{id}/members [post]
+// @Security     Bearer
 func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "id")
 	if groupID == "" {
@@ -216,6 +273,17 @@ func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
 }
 
 // RemoveMember removes a user from the group (or leaves the group).
+// @Summary      Remove group member / Leave group
+// @Description  Remove a user from a group, or leave the group if removing yourself.
+// @Tags         groups
+// @Param        id path string true "Group ID"
+// @Param        userId path string true "User ID of the member to remove"
+// @Success      204  "No Content"
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /groups/{id}/members/{userId} [delete]
+// @Security     Bearer
 func (h *Handler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "id")
 	targetUserID := chi.URLParam(r, "userId")
@@ -250,6 +318,20 @@ type updateRoleRequest struct {
 }
 
 // UpdateMemberRole updates a member's role (admin vs member).
+// @Summary      Update member role
+// @Description  Update the role (e.g. ADMIN, MEMBER) of a user inside the group.
+// @Tags         groups
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "Group ID"
+// @Param        userId path string true "User ID of the member to update"
+// @Param        request body updateRoleRequest true "New role value"
+// @Success      200  {object}  map[string]string "Success message"
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /groups/{id}/members/{userId}/role [put]
+// @Security     Bearer
 func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "id")
 	targetUserID := chi.URLParam(r, "userId")
@@ -286,6 +368,17 @@ func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 }
 
 // Archive archives (soft-deletes) the group.
+// @Summary      Archive group
+// @Description  Soft-delete a bill splitting group. Only group creators can archive.
+// @Tags         groups
+// @Produce      json
+// @Param        id path string true "Group ID"
+// @Success      200  {object}  map[string]string "Success message"
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /groups/{id} [delete]
+// @Security     Bearer
 func (h *Handler) Archive(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "id")
 	if groupID == "" {

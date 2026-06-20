@@ -79,3 +79,21 @@ type PairwiseDebt struct {
 	DebtorName   string  `json:"debtorName"`
 	Amount       float64 `json:"amount"`
 }
+
+// CreateExpenseResponse represents the response returned after creating an expense.
+type CreateExpenseResponse struct {
+	Expense *Expense       `json:"expense"`
+	Splits  []ExpenseSplit `json:"splits"`
+}
+
+// SettleExpenseResponse represents the response returned after settling a balance.
+type SettleExpenseResponse struct {
+	Expense *Expense      `json:"expense"`
+	Split   *ExpenseSplit `json:"split"`
+}
+
+// GetExpenseDetailsResponse represents the response containing an expense and its splits details.
+type GetExpenseDetailsResponse struct {
+	Expense *Expense       `json:"expense"`
+	Splits  []ExpenseSplit `json:"splits"`
+}

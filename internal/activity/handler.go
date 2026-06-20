@@ -24,6 +24,15 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 }
 
 // List retrieves the activity feed for the current user.
+// @Summary      List activity feed
+// @Description  Get audit logs of all actions performed by the current user or in their groups.
+// @Tags         activities
+// @Produce      json
+// @Success      200  {array}   Activity
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /activities [get]
+// @Security     Bearer
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {

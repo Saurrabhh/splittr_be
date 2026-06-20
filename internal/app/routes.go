@@ -4,9 +4,11 @@ import (
 	"net/http"
 	"time"
 
+	_ "github.com/Saurrabhh/splittr_be/docs"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 // routes configures global middlewares, defines route groups, and mounts handlers.
@@ -25,6 +27,11 @@ func (app *Application) routes(deps *dependencies) http.Handler {
 
 	// Health check route
 	r.Get("/health", app.healthCheckHandler)
+
+	// Swagger UI route
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+	))
 
 	// API version 1 routes
 	r.Route("/v1", func(r chi.Router) {

@@ -25,7 +25,11 @@ ifneq ($(APP_ENV),)
     endif
 endif
 
-.PHONY: local dev prod run build-and-run goose-status goose-up goose-down check-env
+.PHONY: local dev prod run build-and-run goose-status goose-up goose-down check-env swagger
+
+swagger:
+	swag init -g cmd/api/main.go
+
 
 # Target to validate that APP_ENV is defined and valid
 check-env:

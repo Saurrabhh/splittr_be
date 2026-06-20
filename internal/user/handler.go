@@ -55,6 +55,18 @@ type addFriendRequest struct {
 }
 
 // Register registers the authenticated user.
+// @Summary      Register user
+// @Description  Create a new user profile using Firebase identities.
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        request body registerRequest true "Registration data"
+// @Success      201  {object}  User
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /users [post]
+// @Security     Bearer
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	identity := auth.IdentityFrom(r.Context())
 	if identity == nil {
@@ -96,6 +108,15 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetMe retrieves the profile of the currently authenticated user.
+// @Summary      Get current user profile
+// @Description  Retrieve the profile details of the logged-in user.
+// @Tags         users
+// @Produce      json
+// @Success      200  {object}  User
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /users/me [get]
+// @Security     Bearer
 func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 	u := UserFrom(r.Context())
 	if u == nil {
@@ -109,6 +130,18 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateMe updates the profile metadata of the current user.
+// @Summary      Update user profile
+// @Description  Update name or default currency for the current user.
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        request body updateProfileRequest true "Profile details to update"
+// @Success      200  {object}  User
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /users/me [put]
+// @Security     Bearer
 func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	currUser := UserFrom(r.Context())
 	if currUser == nil {
@@ -135,6 +168,18 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 }
 
 // AddFriend adds a user as a friend by email or phone.
+// @Summary      Add friend
+// @Description  Create a friendship link with another user by their email or phone.
+// @Tags         friends
+// @Accept       json
+// @Produce      json
+// @Param        request body addFriendRequest true "Friend email or phone"
+// @Success      200  {object}  User
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /friends [post]
+// @Security     Bearer
 func (h *Handler) AddFriend(w http.ResponseWriter, r *http.Request) {
 	currUser := UserFrom(r.Context())
 	if currUser == nil {
@@ -161,6 +206,15 @@ func (h *Handler) AddFriend(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetFriends returns all friends of the current user.
+// @Summary      List friends
+// @Description  Get a list of all friends of the currently authenticated user.
+// @Tags         friends
+// @Produce      json
+// @Success      200  {array}   User
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /friends [get]
+// @Security     Bearer
 func (h *Handler) GetFriends(w http.ResponseWriter, r *http.Request) {
 	currUser := UserFrom(r.Context())
 	if currUser == nil {
@@ -181,6 +235,16 @@ func (h *Handler) GetFriends(w http.ResponseWriter, r *http.Request) {
 }
 
 // RemoveFriend deletes a friendship link.
+// @Summary      Remove friend
+// @Description  Delete a friendship link by friend ID.
+// @Tags         friends
+// @Param        friendId path string true "Friend ID"
+// @Success      204  "No Content"
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /friends/{friendId} [delete]
+// @Security     Bearer
 func (h *Handler) RemoveFriend(w http.ResponseWriter, r *http.Request) {
 	currUser := UserFrom(r.Context())
 	if currUser == nil {

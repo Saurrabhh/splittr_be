@@ -1,0 +1,1134 @@
+basePath: /v1
+definitions:
+  activity.Activity:
+    properties:
+      actionType:
+        type: string
+      actorId:
+        type: string
+      actorName:
+        type: string
+      createdAt:
+        type: string
+      description:
+        type: string
+      groupId:
+        type: string
+      id:
+        type: string
+    type: object
+  expense.BalanceResponse:
+    properties:
+      balances:
+        items:
+          $ref: '#/definitions/expense.UserBalance'
+        type: array
+      settlements:
+        items:
+          $ref: '#/definitions/expense.Settlement'
+        type: array
+    type: object
+  expense.CreateExpenseResponse:
+    properties:
+      expense:
+        $ref: '#/definitions/expense.Expense'
+      splits:
+        items:
+          $ref: '#/definitions/expense.ExpenseSplit'
+        type: array
+    type: object
+  expense.Expense:
+    properties:
+      amount:
+        type: number
+      category:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: string
+      currency:
+        type: string
+      deletedAt:
+        type: string
+      description:
+        type: string
+      groupId:
+        type: string
+      id:
+        type: string
+      isPayment:
+        type: boolean
+      paidBy:
+        type: string
+      spentAt:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  expense.ExpenseSplit:
+    properties:
+      amount:
+        type: number
+      email:
+        type: string
+      expenseId:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      splitType:
+        $ref: '#/definitions/expense.SplitType'
+      splitValue:
+        type: number
+      userId:
+        type: string
+    type: object
+  expense.GetExpenseDetailsResponse:
+    properties:
+      expense:
+        $ref: '#/definitions/expense.Expense'
+      splits:
+        items:
+          $ref: '#/definitions/expense.ExpenseSplit'
+        type: array
+    type: object
+  expense.InputSplit:
+    properties:
+      amount:
+        description: Required if splitType is EXACT
+        type: number
+      percentage:
+        description: Required if splitType is PERCENTAGE
+        type: number
+      userId:
+        type: string
+    type: object
+  expense.SettleExpenseResponse:
+    properties:
+      expense:
+        $ref: '#/definitions/expense.Expense'
+      split:
+        $ref: '#/definitions/expense.ExpenseSplit'
+    type: object
+  expense.Settlement:
+    properties:
+      amount:
+        type: number
+      fromUserId:
+        type: string
+      fromUserName:
+        type: string
+      toUserId:
+        type: string
+      toUserName:
+        type: string
+    type: object
+  expense.SplitType:
+    enum:
+    - EQUAL
+    - EXACT
+    - PERCENTAGE
+    type: string
+    x-enum-varnames:
+    - SplitTypeEqual
+    - SplitTypeExact
+    - SplitTypePercentage
+  expense.UserBalance:
+    properties:
+      netBalance:
+        type: number
+      userId:
+        type: string
+      userName:
+        type: string
+    type: object
+  expense.createExpenseRequest:
+    properties:
+      amount:
+        type: number
+      category:
+        type: string
+      currency:
+        type: string
+      description:
+        type: string
+      groupId:
+        type: string
+      paidBy:
+        type: string
+      splitType:
+        $ref: '#/definitions/expense.SplitType'
+      splits:
+        items:
+          $ref: '#/definitions/expense.InputSplit'
+        type: array
+    type: object
+  expense.settleExpenseRequest:
+    properties:
+      amount:
+        type: number
+      currency:
+        type: string
+      groupId:
+        type: string
+      paidBy:
+        type: string
+      receivedBy:
+        type: string
+    type: object
+  group.Group:
+    properties:
+      archivedAt:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      inviteCode:
+        type: string
+      name:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  group.GroupMember:
+    properties:
+      email:
+        type: string
+      groupId:
+        type: string
+      joinedAt:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+      userId:
+        type: string
+    type: object
+  group.addMemberRequest:
+    properties:
+      userId:
+        type: string
+    type: object
+  group.createGroupRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  group.groupDetailsResponse:
+    properties:
+      archivedAt:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      inviteCode:
+        type: string
+      members:
+        items:
+          $ref: '#/definitions/group.GroupMember'
+        type: array
+      name:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  group.joinGroupRequest:
+    properties:
+      inviteCode:
+        type: string
+    type: object
+  group.updateRoleRequest:
+    properties:
+      role:
+        type: string
+    type: object
+  notification.Notification:
+    properties:
+      activityId:
+        type: string
+      actorId:
+        type: string
+      actorName:
+        type: string
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      isRead:
+        type: boolean
+      title:
+        type: string
+      userId:
+        type: string
+    type: object
+  response.ErrorResponse:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  user.User:
+    properties:
+      createdAt:
+        type: string
+      defaultCurrency:
+        type: string
+      email:
+        type: string
+      firebaseUid:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  user.addFriendRequest:
+    properties:
+      friendEmail:
+        type: string
+      friendPhone:
+        type: string
+    type: object
+  user.registerRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  user.updateProfileRequest:
+    properties:
+      defaultCurrency:
+        type: string
+      name:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Backend API service for Splittr bill splitting.
+  title: Splittr API
+  version: "1.0"
+paths:
+  /activities:
+    get:
+      description: Get audit logs of all actions performed by the current user or
+        in their groups.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/activity.Activity'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: List activity feed
+      tags:
+      - activities
+  /balances:
+    get:
+      description: Calculate net balances and recommended settlement transactions.
+      parameters:
+      - description: Filter by Group ID. If omitted, returns global balances.
+        in: query
+        name: groupId
+        type: string
+      - description: Simplify debts algorithm (true/false)
+        in: query
+        name: simplified
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/expense.BalanceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get user balances
+      tags:
+      - expenses
+  /expenses:
+    get:
+      description: Retrieve a list of expenses filtered by group, personal=true, or
+        friendId.
+      parameters:
+      - description: Filter by Group ID
+        in: query
+        name: groupId
+        type: string
+      - description: Filter for personal only (true/false)
+        in: query
+        name: personal
+        type: boolean
+      - description: Filter by Friend ID
+        in: query
+        name: friendId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/expense.Expense'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: List expenses
+      tags:
+      - expenses
+    post:
+      consumes:
+      - application/json
+      description: Create a new expense with equal/exact/percentage splits.
+      parameters:
+      - description: Expense details and splits structure
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/expense.createExpenseRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/expense.CreateExpenseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Create expense
+      tags:
+      - expenses
+  /expenses/{id}:
+    delete:
+      description: Soft-delete an expense by ID.
+      parameters:
+      - description: Expense ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Delete expense
+      tags:
+      - expenses
+    get:
+      description: Get a specific expense's details including all splits.
+      parameters:
+      - description: Expense ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/expense.GetExpenseDetailsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get expense details
+      tags:
+      - expenses
+  /expenses/settle:
+    post:
+      consumes:
+      - application/json
+      description: Create a settlement payment between two users.
+      parameters:
+      - description: Settlement details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/expense.settleExpenseRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/expense.SettleExpenseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Settle balance
+      tags:
+      - expenses
+  /friends:
+    get:
+      description: Get a list of all friends of the currently authenticated user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/user.User'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: List friends
+      tags:
+      - friends
+    post:
+      consumes:
+      - application/json
+      description: Create a friendship link with another user by their email or phone.
+      parameters:
+      - description: Friend email or phone
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.addFriendRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Add friend
+      tags:
+      - friends
+  /friends/{friendId}:
+    delete:
+      description: Delete a friendship link by friend ID.
+      parameters:
+      - description: Friend ID
+        in: path
+        name: friendId
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Remove friend
+      tags:
+      - friends
+  /groups:
+    get:
+      description: Retrieve all bill-splitting groups the current user belongs to.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/group.Group'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: List groups
+      tags:
+      - groups
+    post:
+      consumes:
+      - application/json
+      description: Create a new bill-splitting group.
+      parameters:
+      - description: Group creation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/group.createGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/group.Group'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Create group
+      tags:
+      - groups
+  /groups/{id}:
+    delete:
+      description: Soft-delete a bill splitting group. Only group creators can archive.
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Archive group
+      tags:
+      - groups
+    get:
+      description: Get a group's metadata and a list of all its members.
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/group.groupDetailsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get group details
+      tags:
+      - groups
+  /groups/{id}/members:
+    post:
+      consumes:
+      - application/json
+      description: Add a user to a group by their User ID. Only admins can add members.
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User ID of the member to add
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/group.addMemberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Add group member
+      tags:
+      - groups
+  /groups/{id}/members/{userId}:
+    delete:
+      description: Remove a user from a group, or leave the group if removing yourself.
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User ID of the member to remove
+        in: path
+        name: userId
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Remove group member / Leave group
+      tags:
+      - groups
+  /groups/{id}/members/{userId}/role:
+    put:
+      consumes:
+      - application/json
+      description: Update the role (e.g. ADMIN, MEMBER) of a user inside the group.
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User ID of the member to update
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: New role value
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/group.updateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Update member role
+      tags:
+      - groups
+  /groups/join:
+    post:
+      consumes:
+      - application/json
+      description: Join an existing group using its unique invite code.
+      parameters:
+      - description: Group join data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/group.joinGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/group.Group'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Join group
+      tags:
+      - groups
+  /notifications:
+    get:
+      description: Get all notifications in the tray for the current user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/notification.Notification'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: List notifications
+      tags:
+      - notifications
+  /notifications/{id}/read:
+    post:
+      description: Mark a specific notification as read by ID.
+      parameters:
+      - description: Notification ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Mark notification as read
+      tags:
+      - notifications
+  /notifications/read-all:
+    post:
+      description: Mark all unread notifications as read for the current user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Mark all notifications as read
+      tags:
+      - notifications
+  /users:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user profile using Firebase identities.
+      parameters:
+      - description: Registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.registerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/user.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Register user
+      tags:
+      - users
+  /users/me:
+    get:
+      description: Retrieve the profile details of the logged-in user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.User'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get current user profile
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Update name or default currency for the current user.
+      parameters:
+      - description: Profile details to update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.updateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Update user profile
+      tags:
+      - users
+securityDefinitions:
+  Bearer:
+    description: Type "Bearer <your_token>"
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
