@@ -66,7 +66,7 @@ type addFriendRequest struct {
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /users [post]
-// @Security     Bearer
+// @Security     BearerAuth
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	identity := auth.IdentityFrom(r.Context())
 	if identity == nil {
@@ -116,7 +116,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /users/me [get]
-// @Security     Bearer
+// @Security     BearerAuth
 func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 	u := UserFrom(r.Context())
 	if u == nil {
@@ -141,7 +141,7 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /users/me [put]
-// @Security     Bearer
+// @Security     BearerAuth
 func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	currUser := UserFrom(r.Context())
 	if currUser == nil {
@@ -179,7 +179,7 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /friends [post]
-// @Security     Bearer
+// @Security     BearerAuth
 func (h *Handler) AddFriend(w http.ResponseWriter, r *http.Request) {
 	currUser := UserFrom(r.Context())
 	if currUser == nil {
@@ -214,7 +214,7 @@ func (h *Handler) AddFriend(w http.ResponseWriter, r *http.Request) {
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /friends [get]
-// @Security     Bearer
+// @Security     BearerAuth
 func (h *Handler) GetFriends(w http.ResponseWriter, r *http.Request) {
 	currUser := UserFrom(r.Context())
 	if currUser == nil {
@@ -244,7 +244,7 @@ func (h *Handler) GetFriends(w http.ResponseWriter, r *http.Request) {
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /friends/{friendId} [delete]
-// @Security     Bearer
+// @Security     BearerAuth
 func (h *Handler) RemoveFriend(w http.ResponseWriter, r *http.Request) {
 	currUser := UserFrom(r.Context())
 	if currUser == nil {

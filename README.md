@@ -55,7 +55,7 @@ Before getting started, make sure you have the following installed on your machi
 - **sqlc** CLI: `go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest`
 - **goose** CLI: `go install github.com/pressly/goose/v3/cmd/goose@latest`
 - **air** CLI: `go install github.com/air-verse/air@latest`
-- **swag** CLI: `go install github.com/swaggo/swag/cmd/swag@latest`
+- **swag** CLI: `go install github.com/swaggo/swag/v2/cmd/swag@latest`
 
 ---
 

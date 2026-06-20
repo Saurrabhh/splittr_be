@@ -63,7 +63,7 @@ type joinGroupRequest struct {
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /groups [post]
-// @Security     Bearer
+// @Security     BearerAuth
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
@@ -101,7 +101,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /groups/join [post]
-// @Security     Bearer
+// @Security     BearerAuth
 func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
@@ -144,7 +144,7 @@ func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /groups [get]
-// @Security     Bearer
+// @Security     BearerAuth
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	currUser := user.UserFrom(r.Context())
 	if currUser == nil {
@@ -180,7 +180,7 @@ type groupDetailsResponse struct {
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /groups/{id} [get]
-// @Security     Bearer
+// @Security     BearerAuth
 func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "id")
 	if groupID == "" {
@@ -229,7 +229,7 @@ type addMemberRequest struct {
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /groups/{id}/members [post]
-// @Security     Bearer
+// @Security     BearerAuth
 func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "id")
 	if groupID == "" {
@@ -283,7 +283,7 @@ func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /groups/{id}/members/{userId} [delete]
-// @Security     Bearer
+// @Security     BearerAuth
 func (h *Handler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "id")
 	targetUserID := chi.URLParam(r, "userId")
@@ -331,7 +331,7 @@ type updateRoleRequest struct {
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /groups/{id}/members/{userId}/role [put]
-// @Security     Bearer
+// @Security     BearerAuth
 func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "id")
 	targetUserID := chi.URLParam(r, "userId")
@@ -378,7 +378,7 @@ func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /groups/{id} [delete]
-// @Security     Bearer
+// @Security     BearerAuth
 func (h *Handler) Archive(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "id")
 	if groupID == "" {
