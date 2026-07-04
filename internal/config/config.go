@@ -10,8 +10,10 @@ import (
 
 // Config holds environment configurations for the application.
 type Config struct {
-	Port        string `env:"PORT" envDefault:"8080"`
-	DatabaseURL string `env:"DATABASE_URL,required"`
+	Port            string `env:"PORT" envDefault:"8080"`
+	DatabaseURL     string `env:"DATABASE_URL,required"`
+	SwaggerUser     string `env:"SWAGGER_USER" envDefault:"admin"`
+	SwaggerPassword string `env:"SWAGGER_PASSWORD" envDefault:"admin"`
 }
 
 // Load reads config from environment variables.

@@ -27,7 +27,7 @@ func (app *Application) routes(deps *dependencies) http.Handler {
 	r.Get("/health", app.healthCheckHandler)
 
 	// Swagger routing
-	registerSwaggerRoutes(r)
+	app.registerSwaggerRoutes(r)
 
 	// API version 1 routes
 	r.Route("/v1", func(r chi.Router) {
