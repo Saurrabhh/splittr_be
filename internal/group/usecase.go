@@ -15,8 +15,8 @@ import (
 type Repository interface {
 	GetByID(ctx context.Context, id string) (*Group, error)
 	GetByInviteCode(ctx context.Context, inviteCode string) (*Group, error)
-	GetGroupMember(ctx context.Context, groupID, userID string) (*GroupMember, error)
-	ListGroupMembers(ctx context.Context, groupID string) ([]GroupMember, error)
+	GetGroupMember(ctx context.Context, groupID, userID string) (*Member, error)
+	ListGroupMembers(ctx context.Context, groupID string) ([]Member, error)
 	ListUserGroups(ctx context.Context, userID string) ([]Group, error)
 	CreateGroup(ctx context.Context, g *Group) error
 	Update(ctx context.Context, g *Group) error
@@ -77,8 +77,7 @@ func (u *Usecase) CreateGroup(ctx context.Context, name, description string, cre
 	}
 
 	// Generate invite code
-	inviteCode := "invite-" + uuid.New().String()[:8]
-	newGroup.InviteCode = &inviteCode
+	newGroup.InviteCode = new("invite-" + uuid.New().String()[:8])
 
 	err := u.tx.RunInTx(ctx, func(txCtx context.Context) error {
 		if err := u.repo.CreateGroup(txCtx, newGroup); err != nil {
@@ -102,7 +101,7 @@ func (u *Usecase) CreateGroup(ctx context.Context, name, description string, cre
 }
 
 // GetGroupDetails retrieves a group and its members, verifying the requester belongs to it.
-func (u *Usecase) GetGroupDetails(ctx context.Context, groupID, userID string) (*Group, []GroupMember, error) {
+func (u *Usecase) GetGroupDetails(ctx context.Context, groupID, userID string) (*Group, []Member, error) {
 	if groupID == "" || userID == "" {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeValidation,

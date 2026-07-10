@@ -17,9 +17,9 @@ func WithUser(ctx context.Context, u *User) context.Context {
 	return context.WithValue(ctx, userCtxKey, u)
 }
 
-// UserFrom retrieves the User from the context.
+// From retrieves the User from the context.
 // Returns nil if no User is present.
-func UserFrom(ctx context.Context) *User {
+func From(ctx context.Context) *User {
 	u, _ := ctx.Value(userCtxKey).(*User)
 	return u
 }

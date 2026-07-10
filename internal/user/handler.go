@@ -118,7 +118,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 // @Router       /users/me [get]
 // @Security     BearerAuth
 func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
-	u := UserFrom(r.Context())
+	u := From(r.Context())
 	if u == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -143,7 +143,7 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 // @Router       /users/me [put]
 // @Security     BearerAuth
 func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
-	currUser := UserFrom(r.Context())
+	currUser := From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -181,7 +181,7 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 // @Router       /friends [post]
 // @Security     BearerAuth
 func (h *Handler) AddFriend(w http.ResponseWriter, r *http.Request) {
-	currUser := UserFrom(r.Context())
+	currUser := From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -216,7 +216,7 @@ func (h *Handler) AddFriend(w http.ResponseWriter, r *http.Request) {
 // @Router       /friends [get]
 // @Security     BearerAuth
 func (h *Handler) GetFriends(w http.ResponseWriter, r *http.Request) {
-	currUser := UserFrom(r.Context())
+	currUser := From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -246,7 +246,7 @@ func (h *Handler) GetFriends(w http.ResponseWriter, r *http.Request) {
 // @Router       /friends/{friendId} [delete]
 // @Security     BearerAuth
 func (h *Handler) RemoveFriend(w http.ResponseWriter, r *http.Request) {
-	currUser := UserFrom(r.Context())
+	currUser := From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,

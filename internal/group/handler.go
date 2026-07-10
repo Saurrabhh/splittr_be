@@ -26,11 +26,11 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Post("/", h.Create)
 		r.Post("/join", h.Join)
 		r.Get("/", h.List)
-		
+
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", h.GetDetails)
 			r.Delete("/", h.Archive)
-			
+
 			r.Route("/members", func(r chi.Router) {
 				r.Post("/", h.AddMember)
 				r.Route("/{userId}", func(r chi.Router) {
@@ -65,7 +65,7 @@ type joinGroupRequest struct {
 // @Router       /groups [post]
 // @Security     BearerAuth
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	currUser := user.UserFrom(r.Context())
+	currUser := user.From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -103,7 +103,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Router       /groups/join [post]
 // @Security     BearerAuth
 func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
-	currUser := user.UserFrom(r.Context())
+	currUser := user.From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -146,7 +146,7 @@ func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 // @Router       /groups [get]
 // @Security     BearerAuth
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	currUser := user.UserFrom(r.Context())
+	currUser := user.From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -166,7 +166,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 
 type groupDetailsResponse struct {
 	Group
-	Members []GroupMember `json:"members"`
+	Members []Member `json:"members"`
 }
 
 // GetDetails returns the group metadata and its members list.
@@ -191,7 +191,7 @@ func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currUser := user.UserFrom(r.Context())
+	currUser := user.From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -240,7 +240,7 @@ func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currUser := user.UserFrom(r.Context())
+	currUser := user.From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -295,7 +295,7 @@ func (h *Handler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currUser := user.UserFrom(r.Context())
+	currUser := user.From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -343,7 +343,7 @@ func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currUser := user.UserFrom(r.Context())
+	currUser := user.From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -389,7 +389,7 @@ func (h *Handler) Archive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currUser := user.UserFrom(r.Context())
+	currUser := user.From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,

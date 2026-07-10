@@ -38,7 +38,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 // @Router       /notifications [get]
 // @Security     BearerAuth
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	currUser := user.UserFrom(r.Context())
+	currUser := user.From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -69,7 +69,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 // @Router       /notifications/{id}/read [post]
 // @Security     BearerAuth
 func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
-	currUser := user.UserFrom(r.Context())
+	currUser := user.From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -107,7 +107,7 @@ func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 // @Router       /notifications/read-all [post]
 // @Security     BearerAuth
 func (h *Handler) MarkAllAsRead(w http.ResponseWriter, r *http.Request) {
-	currUser := user.UserFrom(r.Context())
+	currUser := user.From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,

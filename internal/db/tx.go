@@ -11,9 +11,9 @@ import (
 // txKey is the context key for the active transaction.
 type txKey struct{}
 
-// DBTX defines the interface required to execute queries.
+// TX defines the interface required to execute queries.
 // It is implemented by both *pgxpool.Pool and pgx.Tx.
-type DBTX interface {
+type TX interface {
 	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
 	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
@@ -70,7 +70,7 @@ func (tm *TransactionManager) RunInTx(ctx context.Context, fn func(ctx context.C
 }
 
 // GetTxOrPool retrieves the active transaction from context, or returns the db connection pool.
-func (tm *TransactionManager) GetTxOrPool(ctx context.Context) DBTX {
+func (tm *TransactionManager) GetTxOrPool(ctx context.Context) TX {
 	if tx, ok := ctx.Value(txKey{}).(pgx.Tx); ok {
 		return tx
 	}

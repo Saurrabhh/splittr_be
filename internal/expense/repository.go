@@ -79,7 +79,7 @@ func (r *DBRepository) CreateExpense(ctx context.Context, e *Expense) error {
 }
 
 // CreateExpenseSplit inserts a split share.
-func (r *DBRepository) CreateExpenseSplit(ctx context.Context, s *ExpenseSplit) error {
+func (r *DBRepository) CreateExpenseSplit(ctx context.Context, s *Split) error {
 	parsedExpenseID, err := uuid.Parse(s.ExpenseID)
 	if err != nil {
 		return fmt.Errorf("invalid expense uuid: %w", err)
@@ -134,7 +134,7 @@ func (r *DBRepository) GetExpenseByID(ctx context.Context, id string) (*Expense,
 }
 
 // ListExpenseSplits lists all splits of a specific expense.
-func (r *DBRepository) ListExpenseSplits(ctx context.Context, expenseID string) ([]ExpenseSplit, error) {
+func (r *DBRepository) ListExpenseSplits(ctx context.Context, expenseID string) ([]Split, error) {
 	parsedExpenseID, err := uuid.Parse(expenseID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid uuid: %w", err)
@@ -148,15 +148,14 @@ func (r *DBRepository) ListExpenseSplits(ctx context.Context, expenseID string) 
 		return nil, fmt.Errorf("query splits: %w", err)
 	}
 
-	splits := make([]ExpenseSplit, 0, len(rows))
+	splits := make([]Split, 0, len(rows))
 	for _, row := range rows {
 		var splitVal *float64
 		if row.SplitValue.Valid {
-			v := numericToFloat(row.SplitValue)
-			splitVal = &v
+			splitVal = new(numericToFloat(row.SplitValue))
 		}
 
-		splits = append(splits, ExpenseSplit{
+		splits = append(splits, Split{
 			ExpenseID:  row.ExpenseID.String(),
 			UserID:     row.UserID.String(),
 			Amount:     numericToFloat(row.Amount),
@@ -190,8 +189,7 @@ func (r *DBRepository) ListExpensesByGroup(ctx context.Context, groupID string) 
 	for _, row := range rows {
 		var groupIDStr *string
 		if row.GroupID.Valid {
-			s := uuid.UUID(row.GroupID.Bytes).String()
-			groupIDStr = &s
+			groupIDStr = new(uuid.UUID(row.GroupID.Bytes).String())
 		}
 
 		expenses = append(expenses, Expense{
@@ -230,8 +228,7 @@ func (r *DBRepository) ListUserPersonalExpenses(ctx context.Context, userID stri
 	for _, row := range rows {
 		var groupIDStr *string
 		if row.GroupID.Valid {
-			s := uuid.UUID(row.GroupID.Bytes).String()
-			groupIDStr = &s
+			groupIDStr = new(uuid.UUID(row.GroupID.Bytes).String())
 		}
 
 		expenses = append(expenses, Expense{
@@ -270,8 +267,7 @@ func (r *DBRepository) ListUserFriendExpenses(ctx context.Context, userID string
 	for _, row := range rows {
 		var groupIDStr *string
 		if row.GroupID.Valid {
-			s := uuid.UUID(row.GroupID.Bytes).String()
-			groupIDStr = &s
+			groupIDStr = new(uuid.UUID(row.GroupID.Bytes).String())
 		}
 
 		expenses = append(expenses, Expense{
@@ -391,8 +387,7 @@ func (r *DBRepository) GetGroupPairwiseDebts(ctx context.Context, groupID string
 func toDomainExpense(dbg dbgen.Expense) *Expense {
 	var groupIDStr *string
 	if dbg.GroupID.Valid {
-		s := uuid.UUID(dbg.GroupID.Bytes).String()
-		groupIDStr = &s
+		groupIDStr = new(uuid.UUID(dbg.GroupID.Bytes).String())
 	}
 
 	var deletedAtTime *time.Time

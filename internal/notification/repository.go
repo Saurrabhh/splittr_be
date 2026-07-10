@@ -93,14 +93,12 @@ func (r *DBRepository) ListUserNotifications(ctx context.Context, userID string)
 	for _, row := range rows {
 		var actorIDStr *string
 		if row.ActorID.Valid {
-			s := uuid.UUID(row.ActorID.Bytes).String()
-			actorIDStr = &s
+			actorIDStr = new(uuid.UUID(row.ActorID.Bytes).String())
 		}
 
 		var activityIDStr *string
 		if row.ActivityID.Valid {
-			s := uuid.UUID(row.ActivityID.Bytes).String()
-			activityIDStr = &s
+			activityIDStr = new(uuid.UUID(row.ActivityID.Bytes).String())
 		}
 
 		var actorName *string

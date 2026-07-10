@@ -67,7 +67,7 @@ type settleExpenseRequest struct {
 // @Router       /expenses [post]
 // @Security     BearerAuth
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	currUser := user.UserFrom(r.Context())
+	currUser := user.From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -131,7 +131,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Router       /expenses/settle [post]
 // @Security     BearerAuth
 func (h *Handler) Settle(w http.ResponseWriter, r *http.Request) {
-	currUser := user.UserFrom(r.Context())
+	currUser := user.From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -187,7 +187,7 @@ func (h *Handler) Settle(w http.ResponseWriter, r *http.Request) {
 // @Router       /expenses [get]
 // @Security     BearerAuth
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	currUser := user.UserFrom(r.Context())
+	currUser := user.From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -250,7 +250,7 @@ func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currUser := user.UserFrom(r.Context())
+	currUser := user.From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -292,7 +292,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currUser := user.UserFrom(r.Context())
+	currUser := user.From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
@@ -324,7 +324,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 // @Router       /balances [get]
 // @Security     BearerAuth
 func (h *Handler) GetBalances(w http.ResponseWriter, r *http.Request) {
-	currUser := user.UserFrom(r.Context())
+	currUser := user.From(r.Context())
 	if currUser == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,

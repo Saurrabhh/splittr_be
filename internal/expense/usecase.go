@@ -18,9 +18,9 @@ import (
 // Repository defines the storage contract for the expense domain.
 type Repository interface {
 	CreateExpense(ctx context.Context, e *Expense) error
-	CreateExpenseSplit(ctx context.Context, s *ExpenseSplit) error
+	CreateExpenseSplit(ctx context.Context, s *Split) error
 	GetExpenseByID(ctx context.Context, id string) (*Expense, error)
-	ListExpenseSplits(ctx context.Context, expenseID string) ([]ExpenseSplit, error)
+	ListExpenseSplits(ctx context.Context, expenseID string) ([]Split, error)
 	ListExpensesByGroup(ctx context.Context, groupID string) ([]Expense, error)
 	ListUserPersonalExpenses(ctx context.Context, userID string) ([]Expense, error)
 	ListUserFriendExpenses(ctx context.Context, userID string) ([]Expense, error)
@@ -32,7 +32,7 @@ type Repository interface {
 
 // GroupService defines the contract required to validate group membership.
 type GroupService interface {
-	GetGroupDetails(ctx context.Context, groupID, userID string) (*group.Group, []group.GroupMember, error)
+	GetGroupDetails(ctx context.Context, groupID, userID string) (*group.Group, []group.Member, error)
 }
 
 type ActivityLogger interface {
@@ -64,7 +64,7 @@ func NewUsecase(repo Repository, tx db.Transactor, groupSvc GroupService, activi
 }
 
 // CreateExpense calculates splits, validates constraints, and inserts the expense inside a transaction.
-func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64, currency string, category string, groupID *string, paidBy string, splitType SplitType, inputs []InputSplit, createdBy string) (*Expense, []ExpenseSplit, error) {
+func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64, currency string, category string, groupID *string, paidBy string, splitType SplitType, inputs []InputSplit, createdBy string) (*Expense, []Split, error) {
 	if desc == "" {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeValidation,
@@ -216,7 +216,7 @@ func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64
 }
 
 // SettleUp creates a payment record to clear or reduce debt between a payer and a payee.
-func (u *Usecase) SettleUp(ctx context.Context, amount float64, currency string, groupID *string, paidBy string, receivedBy string, createdBy string) (*Expense, *ExpenseSplit, error) {
+func (u *Usecase) SettleUp(ctx context.Context, amount float64, currency string, groupID *string, paidBy string, receivedBy string, createdBy string) (*Expense, *Split, error) {
 	if amount <= 0 {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeValidation,
@@ -266,7 +266,7 @@ func (u *Usecase) SettleUp(ctx context.Context, amount float64, currency string,
 		SpentAt:     time.Now(),
 	}
 
-	split := &ExpenseSplit{
+	split := &Split{
 		ExpenseID: newExpense.ID,
 		UserID:    receivedBy,
 		Amount:    amount,
@@ -323,7 +323,7 @@ func (u *Usecase) SettleUp(ctx context.Context, amount float64, currency string,
 }
 
 // GetExpenseDetails retrieves an expense and its splits, checking view permissions.
-func (u *Usecase) GetExpenseDetails(ctx context.Context, expenseID, userID string) (*Expense, []ExpenseSplit, error) {
+func (u *Usecase) GetExpenseDetails(ctx context.Context, expenseID, userID string) (*Expense, []Split, error) {
 	e, err := u.repo.GetExpenseByID(ctx, expenseID)
 	if err != nil {
 		return nil, nil, &response.AppError{
@@ -528,9 +528,9 @@ func (u *Usecase) DeleteExpense(ctx context.Context, expenseID, userID string) e
 }
 
 // Helper to compute dynamic splits
-func calculateSplits(totalAmount float64, splitType SplitType, inputs []InputSplit) ([]ExpenseSplit, error) {
+func calculateSplits(totalAmount float64, splitType SplitType, inputs []InputSplit) ([]Split, error) {
 	totalCents := int64(math.Round(totalAmount * 100))
-	splits := make([]ExpenseSplit, 0, len(inputs))
+	splits := make([]Split, 0, len(inputs))
 
 	switch splitType {
 	case SplitTypeEqual:
@@ -544,7 +544,7 @@ func calculateSplits(totalAmount float64, splitType SplitType, inputs []InputSpl
 			if int64(i) < remainder {
 				shareCents++
 			}
-			splits = append(splits, ExpenseSplit{
+			splits = append(splits, Split{
 				UserID: in.UserID,
 				Amount: float64(shareCents) / 100.0,
 			})
@@ -559,7 +559,7 @@ func calculateSplits(totalAmount float64, splitType SplitType, inputs []InputSpl
 			amtCents := int64(math.Round(*in.Amount * 100))
 			sumCents += amtCents
 
-			splits = append(splits, ExpenseSplit{
+			splits = append(splits, Split{
 				UserID: in.UserID,
 				Amount: *in.Amount,
 			})
@@ -594,11 +594,10 @@ func calculateSplits(totalAmount float64, splitType SplitType, inputs []InputSpl
 				allocatedCents += shareCents
 			}
 
-			valCopy := *in.Percentage
-			splits = append(splits, ExpenseSplit{
+			splits = append(splits, Split{
 				UserID:     in.UserID,
 				Amount:     float64(shareCents) / 100.0,
-				SplitValue: &valCopy,
+				SplitValue: new(*in.Percentage),
 			})
 		}
 

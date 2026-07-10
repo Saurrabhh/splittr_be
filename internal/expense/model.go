@@ -30,8 +30,8 @@ type Expense struct {
 	DeletedAt   *time.Time `json:"deletedAt,omitempty"`
 }
 
-// ExpenseSplit represents an individual user's split share in an expense.
-type ExpenseSplit struct {
+// Split represents an individual user's split share in an expense.
+type Split struct {
 	ExpenseID  string    `json:"expenseId"`
 	UserID     string    `json:"userId"`
 	Amount     float64   `json:"amount"`
@@ -82,18 +82,18 @@ type PairwiseDebt struct {
 
 // CreateExpenseResponse represents the response returned after creating an expense.
 type CreateExpenseResponse struct {
-	Expense *Expense       `json:"expense"`
-	Splits  []ExpenseSplit `json:"splits"`
+	Expense *Expense `json:"expense"`
+	Splits  []Split  `json:"splits"`
 }
 
 // SettleExpenseResponse represents the response returned after settling a balance.
 type SettleExpenseResponse struct {
-	Expense *Expense      `json:"expense"`
-	Split   *ExpenseSplit `json:"split"`
+	Expense *Expense `json:"expense"`
+	Split   *Split   `json:"split"`
 }
 
 // GetExpenseDetailsResponse represents the response containing an expense and its splits details.
 type GetExpenseDetailsResponse struct {
-	Expense *Expense       `json:"expense"`
-	Splits  []ExpenseSplit `json:"splits"`
+	Expense *Expense `json:"expense"`
+	Splits  []Split  `json:"splits"`
 }

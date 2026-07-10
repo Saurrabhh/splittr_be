@@ -16,8 +16,8 @@ type Group struct {
 	ArchivedAt  *time.Time `json:"archivedAt,omitempty"`
 }
 
-// GroupMember represents a user's membership details in a group, enriched with basic user details.
-type GroupMember struct {
+// Member represents a user's membership details in a group, enriched with basic user details.
+type Member struct {
 	GroupID  string    `json:"groupId"`
 	UserID   string    `json:"userId"`
 	Role     string    `json:"role"`

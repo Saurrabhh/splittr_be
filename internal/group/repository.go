@@ -65,7 +65,6 @@ func (r *DBRepository) CreateGroup(ctx context.Context, g *Group) error {
 	return nil
 }
 
-
 // GetByID retrieves a group by its ID.
 func (r *DBRepository) GetByID(ctx context.Context, id string) (*Group, error) {
 	parsedID, err := uuid.Parse(id)
@@ -195,7 +194,6 @@ func (r *DBRepository) RemoveGroupMember(ctx context.Context, groupID, userID st
 	return nil
 }
 
-
 // UpdateGroupMemberRole updates a member's role.
 func (r *DBRepository) UpdateGroupMemberRole(ctx context.Context, groupID, userID, role string) error {
 	parsedGroupID, err := uuid.Parse(groupID)
@@ -222,7 +220,7 @@ func (r *DBRepository) UpdateGroupMemberRole(ctx context.Context, groupID, userI
 }
 
 // GetGroupMember retrieves a single member details (e.g. for membership validation).
-func (r *DBRepository) GetGroupMember(ctx context.Context, groupID, userID string) (*GroupMember, error) {
+func (r *DBRepository) GetGroupMember(ctx context.Context, groupID, userID string) (*Member, error) {
 	parsedGroupID, err := uuid.Parse(groupID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid group uuid: %w", err)
@@ -246,7 +244,7 @@ func (r *DBRepository) GetGroupMember(ctx context.Context, groupID, userID strin
 		return nil, fmt.Errorf("query group member: %w", err)
 	}
 
-	return &GroupMember{
+	return &Member{
 		GroupID:  gm.GroupID.String(),
 		UserID:   gm.UserID.String(),
 		Role:     gm.Role,
@@ -255,7 +253,7 @@ func (r *DBRepository) GetGroupMember(ctx context.Context, groupID, userID strin
 }
 
 // ListGroupMembers lists all members of a group with user details.
-func (r *DBRepository) ListGroupMembers(ctx context.Context, groupID string) ([]GroupMember, error) {
+func (r *DBRepository) ListGroupMembers(ctx context.Context, groupID string) ([]Member, error) {
 	parsedGroupID, err := uuid.Parse(groupID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid group uuid: %w", err)
@@ -269,9 +267,9 @@ func (r *DBRepository) ListGroupMembers(ctx context.Context, groupID string) ([]
 		return nil, fmt.Errorf("list group members: %w", err)
 	}
 
-	members := make([]GroupMember, 0, len(rows))
+	members := make([]Member, 0, len(rows))
 	for _, row := range rows {
-		members = append(members, GroupMember{
+		members = append(members, Member{
 			GroupID:  row.GroupID.String(),
 			UserID:   row.UserID.String(),
 			Role:     row.Role,
@@ -310,8 +308,7 @@ func (r *DBRepository) ListUserGroups(ctx context.Context, userID string) ([]Gro
 func toDomainGroup(dbg dbgen.Group) *Group {
 	var createdByStr *string
 	if dbg.CreatedBy.Valid {
-		s := uuid.UUID(dbg.CreatedBy.Bytes).String()
-		createdByStr = &s
+		createdByStr = new(uuid.UUID(dbg.CreatedBy.Bytes).String())
 	}
 
 	var archivedAtTime *time.Time

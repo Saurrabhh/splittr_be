@@ -12,6 +12,7 @@ import (
 type ErrorCode string
 
 const (
+	// ErrBadRequest ErrUnauthorized ErrForbidden ErrNotFound ErrInternalServerError
 	// Generic error codes
 	ErrBadRequest          ErrorCode = "BAD_REQUEST"
 	ErrUnauthorized        ErrorCode = "UNAUTHORIZED"
@@ -19,7 +20,7 @@ const (
 	ErrNotFound            ErrorCode = "NOT_FOUND"
 	ErrInternalServerError ErrorCode = "INTERNAL_SERVER_ERROR"
 
-	// Domain-specific error codes
+	// ErrInvalidBody ErrNameRequired ErrUserNotFound Domain-specific error codes
 	ErrInvalidBody  ErrorCode = "INVALID_BODY"
 	ErrNameRequired ErrorCode = "NAME_REQUIRED"
 	ErrUserNotFound ErrorCode = "USER_NOT_FOUND"
@@ -111,8 +112,7 @@ func HandleError(w http.ResponseWriter, err error) {
 		return
 	}
 
-	var appErr *AppError
-	if errors.As(err, &appErr) {
+	if appErr, ok := errors.AsType[*AppError](err); ok {
 		switch appErr.Type {
 		case TypeValidation:
 			BadRequest(w, appErr.Message)

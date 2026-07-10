@@ -106,14 +106,12 @@ func (r *DBRepository) ListUserActivities(ctx context.Context, userID string) ([
 	for _, row := range rows {
 		var groupIDStr *string
 		if row.GroupID.Valid {
-			s := uuid.UUID(row.GroupID.Bytes).String()
-			groupIDStr = &s
+			groupIDStr = new(uuid.UUID(row.GroupID.Bytes).String())
 		}
 
 		var actorIDStr *string
 		if row.ActorID.Valid {
-			s := uuid.UUID(row.ActorID.Bytes).String()
-			actorIDStr = &s
+			actorIDStr = new(uuid.UUID(row.ActorID.Bytes).String())
 		}
 
 		var actorName *string
