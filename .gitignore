@@ -29,4 +29,8 @@ env/**/*.json
 Thumbs.db
 
 # Firebase credentials (fallback for root folder)
-firebase-key.json
+firebase-key.json
+
+# AI-generated design docs (superpowers)
+docs/superpowers/
+/.idea/
