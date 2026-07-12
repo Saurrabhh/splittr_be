@@ -48,14 +48,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 // @Router       /expenses [post]
 // @Security     BearerAuth
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	var req createExpenseRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -112,14 +105,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Router       /expenses/settle [post]
 // @Security     BearerAuth
 func (h *Handler) Settle(w http.ResponseWriter, r *http.Request) {
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	var req settleExpenseRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -168,14 +154,7 @@ func (h *Handler) Settle(w http.ResponseWriter, r *http.Request) {
 // @Router       /expenses [get]
 // @Security     BearerAuth
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	groupID := r.URL.Query().Get("groupId")
 	personalStr := r.URL.Query().Get("personal")
@@ -231,14 +210,7 @@ func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	exp, splits, err := h.uc.GetExpenseDetails(r.Context(), expenseID, currUser.ID)
 	if err != nil {
@@ -273,14 +245,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	err := h.uc.DeleteExpense(r.Context(), expenseID, currUser.ID)
 	if err != nil {
@@ -305,14 +270,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 // @Router       /balances [get]
 // @Security     BearerAuth
 func (h *Handler) GetBalances(w http.ResponseWriter, r *http.Request) {
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	groupIDStr := r.URL.Query().Get("groupId")
 	var groupID *string
