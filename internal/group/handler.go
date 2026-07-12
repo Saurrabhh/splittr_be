@@ -65,14 +65,7 @@ type joinGroupRequest struct {
 // @Router       /groups [post]
 // @Security     BearerAuth
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	var req createGroupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -103,14 +96,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Router       /groups/join [post]
 // @Security     BearerAuth
 func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	var req joinGroupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -146,14 +132,7 @@ func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 // @Router       /groups [get]
 // @Security     BearerAuth
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	groups, err := h.uc.ListUserGroups(r.Context(), currUser.ID)
 	if err != nil {
@@ -191,14 +170,7 @@ func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	g, members, err := h.uc.GetGroupDetails(r.Context(), groupID, currUser.ID)
 	if err != nil {
@@ -240,14 +212,7 @@ func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	var req addMemberRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -295,14 +260,7 @@ func (h *Handler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	err := h.uc.RemoveMember(r.Context(), groupID, targetUserID, currUser.ID)
 	if err != nil {
@@ -343,14 +301,7 @@ func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	var req updateRoleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -389,14 +340,7 @@ func (h *Handler) Archive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	err := h.uc.ArchiveGroup(r.Context(), groupID, currUser.ID)
 	if err != nil {
