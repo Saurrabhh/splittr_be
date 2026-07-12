@@ -97,3 +97,22 @@ type GetExpenseDetailsResponse struct {
 	Expense *Expense `json:"expense"`
 	Splits  []Split  `json:"splits"`
 }
+
+type createExpenseRequest struct {
+	Description string       `json:"description"`
+	Amount      float64      `json:"amount"`
+	Currency    string       `json:"currency"`
+	Category    string       `json:"category"`
+	GroupID     *string      `json:"groupId"`
+	PaidBy      string       `json:"paidBy"`
+	SplitType   SplitType    `json:"splitType"`
+	Splits      []InputSplit `json:"splits"`
+}
+
+type settleExpenseRequest struct {
+	Amount     float64 `json:"amount"`
+	Currency   string  `json:"currency"`
+	GroupID    *string `json:"groupId"`
+	PaidBy     string  `json:"paidBy"`
+	ReceivedBy string  `json:"receivedBy"`
+}

@@ -34,25 +34,6 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/balances", h.GetBalances)
 }
 
-type createExpenseRequest struct {
-	Description string       `json:"description"`
-	Amount      float64      `json:"amount"`
-	Currency    string       `json:"currency"`
-	Category    string       `json:"category"`
-	GroupID     *string      `json:"groupId"`
-	PaidBy      string       `json:"paidBy"`
-	SplitType   SplitType    `json:"splitType"`
-	Splits      []InputSplit `json:"splits"`
-}
-
-type settleExpenseRequest struct {
-	Amount     float64 `json:"amount"`
-	Currency   string  `json:"currency"`
-	GroupID    *string `json:"groupId"`
-	PaidBy     string  `json:"paidBy"`
-	ReceivedBy string  `json:"receivedBy"`
-}
-
 // Create logs a new expense and distributes the splits.
 // @Summary      Create expense
 // @Description  Create a new expense with equal/exact/percentage splits.
