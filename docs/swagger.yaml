@@ -36,7 +36,7 @@ components:
           $ref: '#/components/schemas/expense.Expense'
         splits:
           items:
-            $ref: '#/components/schemas/expense.ExpenseSplit'
+            $ref: '#/components/schemas/expense.Split'
           type: array
           uniqueItems: false
       type: object
@@ -69,32 +69,13 @@ components:
         updatedAt:
           type: string
       type: object
-    expense.ExpenseSplit:
-      properties:
-        amount:
-          type: number
-        email:
-          type: string
-        expenseId:
-          type: string
-        name:
-          type: string
-        phone:
-          type: string
-        splitType:
-          $ref: '#/components/schemas/expense.SplitType'
-        splitValue:
-          type: number
-        userId:
-          type: string
-      type: object
     expense.GetExpenseDetailsResponse:
       properties:
         expense:
           $ref: '#/components/schemas/expense.Expense'
         splits:
           items:
-            $ref: '#/components/schemas/expense.ExpenseSplit'
+            $ref: '#/components/schemas/expense.Split'
           type: array
           uniqueItems: false
       type: object
@@ -114,7 +95,7 @@ components:
         expense:
           $ref: '#/components/schemas/expense.Expense'
         split:
-          $ref: '#/components/schemas/expense.ExpenseSplit'
+          $ref: '#/components/schemas/expense.Split'
       type: object
     expense.Settlement:
       properties:
@@ -127,6 +108,25 @@ components:
         toUserId:
           type: string
         toUserName:
+          type: string
+      type: object
+    expense.Split:
+      properties:
+        amount:
+          type: number
+        email:
+          type: string
+        expenseId:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+        splitType:
+          $ref: '#/components/schemas/expense.SplitType'
+        splitValue:
+          type: number
+        userId:
           type: string
       type: object
     expense.SplitType:
@@ -202,7 +202,7 @@ components:
         updatedAt:
           type: string
       type: object
-    group.GroupMember:
+    group.Member:
       properties:
         email:
           type: string
@@ -247,7 +247,7 @@ components:
           type: string
         members:
           items:
-            $ref: '#/components/schemas/group.GroupMember'
+            $ref: '#/components/schemas/group.Member'
           type: array
           uniqueItems: false
         name:

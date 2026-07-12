@@ -102,7 +102,7 @@ type createExpenseRequest struct {
 	Description string       `json:"description"`
 	Amount      float64      `json:"amount"`
 	Currency    string       `json:"currency"`
-	Category    string       `json:"category"`
+	Category    *string      `json:"category,omitempty"`
 	GroupID     *string      `json:"groupId"`
 	PaidBy      string       `json:"paidBy"`
 	SplitType   SplitType    `json:"splitType"`

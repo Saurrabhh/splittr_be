@@ -60,7 +60,7 @@ const docTemplate = `{
                     },
                     "splits": {
                         "items": {
-                            "$ref": "#/components/schemas/expense.ExpenseSplit"
+                            "$ref": "#/components/schemas/expense.Split"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -112,35 +112,6 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "expense.ExpenseSplit": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "email": {
-                        "type": "string"
-                    },
-                    "expenseId": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "phone": {
-                        "type": "string"
-                    },
-                    "splitType": {
-                        "$ref": "#/components/schemas/expense.SplitType"
-                    },
-                    "splitValue": {
-                        "type": "number"
-                    },
-                    "userId": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
             "expense.GetExpenseDetailsResponse": {
                 "properties": {
                     "expense": {
@@ -148,7 +119,7 @@ const docTemplate = `{
                     },
                     "splits": {
                         "items": {
-                            "$ref": "#/components/schemas/expense.ExpenseSplit"
+                            "$ref": "#/components/schemas/expense.Split"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -178,7 +149,7 @@ const docTemplate = `{
                         "$ref": "#/components/schemas/expense.Expense"
                     },
                     "split": {
-                        "$ref": "#/components/schemas/expense.ExpenseSplit"
+                        "$ref": "#/components/schemas/expense.Split"
                     }
                 },
                 "type": "object"
@@ -198,6 +169,35 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "toUserName": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "expense.Split": {
+                "properties": {
+                    "amount": {
+                        "type": "number"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "expenseId": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "splitType": {
+                        "$ref": "#/components/schemas/expense.SplitType"
+                    },
+                    "splitValue": {
+                        "type": "number"
+                    },
+                    "userId": {
                         "type": "string"
                     }
                 },
@@ -312,7 +312,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "group.GroupMember": {
+            "group.Member": {
                 "properties": {
                     "email": {
                         "type": "string"
@@ -379,7 +379,7 @@ const docTemplate = `{
                     },
                     "members": {
                         "items": {
-                            "$ref": "#/components/schemas/group.GroupMember"
+                            "$ref": "#/components/schemas/group.Member"
                         },
                         "type": "array",
                         "uniqueItems": false

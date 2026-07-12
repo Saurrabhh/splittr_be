@@ -70,9 +70,9 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Default category to 'Other' if not supplied
-	category := req.Category
-	if category == "" {
-		category = "Other"
+	category := "Other"
+	if req.Category != nil && *req.Category != "" {
+		category = *req.Category
 	}
 
 	exp, splits, err := h.uc.CreateExpense(
