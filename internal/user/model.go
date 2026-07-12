@@ -15,3 +15,17 @@ type User struct {
 	CreatedAt       time.Time `json:"createdAt"`
 	UpdatedAt       time.Time `json:"updatedAt"`
 }
+
+type registerRequest struct {
+	Name string `json:"name"`
+}
+
+type updateProfileRequest struct {
+	Name            string `json:"name"`
+	DefaultCurrency string `json:"defaultCurrency"`
+}
+
+type addFriendRequest struct {
+	FriendEmail string `json:"friendEmail"`
+	FriendPhone string `json:"friendPhone"`
+}

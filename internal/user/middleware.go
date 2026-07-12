@@ -24,6 +24,16 @@ func From(ctx context.Context) *User {
 	return u
 }
 
+// MustFrom retrieves the User from the context, or panics if the User is not present.
+// Use this in handlers where the User is guaranteed to exist by the UserContext middleware.
+func MustFrom(ctx context.Context) *User {
+	u := From(ctx)
+	if u == nil {
+		panic("user missing from context; ensure UserContext middleware is registered for this route")
+	}
+	return u
+}
+
 // UserContext resolves the Firebase UID from the auth.Identity in the context
 // to the local database User and injects it into the request context.
 func (h *Handler) UserContext(next http.Handler) http.Handler {

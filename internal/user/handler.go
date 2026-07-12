@@ -40,20 +40,6 @@ func (h *Handler) RegisterRoutes(r chi.Router, authMiddleware func(http.Handler)
 	})
 }
 
-type registerRequest struct {
-	Name string `json:"name"`
-}
-
-type updateProfileRequest struct {
-	Name            string `json:"name"`
-	DefaultCurrency string `json:"defaultCurrency"`
-}
-
-type addFriendRequest struct {
-	FriendEmail string `json:"friendEmail"`
-	FriendPhone string `json:"friendPhone"`
-}
-
 // Register registers the authenticated user.
 // @Summary      Register user
 // @Description  Create a new user profile using Firebase identities.
