@@ -38,14 +38,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 // @Router       /notifications [get]
 // @Security     BearerAuth
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	notifs, err := h.uc.ListNotifications(r.Context(), currUser.ID)
 	if err != nil {
@@ -69,14 +62,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 // @Router       /notifications/{id}/read [post]
 // @Security     BearerAuth
 func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	id := chi.URLParam(r, "id")
 	if id == "" {
@@ -107,14 +93,7 @@ func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 // @Router       /notifications/read-all [post]
 // @Security     BearerAuth
 func (h *Handler) MarkAllAsRead(w http.ResponseWriter, r *http.Request) {
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	err := h.uc.MarkAllAsRead(r.Context(), currUser.ID)
 	if err != nil {

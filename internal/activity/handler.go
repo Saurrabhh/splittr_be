@@ -34,14 +34,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 // @Router       /activities [get]
 // @Security     BearerAuth
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	currUser := user.From(r.Context())
-	if currUser == nil {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing user profile",
-		})
-		return
-	}
+	currUser := user.MustFrom(r.Context())
 
 	activities, err := h.uc.ListActivities(r.Context(), currUser.ID)
 	if err != nil {
