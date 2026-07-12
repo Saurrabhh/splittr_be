@@ -463,9 +463,6 @@ const docTemplate = `{
                     "email": {
                         "type": "string"
                     },
-                    "firebaseUid": {
-                        "type": "string"
-                    },
                     "id": {
                         "type": "string"
                     },

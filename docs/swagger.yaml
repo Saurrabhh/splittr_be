@@ -301,8 +301,6 @@ components:
           type: string
         email:
           type: string
-        firebaseUid:
-          type: string
         id:
           type: string
         name:
