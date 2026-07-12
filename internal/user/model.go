@@ -7,7 +7,7 @@ import (
 // User represents a user in the system.
 type User struct {
 	ID              string    `json:"id"`
-	FirebaseUID     string    `json:"firebaseUid"`
+	FirebaseUID     string    `json:"-"`
 	Email           *string   `json:"email,omitempty"`
 	Phone           *string   `json:"phone,omitempty"`
 	Name            string    `json:"name"`
