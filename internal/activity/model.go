@@ -17,7 +17,7 @@ type Activity struct {
 	Description string          `json:"description"`
 	EntityType  string          `json:"entityType"`
 	EntityID    *string         `json:"entityId,omitempty"`
-	Metadata    json.RawMessage `json:"metadata,omitempty"`
+	Metadata    json.RawMessage `json:"metadata,omitempty" swaggertype:"object"`
 	CreatedAt   time.Time       `json:"createdAt"`
 }
 
@@ -29,7 +29,7 @@ type FeedItemResponse struct {
 	Actor       ActorInfo       `json:"actor"`
 	Description string          `json:"description"`
 	CreatedAt   time.Time       `json:"createdAt"`
-	Payload     json.RawMessage `json:"payload,omitempty"`
+	Payload     json.RawMessage `json:"payload,omitempty" swaggertype:"object"`
 }
 
 type ActorInfo struct {

@@ -8,7 +8,37 @@ const docTemplate = `{
     "schemes": {{ marshal .Schemes }},
     "components": {
         "schemas": {
-            "activity.Activity": {
+            "github_com_Saurrabhh_splittr_be_internal_pagination.Meta": {
+                "properties": {
+                    "hasMore": {
+                        "type": "boolean"
+                    },
+                    "nextCursor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "github_com_Saurrabhh_splittr_be_internal_response.MessageResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "internal_activity.Activity": {
                 "properties": {
                     "actionType": {
                         "type": "string"
@@ -25,27 +55,91 @@ const docTemplate = `{
                     "description": {
                         "type": "string"
                     },
+                    "entityId": {
+                        "type": "string"
+                    },
+                    "entityType": {
+                        "type": "string"
+                    },
                     "groupId": {
                         "type": "string"
                     },
                     "id": {
                         "type": "string"
+                    },
+                    "metadata": {
+                        "type": "object"
                     }
                 },
                 "type": "object"
             },
-            "expense.BalanceResponse": {
+            "internal_activity.ActorInfo": {
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "internal_activity.FeedItemResponse": {
+                "properties": {
+                    "actionType": {
+                        "type": "string"
+                    },
+                    "actor": {
+                        "$ref": "#/components/schemas/internal_activity.ActorInfo"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "entityId": {
+                        "type": "string"
+                    },
+                    "entityType": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "payload": {
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "internal_activity.FeedResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/internal_activity.FeedItemResponse"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_pagination.Meta"
+                    }
+                },
+                "type": "object"
+            },
+            "internal_expense.BalanceResponse": {
                 "properties": {
                     "balances": {
                         "items": {
-                            "$ref": "#/components/schemas/expense.UserBalance"
+                            "$ref": "#/components/schemas/internal_expense.UserBalance"
                         },
                         "type": "array",
                         "uniqueItems": false
                     },
                     "settlements": {
                         "items": {
-                            "$ref": "#/components/schemas/expense.Settlement"
+                            "$ref": "#/components/schemas/internal_expense.Settlement"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -53,14 +147,14 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "expense.CreateExpenseResponse": {
+            "internal_expense.CreateExpenseResponse": {
                 "properties": {
                     "expense": {
-                        "$ref": "#/components/schemas/expense.Expense"
+                        "$ref": "#/components/schemas/internal_expense.Expense"
                     },
                     "splits": {
                         "items": {
-                            "$ref": "#/components/schemas/expense.Split"
+                            "$ref": "#/components/schemas/internal_expense.Split"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -68,7 +162,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "expense.Expense": {
+            "internal_expense.Expense": {
                 "properties": {
                     "amount": {
                         "type": "number"
@@ -112,14 +206,14 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "expense.GetExpenseDetailsResponse": {
+            "internal_expense.GetExpenseDetailsResponse": {
                 "properties": {
                     "expense": {
-                        "$ref": "#/components/schemas/expense.Expense"
+                        "$ref": "#/components/schemas/internal_expense.Expense"
                     },
                     "splits": {
                         "items": {
-                            "$ref": "#/components/schemas/expense.Split"
+                            "$ref": "#/components/schemas/internal_expense.Split"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -127,7 +221,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "expense.InputSplit": {
+            "internal_expense.InputSplit": {
                 "properties": {
                     "amount": {
                         "description": "Required if splitType is EXACT",
@@ -143,18 +237,18 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "expense.SettleExpenseResponse": {
+            "internal_expense.SettleExpenseResponse": {
                 "properties": {
                     "expense": {
-                        "$ref": "#/components/schemas/expense.Expense"
+                        "$ref": "#/components/schemas/internal_expense.Expense"
                     },
                     "split": {
-                        "$ref": "#/components/schemas/expense.Split"
+                        "$ref": "#/components/schemas/internal_expense.Split"
                     }
                 },
                 "type": "object"
             },
-            "expense.Settlement": {
+            "internal_expense.Settlement": {
                 "properties": {
                     "amount": {
                         "type": "number"
@@ -174,7 +268,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "expense.Split": {
+            "internal_expense.Split": {
                 "properties": {
                     "amount": {
                         "type": "number"
@@ -192,7 +286,7 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "splitType": {
-                        "$ref": "#/components/schemas/expense.SplitType"
+                        "$ref": "#/components/schemas/internal_expense.SplitType"
                     },
                     "splitValue": {
                         "type": "number"
@@ -203,7 +297,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "expense.SplitType": {
+            "internal_expense.SplitType": {
                 "enum": [
                     "EQUAL",
                     "EXACT",
@@ -216,7 +310,7 @@ const docTemplate = `{
                     "SplitTypePercentage"
                 ]
             },
-            "expense.UserBalance": {
+            "internal_expense.UserBalance": {
                 "properties": {
                     "netBalance": {
                         "type": "number"
@@ -230,7 +324,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "expense.createExpenseRequest": {
+            "internal_expense.createExpenseRequest": {
                 "properties": {
                     "amount": {
                         "type": "number"
@@ -251,11 +345,11 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "splitType": {
-                        "$ref": "#/components/schemas/expense.SplitType"
+                        "$ref": "#/components/schemas/internal_expense.SplitType"
                     },
                     "splits": {
                         "items": {
-                            "$ref": "#/components/schemas/expense.InputSplit"
+                            "$ref": "#/components/schemas/internal_expense.InputSplit"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -263,7 +357,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "expense.settleExpenseRequest": {
+            "internal_expense.settleExpenseRequest": {
                 "properties": {
                     "amount": {
                         "type": "number"
@@ -283,7 +377,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "group.Group": {
+            "internal_group.Group": {
                 "properties": {
                     "archivedAt": {
                         "type": "string"
@@ -312,7 +406,43 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "group.Member": {
+            "internal_group.GroupDetailsResponse": {
+                "properties": {
+                    "archivedAt": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "createdBy": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "inviteCode": {
+                        "type": "string"
+                    },
+                    "members": {
+                        "items": {
+                            "$ref": "#/components/schemas/internal_group.Member"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "internal_group.Member": {
                 "properties": {
                     "email": {
                         "type": "string"
@@ -338,7 +468,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "group.addMemberRequest": {
+            "internal_group.addMemberRequest": {
                 "properties": {
                     "userId": {
                         "type": "string"
@@ -346,7 +476,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "group.createGroupRequest": {
+            "internal_group.createGroupRequest": {
                 "properties": {
                     "description": {
                         "type": "string"
@@ -357,43 +487,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "group.groupDetailsResponse": {
-                "properties": {
-                    "archivedAt": {
-                        "type": "string"
-                    },
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "createdBy": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "inviteCode": {
-                        "type": "string"
-                    },
-                    "members": {
-                        "items": {
-                            "$ref": "#/components/schemas/group.Member"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "updatedAt": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "group.joinGroupRequest": {
+            "internal_group.joinGroupRequest": {
                 "properties": {
                     "inviteCode": {
                         "type": "string"
@@ -401,7 +495,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "group.updateRoleRequest": {
+            "internal_group.updateRoleRequest": {
                 "properties": {
                     "role": {
                         "type": "string"
@@ -409,7 +503,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "notification.Notification": {
+            "internal_notification.Notification": {
                 "properties": {
                     "activityId": {
                         "type": "string"
@@ -441,18 +535,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "response.ErrorResponse": {
-                "properties": {
-                    "code": {
-                        "type": "string"
-                    },
-                    "message": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "user.User": {
+            "internal_user.User": {
                 "properties": {
                     "createdAt": {
                         "type": "string"
@@ -478,7 +561,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "user.addFriendRequest": {
+            "internal_user.addFriendRequest": {
                 "properties": {
                     "friendEmail": {
                         "type": "string"
@@ -489,7 +572,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "user.registerRequest": {
+            "internal_user.registerRequest": {
                 "properties": {
                     "name": {
                         "type": "string"
@@ -497,7 +580,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "user.updateProfileRequest": {
+            "internal_user.updateProfileRequest": {
                 "properties": {
                     "defaultCurrency": {
                         "type": "string"
@@ -535,7 +618,7 @@ const docTemplate = `{
                             "application/json": {
                                 "schema": {
                                     "items": {
-                                        "$ref": "#/components/schemas/activity.Activity"
+                                        "$ref": "#/components/schemas/internal_activity.Activity"
                                     },
                                     "type": "array"
                                 }
@@ -547,7 +630,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -557,7 +640,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -601,7 +684,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/expense.BalanceResponse"
+                                    "$ref": "#/components/schemas/internal_expense.BalanceResponse"
                                 }
                             }
                         },
@@ -611,7 +694,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -621,7 +704,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -631,7 +714,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -684,7 +767,7 @@ const docTemplate = `{
                             "application/json": {
                                 "schema": {
                                     "items": {
-                                        "$ref": "#/components/schemas/expense.Expense"
+                                        "$ref": "#/components/schemas/internal_expense.Expense"
                                     },
                                     "type": "array"
                                 }
@@ -696,7 +779,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -706,7 +789,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -716,7 +799,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -744,7 +827,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/expense.createExpenseRequest",
+                                        "$ref": "#/components/schemas/internal_expense.createExpenseRequest",
                                         "summary": "request",
                                         "description": "Expense details and splits structure"
                                     }
@@ -760,7 +843,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/expense.CreateExpenseResponse"
+                                    "$ref": "#/components/schemas/internal_expense.CreateExpenseResponse"
                                 }
                             }
                         },
@@ -770,7 +853,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -780,7 +863,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -790,7 +873,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -820,7 +903,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/expense.settleExpenseRequest",
+                                        "$ref": "#/components/schemas/internal_expense.settleExpenseRequest",
                                         "summary": "request",
                                         "description": "Settlement details"
                                     }
@@ -836,7 +919,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/expense.SettleExpenseResponse"
+                                    "$ref": "#/components/schemas/internal_expense.SettleExpenseResponse"
                                 }
                             }
                         },
@@ -846,7 +929,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -856,7 +939,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -866,7 +949,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -906,7 +989,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -916,7 +999,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -926,7 +1009,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -961,7 +1044,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/expense.GetExpenseDetailsResponse"
+                                    "$ref": "#/components/schemas/internal_expense.GetExpenseDetailsResponse"
                                 }
                             }
                         },
@@ -971,7 +1054,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -981,7 +1064,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -991,7 +1074,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1018,7 +1101,7 @@ const docTemplate = `{
                             "application/json": {
                                 "schema": {
                                     "items": {
-                                        "$ref": "#/components/schemas/user.User"
+                                        "$ref": "#/components/schemas/internal_user.User"
                                     },
                                     "type": "array"
                                 }
@@ -1030,7 +1113,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1040,7 +1123,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1068,7 +1151,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/user.addFriendRequest",
+                                        "$ref": "#/components/schemas/internal_user.addFriendRequest",
                                         "summary": "request",
                                         "description": "Friend email or phone"
                                     }
@@ -1084,7 +1167,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/user.User"
+                                    "$ref": "#/components/schemas/internal_user.User"
                                 }
                             }
                         },
@@ -1094,7 +1177,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1104,7 +1187,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1114,7 +1197,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1154,7 +1237,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1164,7 +1247,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1174,7 +1257,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1201,7 +1284,7 @@ const docTemplate = `{
                             "application/json": {
                                 "schema": {
                                     "items": {
-                                        "$ref": "#/components/schemas/group.Group"
+                                        "$ref": "#/components/schemas/internal_group.GroupDetailsResponse"
                                     },
                                     "type": "array"
                                 }
@@ -1213,7 +1296,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1223,7 +1306,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1251,7 +1334,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/group.createGroupRequest",
+                                        "$ref": "#/components/schemas/internal_group.createGroupRequest",
                                         "summary": "request",
                                         "description": "Group creation data"
                                     }
@@ -1267,7 +1350,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/group.Group"
+                                    "$ref": "#/components/schemas/internal_group.Group"
                                 }
                             }
                         },
@@ -1277,7 +1360,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1287,7 +1370,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1297,7 +1380,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1327,7 +1410,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/group.joinGroupRequest",
+                                        "$ref": "#/components/schemas/internal_group.joinGroupRequest",
                                         "summary": "request",
                                         "description": "Group join data"
                                     }
@@ -1343,7 +1426,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/group.Group"
+                                    "$ref": "#/components/schemas/internal_group.Group"
                                 }
                             }
                         },
@@ -1353,7 +1436,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1363,7 +1446,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1373,7 +1456,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1388,6 +1471,89 @@ const docTemplate = `{
                 "summary": "Join group",
                 "tags": [
                     "groups"
+                ]
+            }
+        },
+        "/groups/{groupId}/feed": {
+            "get": {
+                "description": "Get a cursor-paginated timeline of events inside a group.",
+                "parameters": [
+                    {
+                        "description": "Group ID",
+                        "in": "path",
+                        "name": "groupId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Items per page (max 100, default 20)",
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Opaque cursor token from previous response",
+                        "in": "query",
+                        "name": "cursor",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/internal_activity.FeedResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Get group activity feed",
+                "tags": [
+                    "activities"
                 ]
             }
         },
@@ -1410,10 +1576,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "additionalProperties": {
-                                        "type": "string"
-                                    },
-                                    "type": "object"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.MessageResponse"
                                 }
                             }
                         },
@@ -1423,7 +1586,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1433,7 +1596,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1443,7 +1606,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1478,7 +1641,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/group.groupDetailsResponse"
+                                    "$ref": "#/components/schemas/internal_group.GroupDetailsResponse"
                                 }
                             }
                         },
@@ -1488,7 +1651,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1498,7 +1661,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1508,7 +1671,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1549,7 +1712,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/group.addMemberRequest",
+                                        "$ref": "#/components/schemas/internal_group.addMemberRequest",
                                         "summary": "request",
                                         "description": "User ID of the member to add"
                                     }
@@ -1565,10 +1728,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "additionalProperties": {
-                                        "type": "string"
-                                    },
-                                    "type": "object"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.MessageResponse"
                                 }
                             }
                         },
@@ -1578,7 +1738,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1588,7 +1748,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1598,7 +1758,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1647,7 +1807,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1657,7 +1817,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1667,7 +1827,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1717,7 +1877,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/group.updateRoleRequest",
+                                        "$ref": "#/components/schemas/internal_group.updateRoleRequest",
                                         "summary": "request",
                                         "description": "New role value"
                                     }
@@ -1733,10 +1893,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "additionalProperties": {
-                                        "type": "string"
-                                    },
-                                    "type": "object"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.MessageResponse"
                                 }
                             }
                         },
@@ -1746,7 +1903,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1756,7 +1913,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1766,7 +1923,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1793,7 +1950,7 @@ const docTemplate = `{
                             "application/json": {
                                 "schema": {
                                     "items": {
-                                        "$ref": "#/components/schemas/notification.Notification"
+                                        "$ref": "#/components/schemas/internal_notification.Notification"
                                     },
                                     "type": "array"
                                 }
@@ -1805,7 +1962,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1815,7 +1972,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1841,10 +1998,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "additionalProperties": {
-                                        "type": "string"
-                                    },
-                                    "type": "object"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.MessageResponse"
                                 }
                             }
                         },
@@ -1854,7 +2008,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1864,7 +2018,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1901,10 +2055,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "additionalProperties": {
-                                        "type": "string"
-                                    },
-                                    "type": "object"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.MessageResponse"
                                 }
                             }
                         },
@@ -1914,7 +2065,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1924,7 +2075,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1934,7 +2085,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -1964,7 +2115,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/user.registerRequest",
+                                        "$ref": "#/components/schemas/internal_user.registerRequest",
                                         "summary": "request",
                                         "description": "Registration data"
                                     }
@@ -1980,7 +2131,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/user.User"
+                                    "$ref": "#/components/schemas/internal_user.User"
                                 }
                             }
                         },
@@ -1990,7 +2141,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -2000,7 +2151,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -2010,7 +2161,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -2036,7 +2187,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/user.User"
+                                    "$ref": "#/components/schemas/internal_user.User"
                                 }
                             }
                         },
@@ -2046,7 +2197,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -2056,7 +2207,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -2084,7 +2235,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/user.updateProfileRequest",
+                                        "$ref": "#/components/schemas/internal_user.updateProfileRequest",
                                         "summary": "request",
                                         "description": "Profile details to update"
                                     }
@@ -2100,7 +2251,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/user.User"
+                                    "$ref": "#/components/schemas/internal_user.User"
                                 }
                             }
                         },
@@ -2110,7 +2261,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -2120,7 +2271,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
@@ -2130,7 +2281,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
                                 }
                             }
                         },
