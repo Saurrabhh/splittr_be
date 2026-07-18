@@ -13,9 +13,9 @@ import (
 )
 
 const createActivity = `-- name: CreateActivity :one
-INSERT INTO activities (id, group_id, actor_id, action_type, description, created_at)
-VALUES ($1, $2, $3, $4, $5, NOW())
-RETURNING id, group_id, actor_id, action_type, description, created_at
+INSERT INTO activities (id, group_id, actor_id, action_type, description, entity_type, entity_id, metadata, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+RETURNING id, group_id, actor_id, action_type, description, entity_type, entity_id, metadata, created_at
 `
 
 type CreateActivityParams struct {
@@ -24,23 +24,44 @@ type CreateActivityParams struct {
 	ActorID     pgtype.UUID
 	ActionType  string
 	Description string
+	EntityType  string
+	EntityID    pgtype.UUID
+	Metadata    []byte
 }
 
-func (q *Queries) CreateActivity(ctx context.Context, arg CreateActivityParams) (Activity, error) {
+type CreateActivityRow struct {
+	ID          uuid.UUID
+	GroupID     pgtype.UUID
+	ActorID     pgtype.UUID
+	ActionType  string
+	Description string
+	EntityType  string
+	EntityID    pgtype.UUID
+	Metadata    []byte
+	CreatedAt   pgtype.Timestamptz
+}
+
+func (q *Queries) CreateActivity(ctx context.Context, arg CreateActivityParams) (CreateActivityRow, error) {
 	row := q.db.QueryRow(ctx, createActivity,
 		arg.ID,
 		arg.GroupID,
 		arg.ActorID,
 		arg.ActionType,
 		arg.Description,
+		arg.EntityType,
+		arg.EntityID,
+		arg.Metadata,
 	)
-	var i Activity
+	var i CreateActivityRow
 	err := row.Scan(
 		&i.ID,
 		&i.GroupID,
 		&i.ActorID,
 		&i.ActionType,
 		&i.Description,
+		&i.EntityType,
+		&i.EntityID,
+		&i.Metadata,
 		&i.CreatedAt,
 	)
 	return i, err
@@ -59,6 +80,91 @@ type CreateActivityVisibilityParams struct {
 func (q *Queries) CreateActivityVisibility(ctx context.Context, arg CreateActivityVisibilityParams) error {
 	_, err := q.db.Exec(ctx, createActivityVisibility, arg.ActivityID, arg.UserID)
 	return err
+}
+
+const listGroupFeedPaginated = `-- name: ListGroupFeedPaginated :many
+SELECT 
+    a.id, 
+    a.group_id, 
+    a.actor_id, 
+    COALESCE(u.name, 'System')::varchar as actor_name, 
+    a.entity_type, 
+    a.entity_id, 
+    a.action_type, 
+    a.description, 
+    a.metadata, 
+    a.created_at
+FROM activities a
+LEFT JOIN users u ON a.actor_id = u.id
+WHERE a.group_id = $1
+  AND EXISTS (
+      SELECT 1 FROM group_members gm WHERE gm.group_id = $1 AND gm.user_id = $5
+  )
+  AND (
+    $3::TIMESTAMP WITH TIME ZONE IS NULL 
+    OR a.created_at < $3::TIMESTAMP WITH TIME ZONE
+    OR (a.created_at = $3::TIMESTAMP WITH TIME ZONE AND a.id < $4::UUID)
+  )
+ORDER BY a.created_at DESC, a.id DESC
+LIMIT $2
+`
+
+type ListGroupFeedPaginatedParams struct {
+	GroupID pgtype.UUID
+	Limit   int32
+	Column3 pgtype.Timestamptz
+	Column4 uuid.UUID
+	UserID  uuid.UUID
+}
+
+type ListGroupFeedPaginatedRow struct {
+	ID          uuid.UUID
+	GroupID     pgtype.UUID
+	ActorID     pgtype.UUID
+	ActorName   string
+	EntityType  string
+	EntityID    pgtype.UUID
+	ActionType  string
+	Description string
+	Metadata    []byte
+	CreatedAt   pgtype.Timestamptz
+}
+
+func (q *Queries) ListGroupFeedPaginated(ctx context.Context, arg ListGroupFeedPaginatedParams) ([]ListGroupFeedPaginatedRow, error) {
+	rows, err := q.db.Query(ctx, listGroupFeedPaginated,
+		arg.GroupID,
+		arg.Limit,
+		arg.Column3,
+		arg.Column4,
+		arg.UserID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListGroupFeedPaginatedRow
+	for rows.Next() {
+		var i ListGroupFeedPaginatedRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.GroupID,
+			&i.ActorID,
+			&i.ActorName,
+			&i.EntityType,
+			&i.EntityID,
+			&i.ActionType,
+			&i.Description,
+			&i.Metadata,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listUserActivities = `-- name: ListUserActivities :many
