@@ -1,25 +1,6 @@
 components:
   schemas:
-    github_com_Saurrabhh_splittr_be_internal_pagination.Meta:
-      properties:
-        hasMore:
-          type: boolean
-        nextCursor:
-          type: string
-      type: object
-    github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse:
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-      type: object
-    github_com_Saurrabhh_splittr_be_internal_response.MessageResponse:
-      properties:
-        message:
-          type: string
-      type: object
-    internal_activity.Activity:
+    activity.Activity:
       properties:
         actionType:
           type: string
@@ -42,19 +23,19 @@ components:
         metadata:
           type: object
       type: object
-    internal_activity.ActorInfo:
+    activity.ActorInfo:
       properties:
         id:
           type: string
         name:
           type: string
       type: object
-    internal_activity.FeedItemResponse:
+    activity.FeedItemResponse:
       properties:
         actionType:
           type: string
         actor:
-          $ref: '#/components/schemas/internal_activity.ActorInfo'
+          $ref: '#/components/schemas/activity.ActorInfo'
         createdAt:
           type: string
         description:
@@ -68,40 +49,40 @@ components:
         payload:
           type: object
       type: object
-    internal_activity.FeedResponse:
+    activity.FeedResponse:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/internal_activity.FeedItemResponse'
+            $ref: '#/components/schemas/activity.FeedItemResponse'
           type: array
           uniqueItems: false
         pagination:
-          $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_pagination.Meta'
+          $ref: '#/components/schemas/pagination.Meta'
       type: object
-    internal_expense.BalanceResponse:
+    expense.BalanceResponse:
       properties:
         balances:
           items:
-            $ref: '#/components/schemas/internal_expense.UserBalance'
+            $ref: '#/components/schemas/expense.UserBalance'
           type: array
           uniqueItems: false
         settlements:
           items:
-            $ref: '#/components/schemas/internal_expense.Settlement'
+            $ref: '#/components/schemas/expense.Settlement'
           type: array
           uniqueItems: false
       type: object
-    internal_expense.CreateExpenseResponse:
+    expense.CreateExpenseResponse:
       properties:
         expense:
-          $ref: '#/components/schemas/internal_expense.Expense'
+          $ref: '#/components/schemas/expense.Expense'
         splits:
           items:
-            $ref: '#/components/schemas/internal_expense.Split'
+            $ref: '#/components/schemas/expense.Split'
           type: array
           uniqueItems: false
       type: object
-    internal_expense.Expense:
+    expense.Expense:
       properties:
         amount:
           type: number
@@ -130,17 +111,17 @@ components:
         updatedAt:
           type: string
       type: object
-    internal_expense.GetExpenseDetailsResponse:
+    expense.GetExpenseDetailsResponse:
       properties:
         expense:
-          $ref: '#/components/schemas/internal_expense.Expense'
+          $ref: '#/components/schemas/expense.Expense'
         splits:
           items:
-            $ref: '#/components/schemas/internal_expense.Split'
+            $ref: '#/components/schemas/expense.Split'
           type: array
           uniqueItems: false
       type: object
-    internal_expense.InputSplit:
+    expense.InputSplit:
       properties:
         amount:
           description: Required if splitType is EXACT
@@ -151,14 +132,14 @@ components:
         userId:
           type: string
       type: object
-    internal_expense.SettleExpenseResponse:
+    expense.SettleExpenseResponse:
       properties:
         expense:
-          $ref: '#/components/schemas/internal_expense.Expense'
+          $ref: '#/components/schemas/expense.Expense'
         split:
-          $ref: '#/components/schemas/internal_expense.Split'
+          $ref: '#/components/schemas/expense.Split'
       type: object
-    internal_expense.Settlement:
+    expense.Settlement:
       properties:
         amount:
           type: number
@@ -171,7 +152,7 @@ components:
         toUserName:
           type: string
       type: object
-    internal_expense.Split:
+    expense.Split:
       properties:
         amount:
           type: number
@@ -184,13 +165,13 @@ components:
         phone:
           type: string
         splitType:
-          $ref: '#/components/schemas/internal_expense.SplitType'
+          $ref: '#/components/schemas/expense.SplitType'
         splitValue:
           type: number
         userId:
           type: string
       type: object
-    internal_expense.SplitType:
+    expense.SplitType:
       enum:
       - EQUAL
       - EXACT
@@ -200,7 +181,7 @@ components:
       - SplitTypeEqual
       - SplitTypeExact
       - SplitTypePercentage
-    internal_expense.UserBalance:
+    expense.UserBalance:
       properties:
         netBalance:
           type: number
@@ -209,7 +190,7 @@ components:
         userName:
           type: string
       type: object
-    internal_expense.createExpenseRequest:
+    expense.createExpenseRequest:
       properties:
         amount:
           type: number
@@ -224,14 +205,14 @@ components:
         paidBy:
           type: string
         splitType:
-          $ref: '#/components/schemas/internal_expense.SplitType'
+          $ref: '#/components/schemas/expense.SplitType'
         splits:
           items:
-            $ref: '#/components/schemas/internal_expense.InputSplit'
+            $ref: '#/components/schemas/expense.InputSplit'
           type: array
           uniqueItems: false
       type: object
-    internal_expense.settleExpenseRequest:
+    expense.settleExpenseRequest:
       properties:
         amount:
           type: number
@@ -244,7 +225,7 @@ components:
         receivedBy:
           type: string
       type: object
-    internal_group.Group:
+    group.Group:
       properties:
         archivedAt:
           type: string
@@ -263,7 +244,7 @@ components:
         updatedAt:
           type: string
       type: object
-    internal_group.GroupDetailsResponse:
+    group.GroupDetailsResponse:
       properties:
         archivedAt:
           type: string
@@ -279,7 +260,7 @@ components:
           type: string
         members:
           items:
-            $ref: '#/components/schemas/internal_group.Member'
+            $ref: '#/components/schemas/group.Member'
           type: array
           uniqueItems: false
         name:
@@ -287,7 +268,7 @@ components:
         updatedAt:
           type: string
       type: object
-    internal_group.Member:
+    group.Member:
       properties:
         email:
           type: string
@@ -304,29 +285,29 @@ components:
         userId:
           type: string
       type: object
-    internal_group.addMemberRequest:
+    group.addMemberRequest:
       properties:
         userId:
           type: string
       type: object
-    internal_group.createGroupRequest:
+    group.createGroupRequest:
       properties:
         description:
           type: string
         name:
           type: string
       type: object
-    internal_group.joinGroupRequest:
+    group.joinGroupRequest:
       properties:
         inviteCode:
           type: string
       type: object
-    internal_group.updateRoleRequest:
+    group.updateRoleRequest:
       properties:
         role:
           type: string
       type: object
-    internal_notification.Notification:
+    notification.Notification:
       properties:
         activityId:
           type: string
@@ -347,7 +328,26 @@ components:
         userId:
           type: string
       type: object
-    internal_user.User:
+    pagination.Meta:
+      properties:
+        hasMore:
+          type: boolean
+        nextCursor:
+          type: string
+      type: object
+    response.ErrorResponse:
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      type: object
+    response.MessageResponse:
+      properties:
+        message:
+          type: string
+      type: object
+    user.User:
       properties:
         createdAt:
           type: string
@@ -364,19 +364,19 @@ components:
         updatedAt:
           type: string
       type: object
-    internal_user.addFriendRequest:
+    user.addFriendRequest:
       properties:
         friendEmail:
           type: string
         friendPhone:
           type: string
       type: object
-    internal_user.registerRequest:
+    user.registerRequest:
       properties:
         name:
           type: string
       type: object
-    internal_user.updateProfileRequest:
+    user.updateProfileRequest:
       properties:
         defaultCurrency:
           type: string
@@ -406,20 +406,20 @@ paths:
             application/json:
               schema:
                 items:
-                  $ref: '#/components/schemas/internal_activity.Activity'
+                  $ref: '#/components/schemas/activity.Activity'
                 type: array
           description: OK
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -445,25 +445,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/internal_expense.BalanceResponse'
+                $ref: '#/components/schemas/expense.BalanceResponse'
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -496,26 +496,26 @@ paths:
             application/json:
               schema:
                 items:
-                  $ref: '#/components/schemas/internal_expense.Expense'
+                  $ref: '#/components/schemas/expense.Expense'
                 type: array
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -530,7 +530,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/internal_expense.createExpenseRequest'
+              - $ref: '#/components/schemas/expense.createExpenseRequest'
                 description: Expense details and splits structure
                 summary: request
         description: Expense details and splits structure
@@ -540,25 +540,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/internal_expense.CreateExpenseResponse'
+                $ref: '#/components/schemas/expense.CreateExpenseResponse'
           description: Created
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -582,19 +582,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -615,25 +615,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/internal_expense.GetExpenseDetailsResponse'
+                $ref: '#/components/schemas/expense.GetExpenseDetailsResponse'
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -649,7 +649,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/internal_expense.settleExpenseRequest'
+              - $ref: '#/components/schemas/expense.settleExpenseRequest'
                 description: Settlement details
                 summary: request
         description: Settlement details
@@ -659,25 +659,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/internal_expense.SettleExpenseResponse'
+                $ref: '#/components/schemas/expense.SettleExpenseResponse'
           description: Created
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -693,20 +693,20 @@ paths:
             application/json:
               schema:
                 items:
-                  $ref: '#/components/schemas/internal_user.User'
+                  $ref: '#/components/schemas/user.User'
                 type: array
           description: OK
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -721,7 +721,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/internal_user.addFriendRequest'
+              - $ref: '#/components/schemas/user.addFriendRequest'
                 description: Friend email or phone
                 summary: request
         description: Friend email or phone
@@ -731,25 +731,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/internal_user.User'
+                $ref: '#/components/schemas/user.User'
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -773,19 +773,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -801,20 +801,20 @@ paths:
             application/json:
               schema:
                 items:
-                  $ref: '#/components/schemas/internal_group.GroupDetailsResponse'
+                  $ref: '#/components/schemas/group.GroupDetailsResponse'
                 type: array
           description: OK
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -829,7 +829,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/internal_group.createGroupRequest'
+              - $ref: '#/components/schemas/group.createGroupRequest'
                 description: Group creation data
                 summary: request
         description: Group creation data
@@ -839,25 +839,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/internal_group.Group'
+                $ref: '#/components/schemas/group.Group'
           description: Created
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -889,25 +889,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/internal_activity.FeedResponse'
+                $ref: '#/components/schemas/activity.FeedResponse'
           description: OK
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Forbidden
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -929,25 +929,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.MessageResponse'
+                $ref: '#/components/schemas/response.MessageResponse'
           description: Success message
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -968,25 +968,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/internal_group.GroupDetailsResponse'
+                $ref: '#/components/schemas/group.GroupDetailsResponse'
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -1009,7 +1009,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/internal_group.addMemberRequest'
+              - $ref: '#/components/schemas/group.addMemberRequest'
                 description: User ID of the member to add
                 summary: request
         description: User ID of the member to add
@@ -1019,25 +1019,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.MessageResponse'
+                $ref: '#/components/schemas/response.MessageResponse'
           description: Success message
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -1067,19 +1067,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -1108,7 +1108,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/internal_group.updateRoleRequest'
+              - $ref: '#/components/schemas/group.updateRoleRequest'
                 description: New role value
                 summary: request
         description: New role value
@@ -1118,25 +1118,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.MessageResponse'
+                $ref: '#/components/schemas/response.MessageResponse'
           description: Success message
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -1152,7 +1152,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/internal_group.joinGroupRequest'
+              - $ref: '#/components/schemas/group.joinGroupRequest'
                 description: Group join data
                 summary: request
         description: Group join data
@@ -1162,25 +1162,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/internal_group.Group'
+                $ref: '#/components/schemas/group.Group'
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -1196,20 +1196,20 @@ paths:
             application/json:
               schema:
                 items:
-                  $ref: '#/components/schemas/internal_notification.Notification'
+                  $ref: '#/components/schemas/notification.Notification'
                 type: array
           description: OK
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -1231,25 +1231,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.MessageResponse'
+                $ref: '#/components/schemas/response.MessageResponse'
           description: Success message
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -1264,19 +1264,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.MessageResponse'
+                $ref: '#/components/schemas/response.MessageResponse'
           description: Success message
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -1292,7 +1292,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/internal_user.registerRequest'
+              - $ref: '#/components/schemas/user.registerRequest'
                 description: Registration data
                 summary: request
         description: Registration data
@@ -1302,25 +1302,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/internal_user.User'
+                $ref: '#/components/schemas/user.User'
           description: Created
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -1335,19 +1335,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/internal_user.User'
+                $ref: '#/components/schemas/user.User'
           description: OK
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []
@@ -1362,7 +1362,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/internal_user.updateProfileRequest'
+              - $ref: '#/components/schemas/user.updateProfileRequest'
                 description: Profile details to update
                 summary: request
         description: Profile details to update
@@ -1372,25 +1372,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/internal_user.User'
+                $ref: '#/components/schemas/user.User'
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Unauthorized
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse'
+                $ref: '#/components/schemas/response.ErrorResponse'
           description: Internal Server Error
       security:
       - BearerAuth: []

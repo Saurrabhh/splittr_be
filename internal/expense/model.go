@@ -5,6 +5,7 @@ import (
 )
 
 // SplitType represents the method used to split an expense.
+// @enums EQUAL EXACT PERCENTAGE
 type SplitType string
 
 const (

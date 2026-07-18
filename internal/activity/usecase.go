@@ -129,5 +129,8 @@ func (u *Usecase) GetGroupFeed(ctx context.Context, userID, groupID string, p pa
 	resp := pagination.BuildResponse(feedItems, p.Limit, func(item FeedItemResponse) string {
 		return pagination.EncodeCursor(item.CreatedAt, item.ID)
 	})
-	return &resp, nil
+	return &FeedResponse{
+		Data:       resp.Data,
+		Pagination: resp.Pagination,
+	}, nil
 }
