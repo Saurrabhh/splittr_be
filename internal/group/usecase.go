@@ -17,7 +17,7 @@ type Repository interface {
 	GetByInviteCode(ctx context.Context, inviteCode string) (*Group, error)
 	GetGroupMember(ctx context.Context, groupID, userID string) (*Member, error)
 	ListGroupMembers(ctx context.Context, groupID string) ([]Member, error)
-	ListUserGroups(ctx context.Context, userID string) ([]Group, error)
+	ListUserGroupsWithMembers(ctx context.Context, userID string) ([]GroupDetailsResponse, error)
 	CreateGroup(ctx context.Context, g *Group) error
 	Update(ctx context.Context, g *Group) error
 	Archive(ctx context.Context, id string) error
@@ -151,15 +151,16 @@ func (u *Usecase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 	return g, members, nil
 }
 
-// ListUserGroups returns all groups the user is a member of.
-func (u *Usecase) ListUserGroups(ctx context.Context, userID string) ([]Group, error) {
+// ListUserGroups returns all groups the user is a member of, including member lists,
+// via a single JOIN query — no N+1 round-trips.
+func (u *Usecase) ListUserGroups(ctx context.Context, userID string) ([]GroupDetailsResponse, error) {
 	if userID == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: "user ID is required",
 		}
 	}
-	groups, err := u.repo.ListUserGroups(ctx, userID)
+	result, err := u.repo.ListUserGroupsWithMembers(ctx, userID)
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
@@ -167,7 +168,7 @@ func (u *Usecase) ListUserGroups(ctx context.Context, userID string) ([]Group, e
 			Err:     err,
 		}
 	}
-	return groups, nil
+	return result, nil
 }
 
 // AddMember adds a new user to the group. Requires requester to be an admin.

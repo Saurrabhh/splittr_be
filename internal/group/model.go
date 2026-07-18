@@ -26,3 +26,11 @@ type Member struct {
 	Email    *string   `json:"email,omitempty"`
 	Phone    *string   `json:"phone,omitempty"`
 }
+
+// GroupDetailsResponse is the canonical shape for any endpoint or feed payload that
+// returns group data. It embeds Group (all fields inline) and adds the Members array.
+// Both the list and detail endpoints return this type so Flutter only needs one class.
+type GroupDetailsResponse struct {
+	Group
+	Members []Member `json:"members"`
+}

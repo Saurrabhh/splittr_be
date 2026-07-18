@@ -55,7 +55,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 // @Tags         notifications
 // @Produce      json
 // @Param        id path string true "Notification ID"
-// @Success      200  {object}  map[string]string "Success message"
+// @Success      200  {object}  response.MessageResponse "Success message"
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -79,7 +79,7 @@ func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, map[string]string{"message": "notification marked as read"})
+	response.JSON(w, http.StatusOK, response.MessageResponse{Message: "notification marked as read"})
 }
 
 // MarkAllAsRead marks all notifications as read.
@@ -87,7 +87,7 @@ func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 // @Description  Mark all unread notifications as read for the current user.
 // @Tags         notifications
 // @Produce      json
-// @Success      200  {object}  map[string]string "Success message"
+// @Success      200  {object}  response.MessageResponse "Success message"
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /notifications/read-all [post]
@@ -101,5 +101,5 @@ func (h *Handler) MarkAllAsRead(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, map[string]string{"message": "all notifications marked as read"})
+	response.JSON(w, http.StatusOK, response.MessageResponse{Message: "all notifications marked as read"})
 }

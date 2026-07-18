@@ -126,7 +126,7 @@ func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 // @Description  Retrieve all bill-splitting groups the current user belongs to.
 // @Tags         groups
 // @Produce      json
-// @Success      200  {array}   Group
+// @Success      200  {array}   GroupDetailsResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /groups [get]
@@ -143,18 +143,13 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, groups)
 }
 
-type groupDetailsResponse struct {
-	Group
-	Members []Member `json:"members"`
-}
-
 // GetDetails returns the group metadata and its members list.
 // @Summary      Get group details
 // @Description  Get a group's metadata and a list of all its members.
 // @Tags         groups
 // @Produce      json
 // @Param        id path string true "Group ID"
-// @Success      200  {object}  groupDetailsResponse
+// @Success      200  {object}  GroupDetailsResponse
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -178,7 +173,7 @@ func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, groupDetailsResponse{
+	response.JSON(w, http.StatusOK, GroupDetailsResponse{
 		Group:   *g,
 		Members: members,
 	})
@@ -196,7 +191,7 @@ type addMemberRequest struct {
 // @Produce      json
 // @Param        id path string true "Group ID"
 // @Param        request body addMemberRequest true "User ID of the member to add"
-// @Success      200  {object}  map[string]string "Success message"
+// @Success      200  {object}  response.MessageResponse "Success message"
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -234,7 +229,7 @@ func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, map[string]string{"message": "member added successfully"})
+	response.JSON(w, http.StatusOK, response.MessageResponse{Message: "member added successfully"})
 }
 
 // RemoveMember removes a user from the group (or leaves the group).
@@ -284,7 +279,7 @@ type updateRoleRequest struct {
 // @Param        id path string true "Group ID"
 // @Param        userId path string true "User ID of the member to update"
 // @Param        request body updateRoleRequest true "New role value"
-// @Success      200  {object}  map[string]string "Success message"
+// @Success      200  {object}  response.MessageResponse "Success message"
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -315,7 +310,7 @@ func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, map[string]string{"message": "role updated successfully"})
+	response.JSON(w, http.StatusOK, response.MessageResponse{Message: "role updated successfully"})
 }
 
 // Archive archives (soft-deletes) the group.
@@ -324,7 +319,7 @@ func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 // @Tags         groups
 // @Produce      json
 // @Param        id path string true "Group ID"
-// @Success      200  {object}  map[string]string "Success message"
+// @Success      200  {object}  response.MessageResponse "Success message"
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -348,5 +343,5 @@ func (h *Handler) Archive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, map[string]string{"message": "group archived successfully"})
+	response.JSON(w, http.StatusOK, response.MessageResponse{Message: "group archived successfully"})
 }

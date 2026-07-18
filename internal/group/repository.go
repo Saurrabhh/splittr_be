@@ -2,6 +2,7 @@ package group
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -282,8 +283,9 @@ func (r *DBRepository) ListGroupMembers(ctx context.Context, groupID string) ([]
 	return members, nil
 }
 
-// ListUserGroups lists all groups a user is member of.
-func (r *DBRepository) ListUserGroups(ctx context.Context, userID string) ([]Group, error) {
+// ListUserGroupsWithMembers lists all groups a user is a member of, with each group's
+// member list included via a single JOIN+json_agg query — no N+1 round-trips.
+func (r *DBRepository) ListUserGroupsWithMembers(ctx context.Context, userID string) ([]GroupDetailsResponse, error) {
 	parsedUserID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user uuid: %w", err)
@@ -292,16 +294,33 @@ func (r *DBRepository) ListUserGroups(ctx context.Context, userID string) ([]Gro
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)
 
-	rows, err := q.ListUserGroups(ctx, parsedUserID)
+	rows, err := q.ListUserGroupsWithMembers(ctx, parsedUserID)
 	if err != nil {
-		return nil, fmt.Errorf("list user groups: %w", err)
+		return nil, fmt.Errorf("list user groups with members: %w", err)
 	}
 
-	groups := make([]Group, 0, len(rows))
+	result := make([]GroupDetailsResponse, 0, len(rows))
 	for _, row := range rows {
-		groups = append(groups, *toDomainGroup(row))
+		g := toDomainGroup(dbgen.Group{
+			ID:          row.ID,
+			Name:        row.Name,
+			Description: row.Description,
+			InviteCode:  row.InviteCode,
+			CreatedBy:   row.CreatedBy,
+			CreatedAt:   row.CreatedAt,
+			UpdatedAt:   row.UpdatedAt,
+			ArchivedAt:  row.ArchivedAt,
+		})
+
+		// Decode the aggregated members JSON blob produced by json_agg.
+		var members []Member
+		if err := json.Unmarshal(row.Members, &members); err != nil {
+			return nil, fmt.Errorf("decode members json for group %s: %w", row.ID, err)
+		}
+
+		result = append(result, GroupDetailsResponse{Group: *g, Members: members})
 	}
-	return groups, nil
+	return result, nil
 }
 
 // Helper converters
