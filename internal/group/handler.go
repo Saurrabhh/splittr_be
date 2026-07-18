@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/Saurrabhh/splittr_be/internal/activity"
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 	"github.com/go-chi/chi/v5"
@@ -11,12 +13,16 @@ import (
 
 // Handler handles HTTP requests for group endpoints.
 type Handler struct {
-	uc *Usecase
+	uc         *Usecase
+	activityUC *activity.Usecase
 }
 
 // NewHandler creates a new Handler instance.
-func NewHandler(uc *Usecase) *Handler {
-	return &Handler{uc: uc}
+func NewHandler(uc *Usecase, activityUC *activity.Usecase) *Handler {
+	return &Handler{
+		uc:         uc,
+		activityUC: activityUC,
+	}
 }
 
 // RegisterRoutes registers the group endpoints on the router.
@@ -30,6 +36,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", h.GetDetails)
 			r.Delete("/", h.Archive)
+			r.Get("/feed", h.GetFeed)
 
 			r.Route("/members", func(r chi.Router) {
 				r.Post("/", h.AddMember)
@@ -345,3 +352,34 @@ func (h *Handler) Archive(w http.ResponseWriter, r *http.Request) {
 
 	response.JSON(w, http.StatusOK, response.MessageResponse{Message: "group archived successfully"})
 }
+
+// GetFeed retrieves group activities with cursor-based pagination.
+// @Summary      Get group activity feed
+// @Description  Get a cursor-paginated timeline of events inside a group.
+// @Tags         groups
+// @Produce      json
+// @Param        id       path      string  true   "Group ID"
+// @Param        limit    query     int     false  "Items per page (max 100, default 20)"
+// @Param        cursor   query     string  false  "Opaque cursor token from previous response"
+// @Success      200      {object}  activity.FeedResponse
+// @Failure      401      {object}  response.ErrorResponse
+// @Failure      403      {object}  response.ErrorResponse
+// @Failure      500      {object}  response.ErrorResponse
+// @Router       /groups/{id}/feed [get]
+// @Security     BearerAuth
+func (h *Handler) GetFeed(w http.ResponseWriter, r *http.Request) {
+	currUser := user.MustFrom(r.Context())
+	groupID := chi.URLParam(r, "id")
+
+	// Shared helper: parses ?limit and ?cursor from query string
+	p := pagination.ParseParams(r, 20, 100)
+
+	feed, err := h.activityUC.GetGroupFeed(r.Context(), currUser.ID, groupID, p)
+	if err != nil {
+		response.HandleError(w, err)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, feed)
+}
+

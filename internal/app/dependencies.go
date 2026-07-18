@@ -54,7 +54,7 @@ func initDependencies(ctx context.Context, app *Application) (*dependencies, err
 	// Group domain wiring
 	groupRepo := group.NewRepository(app.DB, tm)
 	groupUsecase := group.NewUsecase(groupRepo, tm, activityUsecase, notificationUsecase)
-	groupHandler := group.NewHandler(groupUsecase)
+	groupHandler := group.NewHandler(groupUsecase, activityUsecase)
 
 	// Expense domain wiring
 	expenseRepo := expense.NewRepository(app.DB, tm)

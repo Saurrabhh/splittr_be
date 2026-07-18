@@ -900,56 +900,6 @@ paths:
       summary: Create group
       tags:
       - groups
-  /groups/{groupId}/feed:
-    get:
-      description: Get a cursor-paginated timeline of events inside a group.
-      parameters:
-      - description: Group ID
-        in: path
-        name: groupId
-        required: true
-        schema:
-          type: string
-      - description: Items per page (max 100, default 20)
-        in: query
-        name: limit
-        schema:
-          type: integer
-      - description: Opaque cursor token from previous response
-        in: query
-        name: cursor
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/activity.FeedResponse'
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/response.ErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/response.ErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/response.ErrorResponse'
-          description: Internal Server Error
-      security:
-      - BearerAuth: []
-      summary: Get group activity feed
-      tags:
-      - activities
   /groups/{id}:
     delete:
       description: Soft-delete a bill splitting group. Only group creators can archive.
@@ -1027,6 +977,56 @@ paths:
       security:
       - BearerAuth: []
       summary: Get group details
+      tags:
+      - groups
+  /groups/{id}/feed:
+    get:
+      description: Get a cursor-paginated timeline of events inside a group.
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - description: Items per page (max 100, default 20)
+        in: query
+        name: limit
+        schema:
+          type: integer
+      - description: Opaque cursor token from previous response
+        in: query
+        name: cursor
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/activity.FeedResponse'
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response.ErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response.ErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response.ErrorResponse'
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get group activity feed
       tags:
       - groups
   /groups/{id}/members:
