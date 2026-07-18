@@ -16,6 +16,9 @@ type Activity struct {
 	ActionType  string
 	Description string
 	CreatedAt   pgtype.Timestamptz
+	EntityType  string
+	EntityID    pgtype.UUID
+	Metadata    []byte
 }
 
 type ActivityVisibility struct {
