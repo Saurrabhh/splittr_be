@@ -8,10 +8,35 @@ const docTemplate = `{
     "schemes": {{ marshal .Schemes }},
     "components": {
         "schemas": {
+            "activity.ActionType": {
+                "enum": [
+                    "EXPENSE_CREATED",
+                    "SETTLEMENT",
+                    "MEMBER_ADDED",
+                    "MEMBER_LEFT",
+                    "MEMBER_KICKED",
+                    "MEMBER_ROLE_UPDATED",
+                    "GROUP_CREATED",
+                    "GROUP_ARCHIVED",
+                    "MEMBER_JOINED"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "ActionTypeExpenseCreated",
+                    "ActionTypeSettlementCreated",
+                    "ActionTypeMemberAdded",
+                    "ActionTypeMemberLeft",
+                    "ActionTypeMemberKicked",
+                    "ActionTypeMemberRoleUpdated",
+                    "ActionTypeGroupCreated",
+                    "ActionTypeGroupArchived",
+                    "ActionTypeMemberJoined"
+                ]
+            },
             "activity.Activity": {
                 "properties": {
                     "actionType": {
-                        "type": "string"
+                        "$ref": "#/components/schemas/activity.ActionType"
                     },
                     "actorId": {
                         "type": "string"
@@ -29,7 +54,7 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "entityType": {
-                        "type": "string"
+                        "$ref": "#/components/schemas/activity.EntityType"
                     },
                     "groupId": {
                         "type": "string"
@@ -54,10 +79,27 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "activity.EntityType": {
+                "enum": [
+                    "SYSTEM",
+                    "EXPENSE",
+                    "SETTLEMENT",
+                    "MEMBER",
+                    "GROUP"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "EntityTypeSystem",
+                    "EntityTypeExpense",
+                    "EntityTypeSettlement",
+                    "EntityTypeMember",
+                    "EntityTypeGroup"
+                ]
+            },
             "activity.FeedItemResponse": {
                 "properties": {
                     "actionType": {
-                        "type": "string"
+                        "$ref": "#/components/schemas/activity.ActionType"
                     },
                     "actor": {
                         "$ref": "#/components/schemas/activity.ActorInfo"
@@ -72,7 +114,7 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "entityType": {
-                        "type": "string"
+                        "$ref": "#/components/schemas/activity.EntityType"
                     },
                     "id": {
                         "type": "string"

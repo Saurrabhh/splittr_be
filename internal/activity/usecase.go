@@ -35,10 +35,10 @@ func (u *Usecase) LogActivity(
 	ctx context.Context,
 	actorID string,
 	groupID *string,
-	actionType string,
+	actionType ActionType,
 	description string,
 	visibleToUserIDs []string,
-	entityType string,
+	entityType EntityType,
 	entityID string,
 	metadata []byte,
 ) (*Activity, error) {

@@ -41,10 +41,10 @@ type ActivityLogger interface {
 		ctx context.Context,
 		actorID string,
 		groupID *string,
-		actionType string,
+		actionType activity.ActionType,
 		description string,
 		visibleToUserIDs []string,
-		entityType string,
+		entityType activity.EntityType,
 		entityID string,
 		metadata []byte,
 	) (*activity.Activity, error)
@@ -196,8 +196,8 @@ func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64
 		}
 
 		act, err := u.activity.LogActivity(
-			txCtx, createdBy, groupID, "EXPENSE_CREATED", activityDesc, visibleTo,
-			"EXPENSE", newExpense.ID, snapshot,
+			txCtx, createdBy, groupID, activity.ActionTypeExpenseCreated, activityDesc, visibleTo,
+			activity.EntityTypeExpense, newExpense.ID, snapshot,
 		)
 		if err != nil {
 			return err
@@ -337,8 +337,8 @@ func (u *Usecase) SettleUp(ctx context.Context, amount float64, currency string,
 		}
 
 		act, err := u.activity.LogActivity(
-			txCtx, createdBy, groupID, "SETTLEMENT", activityDesc, visibleTo,
-			"SETTLEMENT", newExpense.ID, snapshot,
+			txCtx, createdBy, groupID, activity.ActionTypeSettlementCreated, activityDesc, visibleTo,
+			activity.EntityTypeSettlement, newExpense.ID, snapshot,
 		)
 		if err != nil {
 			return err

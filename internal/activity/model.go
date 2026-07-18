@@ -7,15 +7,41 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
 )
 
+// EntityType represents the type of entity involved in an activity.
+type EntityType string
+
+const (
+	EntityTypeSystem     EntityType = "SYSTEM"
+	EntityTypeExpense    EntityType = "EXPENSE"
+	EntityTypeSettlement EntityType = "SETTLEMENT"
+	EntityTypeMember     EntityType = "MEMBER"
+	EntityTypeGroup      EntityType = "GROUP"
+)
+
+// ActionType represents the specific action performed.
+type ActionType string
+
+const (
+	ActionTypeExpenseCreated    ActionType = "EXPENSE_CREATED"
+	ActionTypeSettlementCreated ActionType = "SETTLEMENT"
+	ActionTypeMemberAdded       ActionType = "MEMBER_ADDED"
+	ActionTypeMemberLeft        ActionType = "MEMBER_LEFT"
+	ActionTypeMemberKicked      ActionType = "MEMBER_KICKED"
+	ActionTypeMemberRoleUpdated ActionType = "MEMBER_ROLE_UPDATED"
+	ActionTypeGroupCreated      ActionType = "GROUP_CREATED"
+	ActionTypeGroupArchived     ActionType = "GROUP_ARCHIVED"
+	ActionTypeMemberJoined      ActionType = "MEMBER_JOINED"
+)
+
 // Activity represents an audit log entry for actions performed in the system.
 type Activity struct {
 	ID          string          `json:"id"`
 	GroupID     *string         `json:"groupId,omitempty"`
 	ActorID     *string         `json:"actorId,omitempty"`
 	ActorName   *string         `json:"actorName,omitempty"`
-	ActionType  string          `json:"actionType" Enums:"EXPENSE_CREATED,SETTLEMENT,MEMBER_ADDED,MEMBER_LEFT,MEMBER_KICKED,MEMBER_ROLE_UPDATED,GROUP_CREATED,GROUP_ARCHIVED,MEMBER_JOINED"`
+	ActionType  ActionType      `json:"actionType" Enums:"EXPENSE_CREATED,SETTLEMENT,MEMBER_ADDED,MEMBER_LEFT,MEMBER_KICKED,MEMBER_ROLE_UPDATED,GROUP_CREATED,GROUP_ARCHIVED,MEMBER_JOINED"`
 	Description string          `json:"description"`
-	EntityType  string          `json:"entityType" Enums:"EXPENSE,SETTLEMENT,MEMBER,GROUP"`
+	EntityType  EntityType      `json:"entityType" Enums:"SYSTEM,EXPENSE,SETTLEMENT,MEMBER,GROUP"`
 	EntityID    *string         `json:"entityId,omitempty"`
 	Metadata    json.RawMessage `json:"metadata,omitempty" swaggertype:"object" description:"Snapshot metadata. Shape matches the entity response: EXPENSE (CreateExpenseResponse), SETTLEMENT (SettleExpenseResponse), MEMBER (Member), GROUP (GroupDetailsResponse)"`
 	CreatedAt   time.Time       `json:"createdAt"`
@@ -23,9 +49,9 @@ type Activity struct {
 
 type FeedItemResponse struct {
 	ID          string          `json:"id"`
-	EntityType  string          `json:"entityType" Enums:"EXPENSE,SETTLEMENT,MEMBER,GROUP"`
+	EntityType  EntityType      `json:"entityType" Enums:"EXPENSE,SETTLEMENT,MEMBER,GROUP"`
 	EntityID    *string         `json:"entityId,omitempty"`
-	ActionType  string          `json:"actionType" Enums:"EXPENSE_CREATED,SETTLEMENT,MEMBER_ADDED,MEMBER_LEFT,MEMBER_KICKED,MEMBER_ROLE_UPDATED,GROUP_CREATED,GROUP_ARCHIVED,MEMBER_JOINED"`
+	ActionType  ActionType      `json:"actionType" Enums:"EXPENSE_CREATED,SETTLEMENT,MEMBER_ADDED,MEMBER_LEFT,MEMBER_KICKED,MEMBER_ROLE_UPDATED,GROUP_CREATED,GROUP_ARCHIVED,MEMBER_JOINED"`
 	Actor       ActorInfo       `json:"actor"`
 	Description string          `json:"description"`
 	CreatedAt   time.Time       `json:"createdAt"`

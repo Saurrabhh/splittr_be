@@ -33,10 +33,10 @@ type ActivityLogger interface {
 		ctx context.Context,
 		actorID string,
 		groupID *string,
-		actionType string,
+		actionType activity.ActionType,
 		description string,
 		visibleToUserIDs []string,
-		entityType string,
+		entityType activity.EntityType,
 		entityID string,
 		metadata []byte,
 	) (*activity.Activity, error)
@@ -112,8 +112,8 @@ func (u *Usecase) CreateGroup(ctx context.Context, name, description string, cre
 		}
 
 		_, err = u.activity.LogActivity(
-			txCtx, creatorID, &newGroup.ID, "GROUP_CREATED", "created the group", nil,
-			"GROUP", newGroup.ID, snapshot,
+			txCtx, creatorID, &newGroup.ID, activity.ActionTypeGroupCreated, "created the group", nil,
+			activity.EntityTypeGroup, newGroup.ID, snapshot,
 		)
 		return err
 	})
@@ -258,8 +258,8 @@ func (u *Usecase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 
 		desc := fmt.Sprintf("added user %s to the group", targetUserID)
 		act, err := u.activity.LogActivity(
-			txCtx, actionByUserID, &groupID, "MEMBER_ADDED", desc, nil,
-			"MEMBER", targetUserID, snapshot,
+			txCtx, actionByUserID, &groupID, activity.ActionTypeMemberAdded, desc, nil,
+			activity.EntityTypeMember, targetUserID, snapshot,
 		)
 		if err != nil {
 			return err
@@ -372,8 +372,8 @@ func (u *Usecase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 				}
 
 				_, err = u.activity.LogActivity(
-					txCtx, actionByUserID, &groupID, "MEMBER_LEFT", "left the group", nil,
-					"MEMBER", targetUserID, snapshot,
+					txCtx, actionByUserID, &groupID, activity.ActionTypeMemberLeft, "left the group", nil,
+					activity.EntityTypeMember, targetUserID, snapshot,
 				)
 				if err != nil {
 					return err
@@ -388,10 +388,10 @@ func (u *Usecase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 			return err
 		}
 
-		actionType := "MEMBER_LEFT"
+		actionType := activity.ActionTypeMemberLeft
 		desc := "left the group"
 		if !isSelf {
-			actionType = "MEMBER_KICKED"
+			actionType = activity.ActionTypeMemberKicked
 			desc = fmt.Sprintf("removed user %s from the group", targetUserID)
 		}
 
@@ -402,7 +402,7 @@ func (u *Usecase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 
 		act, err := u.activity.LogActivity(
 			txCtx, actionByUserID, &groupID, actionType, desc, nil,
-			"MEMBER", targetUserID, snapshot,
+			activity.EntityTypeMember, targetUserID, snapshot,
 		)
 		if err != nil {
 			return err
@@ -517,8 +517,8 @@ func (u *Usecase) UpdateMemberRole(ctx context.Context, groupID, targetUserID, r
 
 		desc := fmt.Sprintf("updated user %s's role to %s", targetUserID, role)
 		act, err := u.activity.LogActivity(
-			txCtx, actionByUserID, &groupID, "MEMBER_ROLE_UPDATED", desc, nil,
-			"MEMBER", targetUserID, snapshot,
+			txCtx, actionByUserID, &groupID, activity.ActionTypeMemberRoleUpdated, desc, nil,
+			activity.EntityTypeMember, targetUserID, snapshot,
 		)
 		if err != nil {
 			return err
@@ -598,8 +598,8 @@ func (u *Usecase) ArchiveGroup(ctx context.Context, groupID, actionByUserID stri
 		}
 
 		_, err = u.activity.LogActivity(
-			txCtx, actionByUserID, &groupID, "GROUP_ARCHIVED", "archived the group", nil,
-			"GROUP", groupID, snapshot,
+			txCtx, actionByUserID, &groupID, activity.ActionTypeGroupArchived, "archived the group", nil,
+			activity.EntityTypeGroup, groupID, snapshot,
 		)
 		return err
 	})
@@ -672,8 +672,8 @@ func (u *Usecase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Gr
 		}
 
 		_, err = u.activity.LogActivity(
-			txCtx, userID, &g.ID, "MEMBER_JOINED", "joined the group via invite code", nil,
-			"MEMBER", userID, snapshot,
+			txCtx, userID, &g.ID, activity.ActionTypeMemberJoined, "joined the group via invite code", nil,
+			activity.EntityTypeMember, userID, snapshot,
 		)
 		return err
 	})
