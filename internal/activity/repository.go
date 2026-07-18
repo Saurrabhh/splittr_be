@@ -3,6 +3,7 @@ package activity
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Saurrabhh/splittr_be/internal/db"
 	"github.com/Saurrabhh/splittr_be/internal/db/dbgen"
@@ -49,6 +50,20 @@ func (r *DBRepository) CreateActivity(ctx context.Context, act *Activity) error 
 		pgActorID = pgtype.UUID{Bytes: aUUID, Valid: true}
 	}
 
+	var pgEntityID pgtype.UUID
+	if act.EntityID != nil && *act.EntityID != "" {
+		eUUID, err := uuid.Parse(*act.EntityID)
+		if err != nil {
+			return fmt.Errorf("invalid entity uuid: %w", err)
+		}
+		pgEntityID = pgtype.UUID{Bytes: eUUID, Valid: true}
+	}
+
+	var metadataBytes []byte
+	if len(act.Metadata) > 0 {
+		metadataBytes = act.Metadata
+	}
+
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)
 
@@ -58,6 +73,9 @@ func (r *DBRepository) CreateActivity(ctx context.Context, act *Activity) error 
 		ActorID:     pgActorID,
 		ActionType:  act.ActionType,
 		Description: act.Description,
+		EntityType:  act.EntityType,
+		EntityID:    pgEntityID,
+		Metadata:    metadataBytes,
 	})
 	if err != nil {
 		return fmt.Errorf("insert activity: %w", err)
@@ -130,5 +148,74 @@ func (r *DBRepository) ListUserActivities(ctx context.Context, userID string) ([
 		})
 	}
 
+	return activities, nil
+}
+
+// ListGroupFeed queries a group activity feed chronologically with cursor pagination.
+func (r *DBRepository) ListGroupFeed(ctx context.Context, groupID string, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Activity, error) {
+	gUUID, err := uuid.Parse(groupID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid group uuid: %w", err)
+	}
+	uUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user uuid: %w", err)
+	}
+
+	var pgLastTime pgtype.Timestamptz
+	if lastTime != nil {
+		pgLastTime = pgtype.Timestamptz{Time: *lastTime, Valid: true}
+	}
+
+	var lastIDUUID uuid.UUID
+	if lastID != nil {
+		parsed, err := uuid.Parse(*lastID)
+		if err == nil {
+			lastIDUUID = parsed
+		}
+	}
+
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+
+	rows, err := q.ListGroupFeedPaginated(ctx, dbgen.ListGroupFeedPaginatedParams{
+		GroupID: pgtype.UUID{Bytes: gUUID, Valid: true},
+		Limit:   limit,
+		Column3: pgLastTime,
+		Column4: lastIDUUID,
+		UserID:  uUUID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("query list group feed: %w", err)
+	}
+
+	activities := make([]Activity, 0, len(rows))
+	for _, row := range rows {
+		var groupIDStr *string
+		if row.GroupID.Valid {
+			groupIDStr = new(uuid.UUID(row.GroupID.Bytes).String())
+		}
+		var actorIDStr *string
+		if row.ActorID.Valid {
+			actorIDStr = new(uuid.UUID(row.ActorID.Bytes).String())
+		}
+		var entityIDStr *string
+		if row.EntityID.Valid {
+			entityIDStr = new(uuid.UUID(row.EntityID.Bytes).String())
+		}
+
+		activities = append(activities, Activity{
+			ID:          row.ID.String(),
+			GroupID:     groupIDStr,
+			ActorID:     actorIDStr,
+			ActorName:   &row.ActorName,
+			ActionType:  row.ActionType,
+			Description: row.Description,
+			EntityType:  row.EntityType,
+			EntityID:    entityIDStr,
+			Metadata:    row.Metadata,
+			CreatedAt:   row.CreatedAt.Time,
+		})
+	}
 	return activities, nil
 }
