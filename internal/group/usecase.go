@@ -2,7 +2,9 @@ package group
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/Saurrabhh/splittr_be/internal/activity"
 	"github.com/Saurrabhh/splittr_be/internal/db"
@@ -27,7 +29,17 @@ type Repository interface {
 }
 
 type ActivityLogger interface {
-	LogActivity(ctx context.Context, actorID string, groupID *string, actionType string, description string, visibleToUserIDs []string) (*activity.Activity, error)
+	LogActivity(
+		ctx context.Context,
+		actorID string,
+		groupID *string,
+		actionType string,
+		description string,
+		visibleToUserIDs []string,
+		entityType string,
+		entityID string,
+		metadata []byte,
+	) (*activity.Activity, error)
 }
 
 type NotificationSender interface {
@@ -86,7 +98,23 @@ func (u *Usecase) CreateGroup(ctx context.Context, name, description string, cre
 		if err := u.repo.AddGroupMember(txCtx, newGroup.ID, creatorID, "admin"); err != nil {
 			return err
 		}
-		_, err := u.activity.LogActivity(txCtx, creatorID, &newGroup.ID, "GROUP_CREATED", "created the group", nil)
+		members, err := u.repo.ListGroupMembers(txCtx, newGroup.ID)
+		if err != nil {
+			return err
+		}
+
+		snapshot, err := json.Marshal(GroupDetailsResponse{
+			Group:   *newGroup,
+			Members: members,
+		})
+		if err != nil {
+			return err
+		}
+
+		_, err = u.activity.LogActivity(
+			txCtx, creatorID, &newGroup.ID, "GROUP_CREATED", "created the group", nil,
+			"GROUP", newGroup.ID, snapshot,
+		)
 		return err
 	})
 	if err != nil {
@@ -211,8 +239,28 @@ func (u *Usecase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 			return err
 		}
 
+		members, err := u.repo.ListGroupMembers(txCtx, groupID)
+		if err != nil {
+			return err
+		}
+		var targetMember Member
+		for _, m := range members {
+			if m.UserID == targetUserID {
+				targetMember = m
+				break
+			}
+		}
+
+		snapshot, err := json.Marshal(targetMember)
+		if err != nil {
+			return err
+		}
+
 		desc := fmt.Sprintf("added user %s to the group", targetUserID)
-		act, err := u.activity.LogActivity(txCtx, actionByUserID, &groupID, "MEMBER_ADDED", desc, nil)
+		act, err := u.activity.LogActivity(
+			txCtx, actionByUserID, &groupID, "MEMBER_ADDED", desc, nil,
+			"MEMBER", targetUserID, snapshot,
+		)
 		if err != nil {
 			return err
 		}
@@ -275,12 +323,20 @@ func (u *Usecase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 		}
 	}
 
-	targetMember, err := u.repo.GetGroupMember(ctx, groupID, targetUserID)
+	members, err := u.repo.ListGroupMembers(ctx, groupID)
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve member status",
+			Message: "failed to retrieve group members",
 			Err:     err,
+		}
+	}
+
+	var targetMember *Member
+	for i := range members {
+		if members[i].UserID == targetUserID {
+			targetMember = &members[i]
+			break
 		}
 	}
 	if targetMember == nil {
@@ -291,15 +347,6 @@ func (u *Usecase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 	}
 
 	if targetMember.Role == "admin" {
-		members, err := u.repo.ListGroupMembers(ctx, groupID)
-		if err != nil {
-			return &response.AppError{
-				Type:    response.TypeInternal,
-				Message: "failed to list members",
-				Err:     err,
-			}
-		}
-
 		adminCount := 0
 		for _, m := range members {
 			if m.Role == "admin" {
@@ -318,7 +365,16 @@ func (u *Usecase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 				if err := u.repo.RemoveGroupMember(txCtx, groupID, targetUserID); err != nil {
 					return err
 				}
-				_, err := u.activity.LogActivity(txCtx, actionByUserID, &groupID, "MEMBER_LEFT", "left the group", nil)
+
+				snapshot, err := json.Marshal(targetMember)
+				if err != nil {
+					return err
+				}
+
+				_, err = u.activity.LogActivity(
+					txCtx, actionByUserID, &groupID, "MEMBER_LEFT", "left the group", nil,
+					"MEMBER", targetUserID, snapshot,
+				)
 				if err != nil {
 					return err
 				}
@@ -339,7 +395,15 @@ func (u *Usecase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 			desc = fmt.Sprintf("removed user %s from the group", targetUserID)
 		}
 
-		act, err := u.activity.LogActivity(txCtx, actionByUserID, &groupID, actionType, desc, nil)
+		snapshot, err := json.Marshal(targetMember)
+		if err != nil {
+			return err
+		}
+
+		act, err := u.activity.LogActivity(
+			txCtx, actionByUserID, &groupID, actionType, desc, nil,
+			"MEMBER", targetUserID, snapshot,
+		)
 		if err != nil {
 			return err
 		}
@@ -401,12 +465,20 @@ func (u *Usecase) UpdateMemberRole(ctx context.Context, groupID, targetUserID, r
 		}
 	}
 
-	targetMember, err := u.repo.GetGroupMember(ctx, groupID, targetUserID)
+	members, err := u.repo.ListGroupMembers(ctx, groupID)
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve member status",
+			Message: "failed to retrieve group members",
 			Err:     err,
+		}
+	}
+
+	var targetMember *Member
+	for i := range members {
+		if members[i].UserID == targetUserID {
+			targetMember = &members[i]
+			break
 		}
 	}
 	if targetMember == nil {
@@ -417,15 +489,6 @@ func (u *Usecase) UpdateMemberRole(ctx context.Context, groupID, targetUserID, r
 	}
 
 	if targetMember.Role == "admin" && role == "member" {
-		members, err := u.repo.ListGroupMembers(ctx, groupID)
-		if err != nil {
-			return &response.AppError{
-				Type:    response.TypeInternal,
-				Message: "failed to retrieve members",
-				Err:     err,
-			}
-		}
-
 		adminCount := 0
 		for _, m := range members {
 			if m.Role == "admin" {
@@ -446,8 +509,17 @@ func (u *Usecase) UpdateMemberRole(ctx context.Context, groupID, targetUserID, r
 			return err
 		}
 
+		targetMember.Role = role
+		snapshot, err := json.Marshal(targetMember)
+		if err != nil {
+			return err
+		}
+
 		desc := fmt.Sprintf("updated user %s's role to %s", targetUserID, role)
-		act, err := u.activity.LogActivity(txCtx, actionByUserID, &groupID, "MEMBER_ROLE_UPDATED", desc, nil)
+		act, err := u.activity.LogActivity(
+			txCtx, actionByUserID, &groupID, "MEMBER_ROLE_UPDATED", desc, nil,
+			"MEMBER", targetUserID, snapshot,
+		)
 		if err != nil {
 			return err
 		}
@@ -485,11 +557,50 @@ func (u *Usecase) ArchiveGroup(ctx context.Context, groupID, actionByUserID stri
 		}
 	}
 
+	g, err := u.repo.GetByID(ctx, groupID)
+	if err != nil {
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve group details",
+			Err:     err,
+		}
+	}
+	if g == nil {
+		return &response.AppError{
+			Type:    response.TypeNotFound,
+			Message: "group not found",
+		}
+	}
+
+	members, err := u.repo.ListGroupMembers(ctx, groupID)
+	if err != nil {
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve group members",
+			Err:     err,
+		}
+	}
+
 	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
 		if err := u.repo.Archive(txCtx, groupID); err != nil {
 			return err
 		}
-		_, err := u.activity.LogActivity(txCtx, actionByUserID, &groupID, "GROUP_ARCHIVED", "archived the group", nil)
+
+		now := time.Now()
+		g.ArchivedAt = &now
+
+		snapshot, err := json.Marshal(GroupDetailsResponse{
+			Group:   *g,
+			Members: members,
+		})
+		if err != nil {
+			return err
+		}
+
+		_, err = u.activity.LogActivity(
+			txCtx, actionByUserID, &groupID, "GROUP_ARCHIVED", "archived the group", nil,
+			"GROUP", groupID, snapshot,
+		)
 		return err
 	})
 	if err != nil {
@@ -542,7 +653,28 @@ func (u *Usecase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Gr
 		if err := u.repo.AddGroupMember(txCtx, g.ID, userID, "member"); err != nil {
 			return err
 		}
-		_, err := u.activity.LogActivity(txCtx, userID, &g.ID, "MEMBER_JOINED", "joined the group via invite code", nil)
+
+		members, err := u.repo.ListGroupMembers(txCtx, g.ID)
+		if err != nil {
+			return err
+		}
+		var targetMember Member
+		for _, m := range members {
+			if m.UserID == userID {
+				targetMember = m
+				break
+			}
+		}
+
+		snapshot, err := json.Marshal(targetMember)
+		if err != nil {
+			return err
+		}
+
+		_, err = u.activity.LogActivity(
+			txCtx, userID, &g.ID, "MEMBER_JOINED", "joined the group via invite code", nil,
+			"MEMBER", userID, snapshot,
+		)
 		return err
 	})
 	if err != nil {

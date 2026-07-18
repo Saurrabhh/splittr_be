@@ -2,6 +2,7 @@ package expense
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -36,7 +37,17 @@ type GroupService interface {
 }
 
 type ActivityLogger interface {
-	LogActivity(ctx context.Context, actorID string, groupID *string, actionType string, description string, visibleToUserIDs []string) (*activity.Activity, error)
+	LogActivity(
+		ctx context.Context,
+		actorID string,
+		groupID *string,
+		actionType string,
+		description string,
+		visibleToUserIDs []string,
+		entityType string,
+		entityID string,
+		metadata []byte,
+	) (*activity.Activity, error)
 }
 
 type NotificationSender interface {
@@ -170,7 +181,24 @@ func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64
 			}
 		}
 
-		act, err := u.activity.LogActivity(txCtx, createdBy, groupID, "EXPENSE_CREATED", activityDesc, visibleTo)
+		// Fetch enriched splits inside tx for the activity snapshot
+		enrichedSplits, err := u.repo.ListExpenseSplits(txCtx, newExpense.ID)
+		if err != nil {
+			return err
+		}
+
+		snapshot, err := json.Marshal(CreateExpenseResponse{
+			Expense: newExpense,
+			Splits:  enrichedSplits,
+		})
+		if err != nil {
+			return err
+		}
+
+		act, err := u.activity.LogActivity(
+			txCtx, createdBy, groupID, "EXPENSE_CREATED", activityDesc, visibleTo,
+			"EXPENSE", newExpense.ID, snapshot,
+		)
 		if err != nil {
 			return err
 		}
@@ -288,7 +316,30 @@ func (u *Usecase) SettleUp(ctx context.Context, amount float64, currency string,
 			visibleTo = []string{paidBy, receivedBy, createdBy}
 		}
 
-		act, err := u.activity.LogActivity(txCtx, createdBy, groupID, "SETTLEMENT", activityDesc, visibleTo)
+		// Fetch enriched splits inside tx for the activity snapshot
+		enrichedSplits, err := u.repo.ListExpenseSplits(txCtx, newExpense.ID)
+		if err != nil {
+			return err
+		}
+		var finalSplit *Split
+		if len(enrichedSplits) > 0 {
+			finalSplit = &enrichedSplits[0]
+		} else {
+			finalSplit = split
+		}
+
+		snapshot, err := json.Marshal(SettleExpenseResponse{
+			Expense: newExpense,
+			Split:   finalSplit,
+		})
+		if err != nil {
+			return err
+		}
+
+		act, err := u.activity.LogActivity(
+			txCtx, createdBy, groupID, "SETTLEMENT", activityDesc, visibleTo,
+			"SETTLEMENT", newExpense.ID, snapshot,
+		)
 		if err != nil {
 			return err
 		}

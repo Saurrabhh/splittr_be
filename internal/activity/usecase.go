@@ -31,13 +31,31 @@ func NewUsecase(repo Repository) *Usecase {
 }
 
 // LogActivity records a new activity in the system.
-func (u *Usecase) LogActivity(ctx context.Context, actorID string, groupID *string, actionType string, description string, visibleToUserIDs []string) (*Activity, error) {
+func (u *Usecase) LogActivity(
+	ctx context.Context,
+	actorID string,
+	groupID *string,
+	actionType string,
+	description string,
+	visibleToUserIDs []string,
+	entityType string,
+	entityID string,
+	metadata []byte,
+) (*Activity, error) {
+	var entityIDPtr *string
+	if entityID != "" {
+		entityIDPtr = &entityID
+	}
+
 	newAct := &Activity{
 		ID:          uuid.New().String(),
 		GroupID:     groupID,
 		ActorID:     &actorID,
 		ActionType:  actionType,
 		Description: description,
+		EntityType:  entityType,
+		EntityID:    entityIDPtr,
+		Metadata:    metadata,
 	}
 
 	if err := u.repo.CreateActivity(ctx, newAct); err != nil {
