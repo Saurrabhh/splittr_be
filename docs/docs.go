@@ -63,6 +63,7 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "metadata": {
+                        "description": "Snapshot metadata. Shape matches the entity response: EXPENSE (CreateExpenseResponse), SETTLEMENT (SettleExpenseResponse), MEMBER (Member), GROUP (GroupDetailsResponse)",
                         "type": "object"
                     }
                 },
@@ -120,6 +121,7 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "payload": {
+                        "description": "Verbatim entity snapshot. Shape matches the entity response: EXPENSE (CreateExpenseResponse), SETTLEMENT (SettleExpenseResponse), MEMBER (Member), GROUP (GroupDetailsResponse)",
                         "type": "object"
                     }
                 },
