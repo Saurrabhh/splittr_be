@@ -63,7 +63,7 @@ func ParseParams(r *http.Request, defaultLimit, maxLimit int32) Params {
 
 // Meta is the pagination envelope returned in every paginated API response.
 type Meta struct {
-	NextCursor string `json:"nextCursor"`
+	NextCursor string `json:"nextCursor,omitempty"`
 	HasMore    bool   `json:"hasMore"`
 }
 
