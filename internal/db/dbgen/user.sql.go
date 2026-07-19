@@ -208,6 +208,64 @@ func (q *Queries) ListFriends(ctx context.Context, userID uuid.UUID) ([]User, er
 	return items, nil
 }
 
+const listFriendsPaginated = `-- name: ListFriendsPaginated :many
+SELECT u.id, u.firebase_uid, u.email, u.phone, u.name, u.default_currency, u.created_at, u.updated_at
+FROM users u
+WHERE u.id IN (
+    SELECT f.friend_id FROM friendships f WHERE f.user_id = $1
+    UNION
+    SELECT f.user_id FROM friendships f WHERE f.friend_id = $1
+)
+AND (
+  $3::TIMESTAMP WITH TIME ZONE IS NULL
+  OR u.created_at < $3::TIMESTAMP WITH TIME ZONE
+  OR (u.created_at = $3::TIMESTAMP WITH TIME ZONE AND u.id < $4::UUID)
+)
+ORDER BY u.created_at DESC, u.id DESC
+LIMIT $2
+`
+
+type ListFriendsPaginatedParams struct {
+	UserID  uuid.UUID
+	Limit   int32
+	Column3 pgtype.Timestamptz
+	Column4 uuid.UUID
+}
+
+func (q *Queries) ListFriendsPaginated(ctx context.Context, arg ListFriendsPaginatedParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, listFriendsPaginated,
+		arg.UserID,
+		arg.Limit,
+		arg.Column3,
+		arg.Column4,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.FirebaseUid,
+			&i.Email,
+			&i.Phone,
+			&i.Name,
+			&i.DefaultCurrency,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateUser = `-- name: UpdateUser :one
 UPDATE users
 SET name = $2, default_currency = $3, updated_at = NOW()

@@ -373,6 +373,80 @@ func (q *Queries) ListExpensesByGroup(ctx context.Context, groupID pgtype.UUID) 
 	return items, nil
 }
 
+const listExpensesByGroupPaginated = `-- name: ListExpensesByGroupPaginated :many
+SELECT id, description, amount, currency, category, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at
+FROM expenses
+WHERE group_id = $1
+  AND deleted_at IS NULL
+  AND (
+    $3::TIMESTAMP WITH TIME ZONE IS NULL
+    OR created_at < $3::TIMESTAMP WITH TIME ZONE
+    OR (created_at = $3::TIMESTAMP WITH TIME ZONE AND id < $4::UUID)
+  )
+ORDER BY created_at DESC, id DESC
+LIMIT $2
+`
+
+type ListExpensesByGroupPaginatedParams struct {
+	GroupID pgtype.UUID
+	Limit   int32
+	Column3 pgtype.Timestamptz
+	Column4 uuid.UUID
+}
+
+type ListExpensesByGroupPaginatedRow struct {
+	ID          uuid.UUID
+	Description string
+	Amount      pgtype.Numeric
+	Currency    string
+	Category    string
+	GroupID     pgtype.UUID
+	PaidBy      uuid.UUID
+	CreatedBy   uuid.UUID
+	IsPayment   bool
+	SpentAt     pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
+func (q *Queries) ListExpensesByGroupPaginated(ctx context.Context, arg ListExpensesByGroupPaginatedParams) ([]ListExpensesByGroupPaginatedRow, error) {
+	rows, err := q.db.Query(ctx, listExpensesByGroupPaginated,
+		arg.GroupID,
+		arg.Limit,
+		arg.Column3,
+		arg.Column4,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListExpensesByGroupPaginatedRow
+	for rows.Next() {
+		var i ListExpensesByGroupPaginatedRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Description,
+			&i.Amount,
+			&i.Currency,
+			&i.Category,
+			&i.GroupID,
+			&i.PaidBy,
+			&i.CreatedBy,
+			&i.IsPayment,
+			&i.SpentAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUserFriendExpenses = `-- name: ListUserFriendExpenses :many
 SELECT DISTINCT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
 FROM expenses e
@@ -437,6 +511,85 @@ func (q *Queries) ListUserFriendExpenses(ctx context.Context, paidBy uuid.UUID) 
 	return items, nil
 }
 
+const listUserFriendExpensesPaginated = `-- name: ListUserFriendExpensesPaginated :many
+SELECT DISTINCT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
+FROM expenses e
+JOIN expense_splits es ON e.id = es.expense_id
+WHERE e.group_id IS NULL
+  AND e.deleted_at IS NULL
+  AND (e.paid_by = $1 OR es.user_id = $1)
+  AND (
+    SELECT COUNT(*) FROM expense_splits es2 WHERE es2.expense_id = e.id
+  ) > 1
+  AND (
+    $3::TIMESTAMP WITH TIME ZONE IS NULL
+    OR e.created_at < $3::TIMESTAMP WITH TIME ZONE
+    OR (e.created_at = $3::TIMESTAMP WITH TIME ZONE AND e.id < $4::UUID)
+  )
+ORDER BY e.created_at DESC, e.id DESC
+LIMIT $2
+`
+
+type ListUserFriendExpensesPaginatedParams struct {
+	PaidBy  uuid.UUID
+	Limit   int32
+	Column3 pgtype.Timestamptz
+	Column4 uuid.UUID
+}
+
+type ListUserFriendExpensesPaginatedRow struct {
+	ID          uuid.UUID
+	Description string
+	Amount      pgtype.Numeric
+	Currency    string
+	Category    string
+	GroupID     pgtype.UUID
+	PaidBy      uuid.UUID
+	CreatedBy   uuid.UUID
+	IsPayment   bool
+	SpentAt     pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
+func (q *Queries) ListUserFriendExpensesPaginated(ctx context.Context, arg ListUserFriendExpensesPaginatedParams) ([]ListUserFriendExpensesPaginatedRow, error) {
+	rows, err := q.db.Query(ctx, listUserFriendExpensesPaginated,
+		arg.PaidBy,
+		arg.Limit,
+		arg.Column3,
+		arg.Column4,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUserFriendExpensesPaginatedRow
+	for rows.Next() {
+		var i ListUserFriendExpensesPaginatedRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Description,
+			&i.Amount,
+			&i.Currency,
+			&i.Category,
+			&i.GroupID,
+			&i.PaidBy,
+			&i.CreatedBy,
+			&i.IsPayment,
+			&i.SpentAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUserPersonalExpenses = `-- name: ListUserPersonalExpenses :many
 SELECT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
 FROM expenses e
@@ -476,6 +629,84 @@ func (q *Queries) ListUserPersonalExpenses(ctx context.Context, paidBy uuid.UUID
 	var items []ListUserPersonalExpensesRow
 	for rows.Next() {
 		var i ListUserPersonalExpensesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Description,
+			&i.Amount,
+			&i.Currency,
+			&i.Category,
+			&i.GroupID,
+			&i.PaidBy,
+			&i.CreatedBy,
+			&i.IsPayment,
+			&i.SpentAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUserPersonalExpensesPaginated = `-- name: ListUserPersonalExpensesPaginated :many
+SELECT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
+FROM expenses e
+WHERE e.paid_by = $1
+  AND e.group_id IS NULL
+  AND e.deleted_at IS NULL
+  AND (
+    SELECT COUNT(*) FROM expense_splits es WHERE es.expense_id = e.id
+  ) = 1
+  AND (
+    $3::TIMESTAMP WITH TIME ZONE IS NULL
+    OR e.created_at < $3::TIMESTAMP WITH TIME ZONE
+    OR (e.created_at = $3::TIMESTAMP WITH TIME ZONE AND e.id < $4::UUID)
+  )
+ORDER BY e.created_at DESC, e.id DESC
+LIMIT $2
+`
+
+type ListUserPersonalExpensesPaginatedParams struct {
+	PaidBy  uuid.UUID
+	Limit   int32
+	Column3 pgtype.Timestamptz
+	Column4 uuid.UUID
+}
+
+type ListUserPersonalExpensesPaginatedRow struct {
+	ID          uuid.UUID
+	Description string
+	Amount      pgtype.Numeric
+	Currency    string
+	Category    string
+	GroupID     pgtype.UUID
+	PaidBy      uuid.UUID
+	CreatedBy   uuid.UUID
+	IsPayment   bool
+	SpentAt     pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
+func (q *Queries) ListUserPersonalExpensesPaginated(ctx context.Context, arg ListUserPersonalExpensesPaginatedParams) ([]ListUserPersonalExpensesPaginatedRow, error) {
+	rows, err := q.db.Query(ctx, listUserPersonalExpensesPaginated,
+		arg.PaidBy,
+		arg.Limit,
+		arg.Column3,
+		arg.Column4,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUserPersonalExpensesPaginatedRow
+	for rows.Next() {
+		var i ListUserPersonalExpensesPaginatedRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Description,

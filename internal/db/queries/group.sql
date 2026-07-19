@@ -82,3 +82,36 @@ LEFT JOIN users u ON u.id = gm2.user_id
 WHERE g.archived_at IS NULL
 GROUP BY g.id
 ORDER BY g.created_at DESC;
+
+-- name: ListUserGroupsWithMembersPaginated :many
+SELECT
+    g.id, g.name, g.description, g.invite_code, g.created_by,
+    g.created_at, g.updated_at, g.archived_at,
+    COALESCE(
+        json_agg(
+            json_build_object(
+                'groupId',  gm2.group_id,
+                'userId',   gm2.user_id,
+                'role',     gm2.role,
+                'joinedAt', gm2.joined_at,
+                'name',     u.name,
+                'email',    u.email,
+                'phone',    u.phone
+            ) ORDER BY gm2.joined_at
+        ) FILTER (WHERE gm2.user_id IS NOT NULL),
+        '[]'
+    )::jsonb AS members
+FROM groups g
+JOIN group_members gm ON gm.group_id = g.id AND gm.user_id = $1
+LEFT JOIN group_members gm2 ON gm2.group_id = g.id
+LEFT JOIN users u ON u.id = gm2.user_id
+WHERE g.archived_at IS NULL
+  AND (
+    $3::TIMESTAMP WITH TIME ZONE IS NULL
+    OR g.created_at < $3::TIMESTAMP WITH TIME ZONE
+    OR (g.created_at = $3::TIMESTAMP WITH TIME ZONE AND g.id < $4::UUID)
+  )
+GROUP BY g.id
+ORDER BY g.created_at DESC, g.id DESC
+LIMIT $2;
+

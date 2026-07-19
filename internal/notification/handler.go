@@ -3,6 +3,7 @@ package notification
 import (
 	"net/http"
 
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 	"github.com/go-chi/chi/v5"
@@ -29,24 +30,25 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 
 // List lists all notifications for the current user.
 // @Summary      List notifications
-// @Description  Get all notifications in the tray for the current user.
+// @Description  Get a cursor-paginated list of notifications for the current user.
 // @Tags         notifications
 // @Produce      json
-// @Success      200  {array}   Notification
+// @Param        limit   query  int     false  "Items per page (max 100, default 20)"
+// @Param        cursor  query  string  false  "Opaque cursor token from a previous response"
+// @Success      200  {object}  ListNotificationsResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /notifications [get]
 // @Security     BearerAuth
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
-
-	notifs, err := h.uc.ListNotifications(r.Context(), currUser.ID)
+	p := pagination.ParseParams(r, 20, 100)
+	result, err := h.uc.ListNotifications(r.Context(), currUser.ID, p)
 	if err != nil {
 		response.HandleError(w, err)
 		return
 	}
-
-	response.JSON(w, http.StatusOK, notifs)
+	response.JSON(w, http.StatusOK, result)
 }
 
 // MarkAsRead marks a specific notification as read.

@@ -114,3 +114,52 @@ JOIN users c ON e.paid_by = c.id
 JOIN users d ON es.user_id = d.id
 WHERE e.group_id = $1 AND e.deleted_at IS NULL AND es.user_id != e.paid_by
 GROUP BY e.paid_by, c.name, es.user_id, d.name;
+
+-- name: ListExpensesByGroupPaginated :many
+SELECT id, description, amount, currency, category, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at
+FROM expenses
+WHERE group_id = $1
+  AND deleted_at IS NULL
+  AND (
+    $3::TIMESTAMP WITH TIME ZONE IS NULL
+    OR created_at < $3::TIMESTAMP WITH TIME ZONE
+    OR (created_at = $3::TIMESTAMP WITH TIME ZONE AND id < $4::UUID)
+  )
+ORDER BY created_at DESC, id DESC
+LIMIT $2;
+
+-- name: ListUserPersonalExpensesPaginated :many
+SELECT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
+FROM expenses e
+WHERE e.paid_by = $1
+  AND e.group_id IS NULL
+  AND e.deleted_at IS NULL
+  AND (
+    SELECT COUNT(*) FROM expense_splits es WHERE es.expense_id = e.id
+  ) = 1
+  AND (
+    $3::TIMESTAMP WITH TIME ZONE IS NULL
+    OR e.created_at < $3::TIMESTAMP WITH TIME ZONE
+    OR (e.created_at = $3::TIMESTAMP WITH TIME ZONE AND e.id < $4::UUID)
+  )
+ORDER BY e.created_at DESC, e.id DESC
+LIMIT $2;
+
+-- name: ListUserFriendExpensesPaginated :many
+SELECT DISTINCT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
+FROM expenses e
+JOIN expense_splits es ON e.id = es.expense_id
+WHERE e.group_id IS NULL
+  AND e.deleted_at IS NULL
+  AND (e.paid_by = $1 OR es.user_id = $1)
+  AND (
+    SELECT COUNT(*) FROM expense_splits es2 WHERE es2.expense_id = e.id
+  ) > 1
+  AND (
+    $3::TIMESTAMP WITH TIME ZONE IS NULL
+    OR e.created_at < $3::TIMESTAMP WITH TIME ZONE
+    OR (e.created_at = $3::TIMESTAMP WITH TIME ZONE AND e.id < $4::UUID)
+  )
+ORDER BY e.created_at DESC, e.id DESC
+LIMIT $2;
+

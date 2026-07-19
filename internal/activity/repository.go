@@ -105,17 +105,33 @@ func (r *DBRepository) CreateActivityVisibility(ctx context.Context, activityID 
 	})
 }
 
-// ListUserActivities lists activities visible to the current user.
-func (r *DBRepository) ListUserActivities(ctx context.Context, userID string) ([]Activity, error) {
+// ListUserActivities lists activities visible to the current user with cursor-based pagination.
+func (r *DBRepository) ListUserActivities(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Activity, error) {
 	parsedID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid uuid: %w", err)
 	}
 
+	var pgLastTime pgtype.Timestamptz
+	if lastTime != nil {
+		pgLastTime = pgtype.Timestamptz{Time: *lastTime, Valid: true}
+	}
+	var lastIDUUID uuid.UUID
+	if lastID != nil {
+		if parsed, err := uuid.Parse(*lastID); err == nil {
+			lastIDUUID = parsed
+		}
+	}
+
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)
 
-	rows, err := q.ListUserActivities(ctx, parsedID)
+	rows, err := q.ListUserActivitiesPaginated(ctx, dbgen.ListUserActivitiesPaginatedParams{
+		UserID:  parsedID,
+		Limit:   limit,
+		Column3: pgLastTime,
+		Column4: lastIDUUID,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("list user activities: %w", err)
 	}
@@ -150,6 +166,7 @@ func (r *DBRepository) ListUserActivities(ctx context.Context, userID string) ([
 
 	return activities, nil
 }
+
 
 // ListGroupFeed queries a group activity feed chronologically with cursor pagination.
 func (r *DBRepository) ListGroupFeed(ctx context.Context, groupID string, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Activity, error) {

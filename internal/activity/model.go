@@ -72,3 +72,10 @@ type FeedResponse struct {
 	Data       []FeedItemResponse `json:"data"`
 	Pagination pagination.Meta    `json:"pagination"`
 }
+
+// ListActivitiesResponse represents the paginated user activities response.
+type ListActivitiesResponse struct {
+	Data       []Activity      `json:"data"`
+	Pagination pagination.Meta `json:"pagination"`
+}
+

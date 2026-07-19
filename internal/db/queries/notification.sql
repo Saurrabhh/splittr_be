@@ -19,3 +19,17 @@ WHERE id = $1 AND user_id = $2;
 UPDATE notifications
 SET is_read = TRUE
 WHERE user_id = $1;
+
+-- name: ListUserNotificationsPaginated :many
+SELECT n.id, n.user_id, n.actor_id, n.activity_id, n.title, n.content, n.is_read, n.created_at, u.name as actor_name
+FROM notifications n
+LEFT JOIN users u ON n.actor_id = u.id
+WHERE n.user_id = $1
+  AND (
+    $3::TIMESTAMP WITH TIME ZONE IS NULL
+    OR n.created_at < $3::TIMESTAMP WITH TIME ZONE
+    OR (n.created_at = $3::TIMESTAMP WITH TIME ZONE AND n.id < $4::UUID)
+  )
+ORDER BY n.created_at DESC, n.id DESC
+LIMIT $2;
+

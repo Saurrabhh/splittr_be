@@ -100,6 +100,74 @@ func (q *Queries) ListUserNotifications(ctx context.Context, userID uuid.UUID) (
 	return items, nil
 }
 
+const listUserNotificationsPaginated = `-- name: ListUserNotificationsPaginated :many
+SELECT n.id, n.user_id, n.actor_id, n.activity_id, n.title, n.content, n.is_read, n.created_at, u.name as actor_name
+FROM notifications n
+LEFT JOIN users u ON n.actor_id = u.id
+WHERE n.user_id = $1
+  AND (
+    $3::TIMESTAMP WITH TIME ZONE IS NULL
+    OR n.created_at < $3::TIMESTAMP WITH TIME ZONE
+    OR (n.created_at = $3::TIMESTAMP WITH TIME ZONE AND n.id < $4::UUID)
+  )
+ORDER BY n.created_at DESC, n.id DESC
+LIMIT $2
+`
+
+type ListUserNotificationsPaginatedParams struct {
+	UserID  uuid.UUID
+	Limit   int32
+	Column3 pgtype.Timestamptz
+	Column4 uuid.UUID
+}
+
+type ListUserNotificationsPaginatedRow struct {
+	ID         uuid.UUID
+	UserID     uuid.UUID
+	ActorID    pgtype.UUID
+	ActivityID pgtype.UUID
+	Title      string
+	Content    string
+	IsRead     bool
+	CreatedAt  pgtype.Timestamptz
+	ActorName  pgtype.Text
+}
+
+func (q *Queries) ListUserNotificationsPaginated(ctx context.Context, arg ListUserNotificationsPaginatedParams) ([]ListUserNotificationsPaginatedRow, error) {
+	rows, err := q.db.Query(ctx, listUserNotificationsPaginated,
+		arg.UserID,
+		arg.Limit,
+		arg.Column3,
+		arg.Column4,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUserNotificationsPaginatedRow
+	for rows.Next() {
+		var i ListUserNotificationsPaginatedRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.ActorID,
+			&i.ActivityID,
+			&i.Title,
+			&i.Content,
+			&i.IsRead,
+			&i.CreatedAt,
+			&i.ActorName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const markAllNotificationsAsRead = `-- name: MarkAllNotificationsAsRead :exec
 UPDATE notifications
 SET is_read = TRUE

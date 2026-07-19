@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/Saurrabhh/splittr_be/internal/db"
 	"github.com/Saurrabhh/splittr_be/internal/db/dbgen"
@@ -232,17 +233,33 @@ func (r *DBRepository) GetFriendship(ctx context.Context, userID, friendID strin
 	return true, nil
 }
 
-// ListFriends lists all friends of a user.
-func (r *DBRepository) ListFriends(ctx context.Context, userID string) ([]User, error) {
+// ListFriends retrieves a user's friends with cursor-based pagination.
+func (r *DBRepository) ListFriends(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]User, error) {
 	parsedID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid uuid: %w", err)
 	}
 
+	var pgLastTime pgtype.Timestamptz
+	if lastTime != nil {
+		pgLastTime = pgtype.Timestamptz{Time: *lastTime, Valid: true}
+	}
+	var lastIDUUID uuid.UUID
+	if lastID != nil {
+		if parsed, err := uuid.Parse(*lastID); err == nil {
+			lastIDUUID = parsed
+		}
+	}
+
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)
 
-	rows, err := q.ListFriends(ctx, parsedID)
+	rows, err := q.ListFriendsPaginated(ctx, dbgen.ListFriendsPaginatedParams{
+		UserID:  parsedID,
+		Limit:   limit,
+		Column3: pgLastTime,
+		Column4: lastIDUUID,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("list friends: %w", err)
 	}

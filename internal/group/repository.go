@@ -283,20 +283,35 @@ func (r *DBRepository) ListGroupMembers(ctx context.Context, groupID string) ([]
 	return members, nil
 }
 
-// ListUserGroupsWithMembers lists all groups a user is a member of, with each group's
-// member list included via a single JOIN+json_agg query — no N+1 round-trips.
-func (r *DBRepository) ListUserGroupsWithMembers(ctx context.Context, userID string) ([]GroupDetailsResponse, error) {
+// ListUserGroupsWithMembers lists all groups a user is a member of with cursor-based pagination.
+func (r *DBRepository) ListUserGroupsWithMembers(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]GroupDetailsResponse, error) {
 	parsedUserID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user uuid: %w", err)
 	}
 
+	var pgLastTime pgtype.Timestamptz
+	if lastTime != nil {
+		pgLastTime = pgtype.Timestamptz{Time: *lastTime, Valid: true}
+	}
+	var lastIDUUID uuid.UUID
+	if lastID != nil {
+		if parsed, err := uuid.Parse(*lastID); err == nil {
+			lastIDUUID = parsed
+		}
+	}
+
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)
 
-	rows, err := q.ListUserGroupsWithMembers(ctx, parsedUserID)
+	rows, err := q.ListUserGroupsWithMembersPaginated(ctx, dbgen.ListUserGroupsWithMembersPaginatedParams{
+		UserID:  parsedUserID,
+		Limit:   limit,
+		Column3: pgLastTime,
+		Column4: lastIDUUID,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("list user groups with members: %w", err)
+		return nil, fmt.Errorf("list user groups with members paginated: %w", err)
 	}
 
 	result := make([]GroupDetailsResponse, 0, len(rows))
@@ -322,6 +337,7 @@ func (r *DBRepository) ListUserGroupsWithMembers(ctx context.Context, userID str
 	}
 	return result, nil
 }
+
 
 // Helper converters
 func toDomainGroup(dbg dbgen.Group) *Group {

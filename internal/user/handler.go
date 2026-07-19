@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Saurrabhh/splittr_be/internal/auth"
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/go-chi/chi/v5"
 )
@@ -172,24 +173,25 @@ func (h *Handler) AddFriend(w http.ResponseWriter, r *http.Request) {
 
 // GetFriends returns all friends of the current user.
 // @Summary      List friends
-// @Description  Get a list of all friends of the currently authenticated user.
+// @Description  Get a cursor-paginated list of the current user's friends.
 // @Tags         friends
 // @Produce      json
-// @Success      200  {array}   User
+// @Param        limit   query  int     false  "Items per page (max 100, default 20)"
+// @Param        cursor  query  string  false  "Opaque cursor token from a previous response"
+// @Success      200  {object}  ListFriendsResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /friends [get]
 // @Security     BearerAuth
 func (h *Handler) GetFriends(w http.ResponseWriter, r *http.Request) {
 	currUser := MustFrom(r.Context())
-
-	friends, err := h.uc.ListFriends(r.Context(), currUser.ID)
+	p := pagination.ParseParams(r, 20, 100)
+	result, err := h.uc.ListFriends(r.Context(), currUser.ID, p)
 	if err != nil {
 		response.HandleError(w, err)
 		return
 	}
-
-	response.JSON(w, http.StatusOK, friends)
+	response.JSON(w, http.StatusOK, result)
 }
 
 // RemoveFriend deletes a friendship link.

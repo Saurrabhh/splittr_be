@@ -2,7 +2,9 @@ package user
 
 import (
 	"context"
+	"time"
 
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/google/uuid"
 )
@@ -17,7 +19,7 @@ type Repository interface {
 	CreateFriendship(ctx context.Context, userID, friendID string) error
 	DeleteFriendship(ctx context.Context, userID, friendID string) error
 	GetFriendship(ctx context.Context, userID, friendID string) (bool, error)
-	ListFriends(ctx context.Context, userID string) ([]User, error)
+	ListFriends(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]User, error)
 }
 
 // Usecase handles business operations for users.
@@ -250,23 +252,23 @@ func (u *Usecase) RemoveFriend(ctx context.Context, userID string, friendID stri
 	return nil
 }
 
-// ListFriends retrieves the list of user profiles representing friends.
-func (u *Usecase) ListFriends(ctx context.Context, userID string) ([]User, error) {
+// ListFriends returns a cursor-paginated list of the user's friends.
+func (u *Usecase) ListFriends(ctx context.Context, userID string, p pagination.Params) (pagination.Response[User], error) {
 	if userID == "" {
-		return nil, &response.AppError{
-			Type:    response.TypeValidation,
-			Message: "userID is required",
-		}
+		return pagination.Response[User]{}, &response.AppError{Type: response.TypeValidation, Message: "userID is required"}
 	}
-	friends, err := u.repo.ListFriends(ctx, userID)
+	cursor := pagination.ParseCursor(p.Cursor)
+	friends, err := u.repo.ListFriends(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
 	if err != nil {
-		return nil, &response.AppError{
+		return pagination.Response[User]{}, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: "failed to retrieve friends list",
 			Err:     err,
 		}
 	}
-	return friends, nil
+	return pagination.BuildResponse(friends, p.Limit, func(usr User) string {
+		return pagination.EncodeCursor(usr.CreatedAt, usr.ID)
+	}), nil
 }
 
 

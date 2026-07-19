@@ -219,3 +219,75 @@ func (q *Queries) ListUserActivities(ctx context.Context, userID uuid.UUID) ([]L
 	}
 	return items, nil
 }
+
+const listUserActivitiesPaginated = `-- name: ListUserActivitiesPaginated :many
+SELECT a.id, a.group_id, a.actor_id, a.action_type, a.description, a.created_at, u.name as actor_name
+FROM activities a
+LEFT JOIN users u ON a.actor_id = u.id
+WHERE (
+    a.group_id IN (
+        SELECT gm.group_id FROM group_members gm WHERE gm.user_id = $1
+    )
+    OR
+    (a.group_id IS NULL AND EXISTS (
+        SELECT 1 FROM activity_visibility av WHERE av.activity_id = a.id AND av.user_id = $1
+    ))
+)
+AND (
+  $3::TIMESTAMP WITH TIME ZONE IS NULL
+  OR a.created_at < $3::TIMESTAMP WITH TIME ZONE
+  OR (a.created_at = $3::TIMESTAMP WITH TIME ZONE AND a.id < $4::UUID)
+)
+ORDER BY a.created_at DESC, a.id DESC
+LIMIT $2
+`
+
+type ListUserActivitiesPaginatedParams struct {
+	UserID  uuid.UUID
+	Limit   int32
+	Column3 pgtype.Timestamptz
+	Column4 uuid.UUID
+}
+
+type ListUserActivitiesPaginatedRow struct {
+	ID          uuid.UUID
+	GroupID     pgtype.UUID
+	ActorID     pgtype.UUID
+	ActionType  string
+	Description string
+	CreatedAt   pgtype.Timestamptz
+	ActorName   pgtype.Text
+}
+
+func (q *Queries) ListUserActivitiesPaginated(ctx context.Context, arg ListUserActivitiesPaginatedParams) ([]ListUserActivitiesPaginatedRow, error) {
+	rows, err := q.db.Query(ctx, listUserActivitiesPaginated,
+		arg.UserID,
+		arg.Limit,
+		arg.Column3,
+		arg.Column4,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUserActivitiesPaginatedRow
+	for rows.Next() {
+		var i ListUserActivitiesPaginatedRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.GroupID,
+			&i.ActorID,
+			&i.ActionType,
+			&i.Description,
+			&i.CreatedAt,
+			&i.ActorName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

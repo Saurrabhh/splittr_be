@@ -14,7 +14,7 @@ import (
 type Repository interface {
 	CreateActivity(ctx context.Context, act *Activity) error
 	CreateActivityVisibility(ctx context.Context, activityID string, userID string) error
-	ListUserActivities(ctx context.Context, userID string) ([]Activity, error)
+	ListUserActivities(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Activity, error)
 	ListGroupFeed(ctx context.Context, groupID string, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Activity, error)
 }
 
@@ -74,17 +74,20 @@ func (u *Usecase) LogActivity(
 	return newAct, nil
 }
 
-// ListActivities returns all activities visible to a user.
-func (u *Usecase) ListActivities(ctx context.Context, userID string) ([]Activity, error) {
-	activities, err := u.repo.ListUserActivities(ctx, userID)
+// ListActivities returns a cursor-paginated list of activities visible to the user.
+func (u *Usecase) ListActivities(ctx context.Context, userID string, p pagination.Params) (pagination.Response[Activity], error) {
+	cursor := pagination.ParseCursor(p.Cursor)
+	activities, err := u.repo.ListUserActivities(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
 	if err != nil {
-		return nil, &response.AppError{
+		return pagination.Response[Activity]{}, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: "failed to retrieve activities",
 			Err:     err,
 		}
 	}
-	return activities, nil
+	return pagination.BuildResponse(activities, p.Limit, func(a Activity) string {
+		return pagination.EncodeCursor(a.CreatedAt, a.ID)
+	}), nil
 }
 
 // GetGroupFeed retrieves group activities with cursor-based pagination.

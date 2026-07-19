@@ -295,6 +295,93 @@ func (q *Queries) ListUserGroupsWithMembers(ctx context.Context, userID uuid.UUI
 	return items, nil
 }
 
+const listUserGroupsWithMembersPaginated = `-- name: ListUserGroupsWithMembersPaginated :many
+SELECT
+    g.id, g.name, g.description, g.invite_code, g.created_by,
+    g.created_at, g.updated_at, g.archived_at,
+    COALESCE(
+        json_agg(
+            json_build_object(
+                'groupId',  gm2.group_id,
+                'userId',   gm2.user_id,
+                'role',     gm2.role,
+                'joinedAt', gm2.joined_at,
+                'name',     u.name,
+                'email',    u.email,
+                'phone',    u.phone
+            ) ORDER BY gm2.joined_at
+        ) FILTER (WHERE gm2.user_id IS NOT NULL),
+        '[]'
+    )::jsonb AS members
+FROM groups g
+JOIN group_members gm ON gm.group_id = g.id AND gm.user_id = $1
+LEFT JOIN group_members gm2 ON gm2.group_id = g.id
+LEFT JOIN users u ON u.id = gm2.user_id
+WHERE g.archived_at IS NULL
+  AND (
+    $3::TIMESTAMP WITH TIME ZONE IS NULL
+    OR g.created_at < $3::TIMESTAMP WITH TIME ZONE
+    OR (g.created_at = $3::TIMESTAMP WITH TIME ZONE AND g.id < $4::UUID)
+  )
+GROUP BY g.id
+ORDER BY g.created_at DESC, g.id DESC
+LIMIT $2
+`
+
+type ListUserGroupsWithMembersPaginatedParams struct {
+	UserID  uuid.UUID
+	Limit   int32
+	Column3 pgtype.Timestamptz
+	Column4 uuid.UUID
+}
+
+type ListUserGroupsWithMembersPaginatedRow struct {
+	ID          uuid.UUID
+	Name        string
+	Description pgtype.Text
+	InviteCode  pgtype.Text
+	CreatedBy   pgtype.UUID
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	ArchivedAt  pgtype.Timestamptz
+	Members     []byte
+}
+
+func (q *Queries) ListUserGroupsWithMembersPaginated(ctx context.Context, arg ListUserGroupsWithMembersPaginatedParams) ([]ListUserGroupsWithMembersPaginatedRow, error) {
+	rows, err := q.db.Query(ctx, listUserGroupsWithMembersPaginated,
+		arg.UserID,
+		arg.Limit,
+		arg.Column3,
+		arg.Column4,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUserGroupsWithMembersPaginatedRow
+	for rows.Next() {
+		var i ListUserGroupsWithMembersPaginatedRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.InviteCode,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ArchivedAt,
+			&i.Members,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const removeGroupMember = `-- name: RemoveGroupMember :exec
 DELETE FROM group_members
 WHERE group_id = $1 AND user_id = $2

@@ -2,6 +2,8 @@ package notification
 
 import (
 	"time"
+
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 )
 
 // Notification represents a user-specific alert message in their notification tray.
@@ -15,4 +17,10 @@ type Notification struct {
 	Content    string    `json:"content"`
 	IsRead     bool      `json:"isRead"`
 	CreatedAt  time.Time `json:"createdAt"`
+}
+
+// ListNotificationsResponse represents the paginated user notifications response.
+type ListNotificationsResponse struct {
+	Data       []Notification  `json:"data"`
+	Pagination pagination.Meta `json:"pagination"`
 }

@@ -2,6 +2,8 @@ package expense
 
 import (
 	"time"
+
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 )
 
 // SplitType represents the method used to split an expense.
@@ -116,4 +118,10 @@ type settleExpenseRequest struct {
 	GroupID    *string `json:"groupId"`
 	PaidBy     string  `json:"paidBy"`
 	ReceivedBy string  `json:"receivedBy"`
+}
+
+// ListExpensesResponse represents the paginated expenses list response.
+type ListExpensesResponse struct {
+	Data       []Expense       `json:"data"`
+	Pagination pagination.Meta `json:"pagination"`
 }

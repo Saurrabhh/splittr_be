@@ -130,25 +130,27 @@ func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 
 // List retrieves all groups the user is a member of.
 // @Summary      List groups
-// @Description  Retrieve all bill-splitting groups the current user belongs to.
+// @Description  Retrieve a cursor-paginated list of groups the current user belongs to.
 // @Tags         groups
 // @Produce      json
-// @Success      200  {array}   GroupDetailsResponse
+// @Param        limit   query  int     false  "Items per page (max 100, default 20)"
+// @Param        cursor  query  string  false  "Opaque cursor token from a previous response"
+// @Success      200  {object}  ListGroupsResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /groups [get]
 // @Security     BearerAuth
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
-
-	groups, err := h.uc.ListUserGroups(r.Context(), currUser.ID)
+	p := pagination.ParseParams(r, 20, 100)
+	result, err := h.uc.ListUserGroups(r.Context(), currUser.ID, p)
 	if err != nil {
 		response.HandleError(w, err)
 		return
 	}
-
-	response.JSON(w, http.StatusOK, groups)
+	response.JSON(w, http.StatusOK, result)
 }
+
 
 // GetDetails returns the group metadata and its members list.
 // @Summary      Get group details

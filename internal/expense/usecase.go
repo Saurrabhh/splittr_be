@@ -12,6 +12,7 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/db"
 	"github.com/Saurrabhh/splittr_be/internal/group"
 	"github.com/Saurrabhh/splittr_be/internal/notification"
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/google/uuid"
 )
@@ -22,9 +23,9 @@ type Repository interface {
 	CreateExpenseSplit(ctx context.Context, s *Split) error
 	GetExpenseByID(ctx context.Context, id string) (*Expense, error)
 	ListExpenseSplits(ctx context.Context, expenseID string) ([]Split, error)
-	ListExpensesByGroup(ctx context.Context, groupID string) ([]Expense, error)
-	ListUserPersonalExpenses(ctx context.Context, userID string) ([]Expense, error)
-	ListUserFriendExpenses(ctx context.Context, userID string) ([]Expense, error)
+	ListExpensesByGroup(ctx context.Context, groupID string, limit int32, lastTime *time.Time, lastID *string) ([]Expense, error)
+	ListUserPersonalExpenses(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Expense, error)
+	ListUserFriendExpenses(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Expense, error)
 	DeleteExpense(ctx context.Context, id string) error
 	GetGroupBalances(ctx context.Context, groupID string) ([]UserBalance, error)
 	GetFriendBalances(ctx context.Context, userID string) ([]UserBalance, error)
@@ -420,51 +421,39 @@ func (u *Usecase) GetExpenseDetails(ctx context.Context, expenseID, userID strin
 	return e, splits, nil
 }
 
-// ListExpenses returns a list of expenses filtered by group or personal type.
-func (u *Usecase) ListExpenses(ctx context.Context, filterType, filterID, userID string) ([]Expense, error) {
-	if filterType == "group" {
+// ListExpenses returns a cursor-paginated list of expenses filtered by group, personal, or friend type.
+func (u *Usecase) ListExpenses(ctx context.Context, filterType, filterID, userID string, p pagination.Params) (pagination.Response[Expense], error) {
+	cursor := pagination.ParseCursor(p.Cursor)
+	encodeFn := func(e Expense) string { return pagination.EncodeCursor(e.CreatedAt, e.ID) }
+
+	switch filterType {
+	case "group":
 		_, _, err := u.groupSvc.GetGroupDetails(ctx, filterID, userID)
 		if err != nil {
-			return nil, err // bubble up group access validation error
+			return pagination.Response[Expense]{}, err
 		}
-		expenses, err := u.repo.ListExpensesByGroup(ctx, filterID)
+		rows, err := u.repo.ListExpensesByGroup(ctx, filterID, p.Limit+1, cursor.LastTime, cursor.LastID)
 		if err != nil {
-			return nil, &response.AppError{
-				Type:    response.TypeInternal,
-				Message: "failed to list group expenses",
-				Err:     err,
-			}
+			return pagination.Response[Expense]{}, &response.AppError{Type: response.TypeInternal, Message: "failed to list group expenses", Err: err}
 		}
-		return expenses, nil
-	}
+		return pagination.BuildResponse(rows, p.Limit, encodeFn), nil
 
-	if filterType == "personal" {
-		expenses, err := u.repo.ListUserPersonalExpenses(ctx, userID)
+	case "personal":
+		rows, err := u.repo.ListUserPersonalExpenses(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
 		if err != nil {
-			return nil, &response.AppError{
-				Type:    response.TypeInternal,
-				Message: "failed to list personal expenses",
-				Err:     err,
-			}
+			return pagination.Response[Expense]{}, &response.AppError{Type: response.TypeInternal, Message: "failed to list personal expenses", Err: err}
 		}
-		return expenses, nil
-	}
+		return pagination.BuildResponse(rows, p.Limit, encodeFn), nil
 
-	if filterType == "friend" {
-		expenses, err := u.repo.ListUserFriendExpenses(ctx, userID)
+	case "friend":
+		rows, err := u.repo.ListUserFriendExpenses(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
 		if err != nil {
-			return nil, &response.AppError{
-				Type:    response.TypeInternal,
-				Message: "failed to list friend expenses",
-				Err:     err,
-			}
+			return pagination.Response[Expense]{}, &response.AppError{Type: response.TypeInternal, Message: "failed to list friend expenses", Err: err}
 		}
-		return expenses, nil
-	}
+		return pagination.BuildResponse(rows, p.Limit, encodeFn), nil
 
-	return nil, &response.AppError{
-		Type:    response.TypeValidation,
-		Message: "invalid filter type: must be group, personal, or friend",
+	default:
+		return pagination.Response[Expense]{}, &response.AppError{Type: response.TypeValidation, Message: "invalid filter type: must be group, personal, or friend"}
 	}
 }
 

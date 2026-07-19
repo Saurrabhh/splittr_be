@@ -46,3 +46,25 @@ WHERE a.group_id = $1
   )
 ORDER BY a.created_at DESC, a.id DESC
 LIMIT $2;
+
+-- name: ListUserActivitiesPaginated :many
+SELECT a.id, a.group_id, a.actor_id, a.action_type, a.description, a.created_at, u.name as actor_name
+FROM activities a
+LEFT JOIN users u ON a.actor_id = u.id
+WHERE (
+    a.group_id IN (
+        SELECT gm.group_id FROM group_members gm WHERE gm.user_id = $1
+    )
+    OR
+    (a.group_id IS NULL AND EXISTS (
+        SELECT 1 FROM activity_visibility av WHERE av.activity_id = a.id AND av.user_id = $1
+    ))
+)
+AND (
+  $3::TIMESTAMP WITH TIME ZONE IS NULL
+  OR a.created_at < $3::TIMESTAMP WITH TIME ZONE
+  OR (a.created_at = $3::TIMESTAMP WITH TIME ZONE AND a.id < $4::UUID)
+)
+ORDER BY a.created_at DESC, a.id DESC
+LIMIT $2;
+

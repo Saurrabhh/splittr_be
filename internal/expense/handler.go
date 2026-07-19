@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 	"github.com/go-chi/chi/v5"
@@ -141,13 +142,15 @@ func (h *Handler) Settle(w http.ResponseWriter, r *http.Request) {
 
 // List lists expenses based on filters (group, personal, or friend).
 // @Summary      List expenses
-// @Description  Retrieve a list of expenses filtered by group, personal=true, or friendId.
+// @Description  Retrieve a cursor-paginated list of expenses filtered by group, personal=true, or friendId.
 // @Tags         expenses
 // @Produce      json
-// @Param        groupId query string false "Filter by Group ID"
-// @Param        personal query boolean false "Filter for personal only (true/false)"
-// @Param        friendId query string false "Filter by Friend ID"
-// @Success      200  {array}   Expense
+// @Param        groupId   query  string  false  "Filter by Group ID"
+// @Param        personal  query  boolean false  "Filter for personal only (true/false)"
+// @Param        friendId  query  string  false  "Filter by Friend ID"
+// @Param        limit     query  int     false  "Items per page (max 100, default 20)"
+// @Param        cursor    query  string  false  "Opaque cursor token from a previous response"
+// @Success      200  {object}  ListExpensesResponse
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -179,13 +182,14 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expenses, err := h.uc.ListExpenses(r.Context(), filterType, filterID, currUser.ID)
+	p := pagination.ParseParams(r, 20, 100)
+	result, err := h.uc.ListExpenses(r.Context(), filterType, filterID, currUser.ID, p)
 	if err != nil {
 		response.HandleError(w, err)
 		return
 	}
 
-	response.JSON(w, http.StatusOK, expenses)
+	response.JSON(w, http.StatusOK, result)
 }
 
 // GetDetails retrieves a specific expense and its details.

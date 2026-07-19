@@ -46,3 +46,20 @@ WHERE u.id IN (
     SELECT f.user_id FROM friendships f WHERE f.friend_id = $1
 );
 
+-- name: ListFriendsPaginated :many
+SELECT u.id, u.firebase_uid, u.email, u.phone, u.name, u.default_currency, u.created_at, u.updated_at
+FROM users u
+WHERE u.id IN (
+    SELECT f.friend_id FROM friendships f WHERE f.user_id = $1
+    UNION
+    SELECT f.user_id FROM friendships f WHERE f.friend_id = $1
+)
+AND (
+  $3::TIMESTAMP WITH TIME ZONE IS NULL
+  OR u.created_at < $3::TIMESTAMP WITH TIME ZONE
+  OR (u.created_at = $3::TIMESTAMP WITH TIME ZONE AND u.id < $4::UUID)
+)
+ORDER BY u.created_at DESC, u.id DESC
+LIMIT $2;
+
+

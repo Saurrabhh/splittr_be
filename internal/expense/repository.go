@@ -170,122 +170,171 @@ func (r *DBRepository) ListExpenseSplits(ctx context.Context, expenseID string) 
 	return splits, nil
 }
 
-// ListExpensesByGroup lists expenses for a group.
-func (r *DBRepository) ListExpensesByGroup(ctx context.Context, groupID string) ([]Expense, error) {
+// parseCursorArgs converts optional cursor fields to pg types for paginated queries.
+func parseCursorArgs(lastTime *time.Time, lastID *string) (pgtype.Timestamptz, uuid.UUID) {
+	var pgLastTime pgtype.Timestamptz
+	if lastTime != nil {
+		pgLastTime = pgtype.Timestamptz{Time: *lastTime, Valid: true}
+	}
+	var lastIDUUID uuid.UUID
+	if lastID != nil {
+		if parsed, err := uuid.Parse(*lastID); err == nil {
+			lastIDUUID = parsed
+		}
+	}
+	return pgLastTime, lastIDUUID
+}
+
+func toExpensesFromGroupPaginated(rows []dbgen.ListExpensesByGroupPaginatedRow) []Expense {
+	expenses := make([]Expense, 0, len(rows))
+	for _, row := range rows {
+		var groupIDStr *string
+		if row.GroupID.Valid {
+			s := uuid.UUID(row.GroupID.Bytes).String()
+			groupIDStr = &s
+		}
+		expenses = append(expenses, Expense{
+			ID:          row.ID.String(),
+			Description: row.Description,
+			Amount:      numericToFloat(row.Amount),
+			Currency:    row.Currency,
+			Category:    row.Category,
+			GroupID:     groupIDStr,
+			PaidBy:      row.PaidBy.String(),
+			CreatedBy:   row.CreatedBy.String(),
+			IsPayment:   row.IsPayment,
+			SpentAt:     row.SpentAt.Time,
+			CreatedAt:   row.CreatedAt.Time,
+			UpdatedAt:   row.UpdatedAt.Time,
+		})
+	}
+	return expenses
+}
+
+func toExpensesFromPersonalPaginated(rows []dbgen.ListUserPersonalExpensesPaginatedRow) []Expense {
+	expenses := make([]Expense, 0, len(rows))
+	for _, row := range rows {
+		var groupIDStr *string
+		if row.GroupID.Valid {
+			s := uuid.UUID(row.GroupID.Bytes).String()
+			groupIDStr = &s
+		}
+		expenses = append(expenses, Expense{
+			ID:          row.ID.String(),
+			Description: row.Description,
+			Amount:      numericToFloat(row.Amount),
+			Currency:    row.Currency,
+			Category:    row.Category,
+			GroupID:     groupIDStr,
+			PaidBy:      row.PaidBy.String(),
+			CreatedBy:   row.CreatedBy.String(),
+			IsPayment:   row.IsPayment,
+			SpentAt:     row.SpentAt.Time,
+			CreatedAt:   row.CreatedAt.Time,
+			UpdatedAt:   row.UpdatedAt.Time,
+		})
+	}
+	return expenses
+}
+
+func toExpensesFromFriendPaginated(rows []dbgen.ListUserFriendExpensesPaginatedRow) []Expense {
+	expenses := make([]Expense, 0, len(rows))
+	for _, row := range rows {
+		var groupIDStr *string
+		if row.GroupID.Valid {
+			s := uuid.UUID(row.GroupID.Bytes).String()
+			groupIDStr = &s
+		}
+		expenses = append(expenses, Expense{
+			ID:          row.ID.String(),
+			Description: row.Description,
+			Amount:      numericToFloat(row.Amount),
+			Currency:    row.Currency,
+			Category:    row.Category,
+			GroupID:     groupIDStr,
+			PaidBy:      row.PaidBy.String(),
+			CreatedBy:   row.CreatedBy.String(),
+			IsPayment:   row.IsPayment,
+			SpentAt:     row.SpentAt.Time,
+			CreatedAt:   row.CreatedAt.Time,
+			UpdatedAt:   row.UpdatedAt.Time,
+		})
+	}
+	return expenses
+}
+
+// ListExpensesByGroup lists expenses for a group with cursor-based pagination.
+func (r *DBRepository) ListExpensesByGroup(ctx context.Context, groupID string, limit int32, lastTime *time.Time, lastID *string) ([]Expense, error) {
 	parsedGroupID, err := uuid.Parse(groupID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid uuid: %w", err)
 	}
 
+	pgLastTime, lastIDUUID := parseCursorArgs(lastTime, lastID)
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)
 
-	rows, err := q.ListExpensesByGroup(ctx, pgtype.UUID{Bytes: parsedGroupID, Valid: true})
+	rows, err := q.ListExpensesByGroupPaginated(ctx, dbgen.ListExpensesByGroupPaginatedParams{
+		GroupID: pgtype.UUID{Bytes: parsedGroupID, Valid: true},
+		Limit:   limit,
+		Column3: pgLastTime,
+		Column4: lastIDUUID,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("list group expenses: %w", err)
 	}
 
-	expenses := make([]Expense, 0, len(rows))
-	for _, row := range rows {
-		var groupIDStr *string
-		if row.GroupID.Valid {
-			groupIDStr = new(uuid.UUID(row.GroupID.Bytes).String())
-		}
-
-		expenses = append(expenses, Expense{
-			ID:          row.ID.String(),
-			Description: row.Description,
-			Amount:      numericToFloat(row.Amount),
-			Currency:    row.Currency,
-			GroupID:     groupIDStr,
-			PaidBy:      row.PaidBy.String(),
-			CreatedBy:   row.CreatedBy.String(),
-			IsPayment:   row.IsPayment,
-			SpentAt:     row.SpentAt.Time,
-			CreatedAt:   row.CreatedAt.Time,
-			UpdatedAt:   row.UpdatedAt.Time,
-		})
-	}
-	return expenses, nil
+	return toExpensesFromGroupPaginated(rows), nil
 }
 
-// ListUserPersonalExpenses lists a user's private budgeting expenses.
-func (r *DBRepository) ListUserPersonalExpenses(ctx context.Context, userID string) ([]Expense, error) {
+// ListUserPersonalExpenses lists a user's private budgeting expenses with cursor-based pagination.
+func (r *DBRepository) ListUserPersonalExpenses(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Expense, error) {
 	parsedUserID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid uuid: %w", err)
 	}
 
+	pgLastTime, lastIDUUID := parseCursorArgs(lastTime, lastID)
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)
 
-	rows, err := q.ListUserPersonalExpenses(ctx, parsedUserID)
+	rows, err := q.ListUserPersonalExpensesPaginated(ctx, dbgen.ListUserPersonalExpensesPaginatedParams{
+		PaidBy:  parsedUserID,
+		Limit:   limit,
+		Column3: pgLastTime,
+		Column4: lastIDUUID,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("list personal expenses: %w", err)
 	}
 
-	expenses := make([]Expense, 0, len(rows))
-	for _, row := range rows {
-		var groupIDStr *string
-		if row.GroupID.Valid {
-			groupIDStr = new(uuid.UUID(row.GroupID.Bytes).String())
-		}
-
-		expenses = append(expenses, Expense{
-			ID:          row.ID.String(),
-			Description: row.Description,
-			Amount:      numericToFloat(row.Amount),
-			Currency:    row.Currency,
-			GroupID:     groupIDStr,
-			PaidBy:      row.PaidBy.String(),
-			CreatedBy:   row.CreatedBy.String(),
-			IsPayment:   row.IsPayment,
-			SpentAt:     row.SpentAt.Time,
-			CreatedAt:   row.CreatedAt.Time,
-			UpdatedAt:   row.UpdatedAt.Time,
-		})
-	}
-	return expenses, nil
+	return toExpensesFromPersonalPaginated(rows), nil
 }
 
-// ListUserFriendExpenses lists direct non-group friend splits.
-func (r *DBRepository) ListUserFriendExpenses(ctx context.Context, userID string) ([]Expense, error) {
+// ListUserFriendExpenses lists direct non-group friend splits with cursor-based pagination.
+func (r *DBRepository) ListUserFriendExpenses(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Expense, error) {
 	parsedUserID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid uuid: %w", err)
 	}
 
+	pgLastTime, lastIDUUID := parseCursorArgs(lastTime, lastID)
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)
 
-	rows, err := q.ListUserFriendExpenses(ctx, parsedUserID)
+	rows, err := q.ListUserFriendExpensesPaginated(ctx, dbgen.ListUserFriendExpensesPaginatedParams{
+		PaidBy:  parsedUserID,
+		Limit:   limit,
+		Column3: pgLastTime,
+		Column4: lastIDUUID,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("list friend expenses: %w", err)
 	}
 
-	expenses := make([]Expense, 0, len(rows))
-	for _, row := range rows {
-		var groupIDStr *string
-		if row.GroupID.Valid {
-			groupIDStr = new(uuid.UUID(row.GroupID.Bytes).String())
-		}
-
-		expenses = append(expenses, Expense{
-			ID:          row.ID.String(),
-			Description: row.Description,
-			Amount:      numericToFloat(row.Amount),
-			Currency:    row.Currency,
-			GroupID:     groupIDStr,
-			PaidBy:      row.PaidBy.String(),
-			CreatedBy:   row.CreatedBy.String(),
-			IsPayment:   row.IsPayment,
-			SpentAt:     row.SpentAt.Time,
-			CreatedAt:   row.CreatedAt.Time,
-			UpdatedAt:   row.UpdatedAt.Time,
-		})
-	}
-	return expenses, nil
+	return toExpensesFromFriendPaginated(rows), nil
 }
+
 
 // DeleteExpense soft deletes an expense.
 func (r *DBRepository) DeleteExpense(ctx context.Context, id string) error {

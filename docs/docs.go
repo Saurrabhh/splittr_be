@@ -142,6 +142,21 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "activity.ListActivitiesResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/activity.Activity"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/pagination.Meta"
+                    }
+                },
+                "type": "object"
+            },
             "expense.BalanceResponse": {
                 "properties": {
                     "balances": {
@@ -247,6 +262,21 @@ const docTemplate = `{
                     },
                     "userId": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "expense.ListExpensesResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/expense.Expense"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/pagination.Meta"
                     }
                 },
                 "type": "object"
@@ -456,6 +486,21 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "group.ListGroupsResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/group.GroupDetailsResponse"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/pagination.Meta"
+                    }
+                },
+                "type": "object"
+            },
             "group.Member": {
                 "properties": {
                     "email": {
@@ -513,6 +558,21 @@ const docTemplate = `{
                 "properties": {
                     "role": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "notification.ListNotificationsResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/notification.Notification"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/pagination.Meta"
                     }
                 },
                 "type": "object"
@@ -575,6 +635,21 @@ const docTemplate = `{
                 "properties": {
                     "message": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "user.ListFriendsResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/user.User"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/pagination.Meta"
                     }
                 },
                 "type": "object"
@@ -655,16 +730,31 @@ const docTemplate = `{
     "paths": {
         "/activities": {
             "get": {
-                "description": "Get audit logs of all actions performed by the current user or in their groups.",
+                "description": "Get a cursor-paginated list of activities visible to the current user.",
+                "parameters": [
+                    {
+                        "description": "Items per page (max 100, default 20)",
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Opaque cursor token from a previous response",
+                        "in": "query",
+                        "name": "cursor",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "items": {
-                                        "$ref": "#/components/schemas/activity.Activity"
-                                    },
-                                    "type": "array"
+                                    "$ref": "#/components/schemas/activity.ListActivitiesResponse"
                                 }
                             }
                         },
@@ -778,7 +868,7 @@ const docTemplate = `{
         },
         "/expenses": {
             "get": {
-                "description": "Retrieve a list of expenses filtered by group, personal=true, or friendId.",
+                "description": "Retrieve a cursor-paginated list of expenses filtered by group, personal=true, or friendId.",
                 "parameters": [
                     {
                         "description": "Filter by Group ID",
@@ -803,6 +893,22 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "Items per page (max 100, default 20)",
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Opaque cursor token from a previous response",
+                        "in": "query",
+                        "name": "cursor",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -810,10 +916,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "items": {
-                                        "$ref": "#/components/schemas/expense.Expense"
-                                    },
-                                    "type": "array"
+                                    "$ref": "#/components/schemas/expense.ListExpensesResponse"
                                 }
                             }
                         },
@@ -1138,16 +1241,31 @@ const docTemplate = `{
         },
         "/friends": {
             "get": {
-                "description": "Get a list of all friends of the currently authenticated user.",
+                "description": "Get a cursor-paginated list of the current user's friends.",
+                "parameters": [
+                    {
+                        "description": "Items per page (max 100, default 20)",
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Opaque cursor token from a previous response",
+                        "in": "query",
+                        "name": "cursor",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "items": {
-                                        "$ref": "#/components/schemas/user.User"
-                                    },
-                                    "type": "array"
+                                    "$ref": "#/components/schemas/user.ListFriendsResponse"
                                 }
                             }
                         },
@@ -1321,16 +1439,31 @@ const docTemplate = `{
         },
         "/groups": {
             "get": {
-                "description": "Retrieve all bill-splitting groups the current user belongs to.",
+                "description": "Retrieve a cursor-paginated list of groups the current user belongs to.",
+                "parameters": [
+                    {
+                        "description": "Items per page (max 100, default 20)",
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Opaque cursor token from a previous response",
+                        "in": "query",
+                        "name": "cursor",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "items": {
-                                        "$ref": "#/components/schemas/group.GroupDetailsResponse"
-                                    },
-                                    "type": "array"
+                                    "$ref": "#/components/schemas/group.ListGroupsResponse"
                                 }
                             }
                         },
@@ -1987,16 +2120,31 @@ const docTemplate = `{
         },
         "/notifications": {
             "get": {
-                "description": "Get all notifications in the tray for the current user.",
+                "description": "Get a cursor-paginated list of notifications for the current user.",
+                "parameters": [
+                    {
+                        "description": "Items per page (max 100, default 20)",
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Opaque cursor token from a previous response",
+                        "in": "query",
+                        "name": "cursor",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "items": {
-                                        "$ref": "#/components/schemas/notification.Notification"
-                                    },
-                                    "type": "array"
+                                    "$ref": "#/components/schemas/notification.ListNotificationsResponse"
                                 }
                             }
                         },

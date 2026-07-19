@@ -3,7 +3,9 @@ package notification
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/google/uuid"
 )
@@ -11,7 +13,7 @@ import (
 // Repository defines storage contract for notifications.
 type Repository interface {
 	CreateNotification(ctx context.Context, notif *Notification) error
-	ListUserNotifications(ctx context.Context, userID string) ([]Notification, error)
+	ListUserNotifications(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Notification, error)
 	MarkNotificationAsRead(ctx context.Context, id, userID string) error
 	MarkAllNotificationsAsRead(ctx context.Context, userID string) error
 }
@@ -46,17 +48,20 @@ func (u *Usecase) CreateAlert(ctx context.Context, userID string, actorID *strin
 	return newNotif, nil
 }
 
-// ListNotifications lists all notifications for a user.
-func (u *Usecase) ListNotifications(ctx context.Context, userID string) ([]Notification, error) {
-	notifs, err := u.repo.ListUserNotifications(ctx, userID)
+// ListNotifications returns a cursor-paginated list of notifications for the user.
+func (u *Usecase) ListNotifications(ctx context.Context, userID string, p pagination.Params) (pagination.Response[Notification], error) {
+	cursor := pagination.ParseCursor(p.Cursor)
+	notifs, err := u.repo.ListUserNotifications(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
 	if err != nil {
-		return nil, &response.AppError{
+		return pagination.Response[Notification]{}, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: "failed to retrieve notifications",
 			Err:     err,
 		}
 	}
-	return notifs, nil
+	return pagination.BuildResponse(notifs, p.Limit, func(n Notification) string {
+		return pagination.EncodeCursor(n.CreatedAt, n.ID)
+	}), nil
 }
 
 // MarkAsRead marks a single notification as read.

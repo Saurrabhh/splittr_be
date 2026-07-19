@@ -9,6 +9,7 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/activity"
 	"github.com/Saurrabhh/splittr_be/internal/db"
 	"github.com/Saurrabhh/splittr_be/internal/notification"
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/google/uuid"
 )
@@ -19,7 +20,7 @@ type Repository interface {
 	GetByInviteCode(ctx context.Context, inviteCode string) (*Group, error)
 	GetGroupMember(ctx context.Context, groupID, userID string) (*Member, error)
 	ListGroupMembers(ctx context.Context, groupID string) ([]Member, error)
-	ListUserGroupsWithMembers(ctx context.Context, userID string) ([]GroupDetailsResponse, error)
+	ListUserGroupsWithMembers(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]GroupDetailsResponse, error)
 	CreateGroup(ctx context.Context, g *Group) error
 	Update(ctx context.Context, g *Group) error
 	Archive(ctx context.Context, id string) error
@@ -179,24 +180,23 @@ func (u *Usecase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 	return g, members, nil
 }
 
-// ListUserGroups returns all groups the user is a member of, including member lists,
-// via a single JOIN query — no N+1 round-trips.
-func (u *Usecase) ListUserGroups(ctx context.Context, userID string) ([]GroupDetailsResponse, error) {
+// ListUserGroups returns a cursor-paginated list of groups the user belongs to.
+func (u *Usecase) ListUserGroups(ctx context.Context, userID string, p pagination.Params) (pagination.Response[GroupDetailsResponse], error) {
 	if userID == "" {
-		return nil, &response.AppError{
-			Type:    response.TypeValidation,
-			Message: "user ID is required",
-		}
+		return pagination.Response[GroupDetailsResponse]{}, &response.AppError{Type: response.TypeValidation, Message: "user ID is required"}
 	}
-	result, err := u.repo.ListUserGroupsWithMembers(ctx, userID)
+	cursor := pagination.ParseCursor(p.Cursor)
+	rows, err := u.repo.ListUserGroupsWithMembers(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
 	if err != nil {
-		return nil, &response.AppError{
+		return pagination.Response[GroupDetailsResponse]{}, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: "failed to retrieve user groups",
 			Err:     err,
 		}
 	}
-	return result, nil
+	return pagination.BuildResponse(rows, p.Limit, func(g GroupDetailsResponse) string {
+		return pagination.EncodeCursor(g.Group.CreatedAt, g.Group.ID)
+	}), nil
 }
 
 // AddMember adds a new user to the group. Requires requester to be an admin.

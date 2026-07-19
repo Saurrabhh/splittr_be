@@ -2,6 +2,8 @@ package group
 
 import (
 	"time"
+
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 )
 
 // Group represents a bill-splitting group.
@@ -33,4 +35,10 @@ type Member struct {
 type GroupDetailsResponse struct {
 	Group
 	Members []Member `json:"members"`
+}
+
+// ListGroupsResponse represents the paginated groups list response.
+type ListGroupsResponse struct {
+	Data       []GroupDetailsResponse `json:"data"`
+	Pagination pagination.Meta        `json:"pagination"`
 }

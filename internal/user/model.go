@@ -2,6 +2,8 @@ package user
 
 import (
 	"time"
+
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 )
 
 // User represents a user in the system.
@@ -28,4 +30,10 @@ type updateProfileRequest struct {
 type addFriendRequest struct {
 	FriendEmail string `json:"friendEmail"`
 	FriendPhone string `json:"friendPhone"`
+}
+
+// ListFriendsResponse represents the paginated friends list response.
+type ListFriendsResponse struct {
+	Data       []User          `json:"data"`
+	Pagination pagination.Meta `json:"pagination"`
 }
