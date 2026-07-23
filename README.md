@@ -71,7 +71,7 @@ cp env/local/.env.example env/local/.env
 Open `env/local/.env` to configure port, database URLs, and other service-specific environment settings.
 
 ### 2. Configure Firebase Admin SDK
-1. Go to your **Firebase Console** -> **Project Settings** -> **Service Accounts**.
+1. Go to your **Firebase Console** → **Project Settings** → **Service Accounts**.
 2. Generate a new private key and download the JSON file.
 3. Save the downloaded file to the local environment folder as `env/local/firebase-key.json` (as configured by `GOOGLE_APPLICATION_CREDENTIALS` in your `.env` file).
 

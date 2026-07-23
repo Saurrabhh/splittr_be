@@ -235,7 +235,7 @@ func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64
 		}
 	}
 
-	// Fetch enriched splits with user names and profiles for the response
+	// Fetch enriched splits with usernames and profiles for the response
 	enrichedSplits, err := u.repo.ListExpenseSplits(ctx, newExpense.ID)
 	if err != nil {
 		return newExpense, nil, nil // Return expense anyway if only list fails
