@@ -20,9 +20,8 @@ const (
 	ErrNotFound            ErrorCode = "NOT_FOUND"
 	ErrInternalServerError ErrorCode = "INTERNAL_SERVER_ERROR"
 
-	// ErrInvalidBody ErrNameRequired ErrUserNotFound Domain-specific error codes
+	// ErrInvalidBody ErrUserNotFound Domain-specific error codes
 	ErrInvalidBody  ErrorCode = "INVALID_BODY"
-	ErrNameRequired ErrorCode = "NAME_REQUIRED"
 	ErrUserNotFound ErrorCode = "USER_NOT_FOUND"
 )
 
