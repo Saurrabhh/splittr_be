@@ -181,15 +181,23 @@ func (r *DBRepository) Archive(ctx context.Context, id string) error {
 	return nil
 }
 
-// AddGroupMember adds a member to the group.
-func (r *DBRepository) AddGroupMember(ctx context.Context, groupID, userID, role string) error {
+func parseGroupIDAndUserID(groupID, userID string) (uuid.UUID, uuid.UUID, error) {
 	parsedGroupID, err := uuid.Parse(groupID)
 	if err != nil {
-		return fmt.Errorf("invalid group uuid: %w", err)
+		return uuid.UUID{}, uuid.UUID{}, fmt.Errorf("invalid group uuid: %w", err)
 	}
 	parsedUserID, err := uuid.Parse(userID)
 	if err != nil {
-		return fmt.Errorf("invalid user uuid: %w", err)
+		return uuid.UUID{}, uuid.UUID{}, fmt.Errorf("invalid user uuid: %w", err)
+	}
+	return parsedGroupID, parsedUserID, nil
+}
+
+// AddGroupMember adds a member to the group.
+func (r *DBRepository) AddGroupMember(ctx context.Context, groupID, userID, role string) error {
+	parsedGroupID, parsedUserID, err := parseGroupIDAndUserID(groupID, userID)
+	if err != nil {
+		return err
 	}
 
 	client := r.tm.GetTxOrPool(ctx)
@@ -208,13 +216,9 @@ func (r *DBRepository) AddGroupMember(ctx context.Context, groupID, userID, role
 
 // RemoveGroupMember removes a member from the group.
 func (r *DBRepository) RemoveGroupMember(ctx context.Context, groupID, userID string) error {
-	parsedGroupID, err := uuid.Parse(groupID)
+	parsedGroupID, parsedUserID, err := parseGroupIDAndUserID(groupID, userID)
 	if err != nil {
-		return fmt.Errorf("invalid group uuid: %w", err)
-	}
-	parsedUserID, err := uuid.Parse(userID)
-	if err != nil {
-		return fmt.Errorf("invalid user uuid: %w", err)
+		return err
 	}
 
 	client := r.tm.GetTxOrPool(ctx)
@@ -232,13 +236,9 @@ func (r *DBRepository) RemoveGroupMember(ctx context.Context, groupID, userID st
 
 // UpdateGroupMemberRole updates a member's role.
 func (r *DBRepository) UpdateGroupMemberRole(ctx context.Context, groupID, userID, role string) error {
-	parsedGroupID, err := uuid.Parse(groupID)
+	parsedGroupID, parsedUserID, err := parseGroupIDAndUserID(groupID, userID)
 	if err != nil {
-		return fmt.Errorf("invalid group uuid: %w", err)
-	}
-	parsedUserID, err := uuid.Parse(userID)
-	if err != nil {
-		return fmt.Errorf("invalid user uuid: %w", err)
+		return err
 	}
 
 	client := r.tm.GetTxOrPool(ctx)

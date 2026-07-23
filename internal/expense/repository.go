@@ -185,28 +185,49 @@ func parseCursorArgs(lastTime *time.Time, lastID *string) (pgtype.Timestamptz, u
 	return pgLastTime, lastIDUUID
 }
 
+func mapExpenseRow(
+	id uuid.UUID,
+	description string,
+	amount pgtype.Numeric,
+	currency string,
+	category string,
+	groupID pgtype.UUID,
+	paidBy uuid.UUID,
+	createdBy uuid.UUID,
+	isPayment bool,
+	spentAt pgtype.Timestamptz,
+	createdAt pgtype.Timestamptz,
+	updatedAt pgtype.Timestamptz,
+) Expense {
+	var groupIDStr *string
+	if groupID.Valid {
+		s := uuid.UUID(groupID.Bytes).String()
+		groupIDStr = &s
+	}
+	return Expense{
+		ID:          id.String(),
+		Description: description,
+		Amount:      numericToFloat(amount),
+		Currency:    currency,
+		Category:    category,
+		GroupID:     groupIDStr,
+		PaidBy:      paidBy.String(),
+		CreatedBy:   createdBy.String(),
+		IsPayment:   isPayment,
+		SpentAt:     spentAt.Time,
+		CreatedAt:   createdAt.Time,
+		UpdatedAt:   updatedAt.Time,
+	}
+}
+
 func toExpensesFromGroupPaginated(rows []dbgen.ListExpensesByGroupPaginatedRow) []Expense {
 	expenses := make([]Expense, 0, len(rows))
 	for _, row := range rows {
-		var groupIDStr *string
-		if row.GroupID.Valid {
-			s := uuid.UUID(row.GroupID.Bytes).String()
-			groupIDStr = &s
-		}
-		expenses = append(expenses, Expense{
-			ID:          row.ID.String(),
-			Description: row.Description,
-			Amount:      numericToFloat(row.Amount),
-			Currency:    row.Currency,
-			Category:    row.Category,
-			GroupID:     groupIDStr,
-			PaidBy:      row.PaidBy.String(),
-			CreatedBy:   row.CreatedBy.String(),
-			IsPayment:   row.IsPayment,
-			SpentAt:     row.SpentAt.Time,
-			CreatedAt:   row.CreatedAt.Time,
-			UpdatedAt:   row.UpdatedAt.Time,
-		})
+		expenses = append(expenses, mapExpenseRow(
+			row.ID, row.Description, row.Amount, row.Currency, row.Category,
+			row.GroupID, row.PaidBy, row.CreatedBy, row.IsPayment,
+			row.SpentAt, row.CreatedAt, row.UpdatedAt,
+		))
 	}
 	return expenses
 }
@@ -214,25 +235,11 @@ func toExpensesFromGroupPaginated(rows []dbgen.ListExpensesByGroupPaginatedRow) 
 func toExpensesFromPersonalPaginated(rows []dbgen.ListUserPersonalExpensesPaginatedRow) []Expense {
 	expenses := make([]Expense, 0, len(rows))
 	for _, row := range rows {
-		var groupIDStr *string
-		if row.GroupID.Valid {
-			s := uuid.UUID(row.GroupID.Bytes).String()
-			groupIDStr = &s
-		}
-		expenses = append(expenses, Expense{
-			ID:          row.ID.String(),
-			Description: row.Description,
-			Amount:      numericToFloat(row.Amount),
-			Currency:    row.Currency,
-			Category:    row.Category,
-			GroupID:     groupIDStr,
-			PaidBy:      row.PaidBy.String(),
-			CreatedBy:   row.CreatedBy.String(),
-			IsPayment:   row.IsPayment,
-			SpentAt:     row.SpentAt.Time,
-			CreatedAt:   row.CreatedAt.Time,
-			UpdatedAt:   row.UpdatedAt.Time,
-		})
+		expenses = append(expenses, mapExpenseRow(
+			row.ID, row.Description, row.Amount, row.Currency, row.Category,
+			row.GroupID, row.PaidBy, row.CreatedBy, row.IsPayment,
+			row.SpentAt, row.CreatedAt, row.UpdatedAt,
+		))
 	}
 	return expenses
 }
@@ -240,25 +247,11 @@ func toExpensesFromPersonalPaginated(rows []dbgen.ListUserPersonalExpensesPagina
 func toExpensesFromFriendPaginated(rows []dbgen.ListUserFriendExpensesPaginatedRow) []Expense {
 	expenses := make([]Expense, 0, len(rows))
 	for _, row := range rows {
-		var groupIDStr *string
-		if row.GroupID.Valid {
-			s := uuid.UUID(row.GroupID.Bytes).String()
-			groupIDStr = &s
-		}
-		expenses = append(expenses, Expense{
-			ID:          row.ID.String(),
-			Description: row.Description,
-			Amount:      numericToFloat(row.Amount),
-			Currency:    row.Currency,
-			Category:    row.Category,
-			GroupID:     groupIDStr,
-			PaidBy:      row.PaidBy.String(),
-			CreatedBy:   row.CreatedBy.String(),
-			IsPayment:   row.IsPayment,
-			SpentAt:     row.SpentAt.Time,
-			CreatedAt:   row.CreatedAt.Time,
-			UpdatedAt:   row.UpdatedAt.Time,
-		})
+		expenses = append(expenses, mapExpenseRow(
+			row.ID, row.Description, row.Amount, row.Currency, row.Category,
+			row.GroupID, row.PaidBy, row.CreatedBy, row.IsPayment,
+			row.SpentAt, row.CreatedAt, row.UpdatedAt,
+		))
 	}
 	return expenses
 }
