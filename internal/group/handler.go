@@ -14,12 +14,12 @@ import (
 
 // Handler handles HTTP requests for group endpoints.
 type Handler struct {
-	uc         *Usecase
-	activityUC *activity.Usecase
+	uc         *UseCase
+	activityUC *activity.UseCase
 }
 
 // NewHandler creates a new Handler instance.
-func NewHandler(uc *Usecase, activityUC *activity.Usecase) *Handler {
+func NewHandler(uc *UseCase, activityUC *activity.UseCase) *Handler {
 	return &Handler{
 		uc:         uc,
 		activityUC: activityUC,

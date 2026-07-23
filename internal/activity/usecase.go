@@ -18,20 +18,20 @@ type Repository interface {
 	ListGroupFeed(ctx context.Context, groupID string, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Activity, error)
 }
 
-// Usecase manages business logic for activities.
-type Usecase struct {
+// UseCase manages business logic for activities.
+type UseCase struct {
 	repo Repository
 }
 
-// NewUsecase instantiates a new Usecase.
-func NewUsecase(repo Repository) *Usecase {
-	return &Usecase{
+// NewUseCase instantiates a new UseCase.
+func NewUseCase(repo Repository) *UseCase {
+	return &UseCase{
 		repo: repo,
 	}
 }
 
 // LogActivity records a new activity in the system.
-func (u *Usecase) LogActivity(
+func (u *UseCase) LogActivity(
 	ctx context.Context,
 	actorID string,
 	groupID *string,
@@ -75,7 +75,7 @@ func (u *Usecase) LogActivity(
 }
 
 // ListActivities returns a cursor-paginated list of activities visible to the user.
-func (u *Usecase) ListActivities(ctx context.Context, userID string, p pagination.Params) (pagination.Response[Activity], error) {
+func (u *UseCase) ListActivities(ctx context.Context, userID string, p pagination.Params) (pagination.Response[Activity], error) {
 	cursor := pagination.ParseCursor(p.Cursor)
 	activities, err := u.repo.ListUserActivities(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
 	if err != nil {
@@ -91,7 +91,7 @@ func (u *Usecase) ListActivities(ctx context.Context, userID string, p paginatio
 }
 
 // GetGroupFeed retrieves group activities with cursor-based pagination.
-func (u *Usecase) GetGroupFeed(ctx context.Context, userID, groupID string, p pagination.Params) (*FeedResponse, error) {
+func (u *UseCase) GetGroupFeed(ctx context.Context, userID, groupID string, p pagination.Params) (*FeedResponse, error) {
 	// Delegate cursor parsing to the shared package
 	cursor := pagination.ParseCursor(p.Cursor)
 

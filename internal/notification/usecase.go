@@ -18,20 +18,20 @@ type Repository interface {
 	MarkAllNotificationsAsRead(ctx context.Context, userID string) error
 }
 
-// Usecase manages business logic for notifications.
-type Usecase struct {
+// UseCase manages business logic for notifications.
+type UseCase struct {
 	repo Repository
 }
 
-// NewUsecase instantiates a new Usecase.
-func NewUsecase(repo Repository) *Usecase {
-	return &Usecase{
+// NewUseCase instantiates a new UseCase.
+func NewUseCase(repo Repository) *UseCase {
+	return &UseCase{
 		repo: repo,
 	}
 }
 
 // CreateAlert stores a new notification for a specific recipient user.
-func (u *Usecase) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) (*Notification, error) {
+func (u *UseCase) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) (*Notification, error) {
 	newNotif := &Notification{
 		ID:         uuid.New().String(),
 		UserID:     userID,
@@ -49,7 +49,7 @@ func (u *Usecase) CreateAlert(ctx context.Context, userID string, actorID *strin
 }
 
 // ListNotifications returns a cursor-paginated list of notifications for the user.
-func (u *Usecase) ListNotifications(ctx context.Context, userID string, p pagination.Params) (pagination.Response[Notification], error) {
+func (u *UseCase) ListNotifications(ctx context.Context, userID string, p pagination.Params) (pagination.Response[Notification], error) {
 	cursor := pagination.ParseCursor(p.Cursor)
 	notifs, err := u.repo.ListUserNotifications(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
 	if err != nil {
@@ -65,7 +65,7 @@ func (u *Usecase) ListNotifications(ctx context.Context, userID string, p pagina
 }
 
 // MarkAsRead marks a single notification as read.
-func (u *Usecase) MarkAsRead(ctx context.Context, id, userID string) error {
+func (u *UseCase) MarkAsRead(ctx context.Context, id, userID string) error {
 	if id == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
@@ -84,7 +84,7 @@ func (u *Usecase) MarkAsRead(ctx context.Context, id, userID string) error {
 }
 
 // MarkAllAsRead marks all notifications as read for a user.
-func (u *Usecase) MarkAllAsRead(ctx context.Context, userID string) error {
+func (u *UseCase) MarkAllAsRead(ctx context.Context, userID string) error {
 	err := u.repo.MarkAllNotificationsAsRead(ctx, userID)
 	if err != nil {
 		return &response.AppError{

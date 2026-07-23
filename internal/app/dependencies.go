@@ -38,28 +38,28 @@ func initDependencies(ctx context.Context, app *Application) (*dependencies, err
 
 	// User domain wiring
 	userRepo := user.NewRepository(app.DB, tm)
-	userUsecase := user.NewUsecase(userRepo)
-	userHandler := user.NewHandler(userUsecase)
+	userUseCase := user.NewUseCase(userRepo)
+	userHandler := user.NewHandler(userUseCase)
 
 	// Activity domain wiring
 	activityRepo := activity.NewRepository(app.DB, tm)
-	activityUsecase := activity.NewUsecase(activityRepo)
-	activityHandler := activity.NewHandler(activityUsecase)
+	activityUseCase := activity.NewUseCase(activityRepo)
+	activityHandler := activity.NewHandler(activityUseCase)
 
 	// Notification domain wiring
 	notificationRepo := notification.NewRepository(app.DB, tm)
-	notificationUsecase := notification.NewUsecase(notificationRepo)
-	notificationHandler := notification.NewHandler(notificationUsecase)
+	notificationUseCase := notification.NewUseCase(notificationRepo)
+	notificationHandler := notification.NewHandler(notificationUseCase)
 
 	// Group domain wiring
 	groupRepo := group.NewRepository(app.DB, tm)
-	groupUsecase := group.NewUsecase(groupRepo, tm, activityUsecase, notificationUsecase)
-	groupHandler := group.NewHandler(groupUsecase, activityUsecase)
+	groupUseCase := group.NewUseCase(groupRepo, tm, activityUseCase, notificationUseCase)
+	groupHandler := group.NewHandler(groupUseCase, activityUseCase)
 
 	// Expense domain wiring
 	expenseRepo := expense.NewRepository(app.DB, tm)
-	expenseUsecase := expense.NewUsecase(expenseRepo, tm, groupUsecase, activityUsecase, notificationUsecase)
-	expenseHandler := expense.NewHandler(expenseUsecase)
+	expenseUseCase := expense.NewUseCase(expenseRepo, tm, groupUseCase, activityUseCase, notificationUseCase)
+	expenseHandler := expense.NewHandler(expenseUseCase)
 
 	return &dependencies{
 		authMiddleware:      authMiddleware,

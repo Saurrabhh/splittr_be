@@ -55,8 +55,8 @@ type NotificationSender interface {
 	CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) (*notification.Notification, error)
 }
 
-// Usecase manages business logic for expenses, splits, and balances.
-type Usecase struct {
+// UseCase manages business logic for expenses, splits, and balances.
+type UseCase struct {
 	repo         Repository
 	tx           db.Transactor
 	groupSvc     GroupService
@@ -64,9 +64,9 @@ type Usecase struct {
 	notification NotificationSender
 }
 
-// NewUsecase instantiates a new Usecase.
-func NewUsecase(repo Repository, tx db.Transactor, groupSvc GroupService, activitySvc ActivityLogger, notificationSvc NotificationSender) *Usecase {
-	return &Usecase{
+// NewUseCase instantiates a new UseCase.
+func NewUseCase(repo Repository, tx db.Transactor, groupSvc GroupService, activitySvc ActivityLogger, notificationSvc NotificationSender) *UseCase {
+	return &UseCase{
 		repo:         repo,
 		tx:           tx,
 		groupSvc:     groupSvc,
@@ -76,7 +76,7 @@ func NewUsecase(repo Repository, tx db.Transactor, groupSvc GroupService, activi
 }
 
 // CreateExpense calculates splits, validates constraints, and inserts the expense inside a transaction.
-func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64, currency string, category string, groupID *string, paidBy string, splitType SplitType, inputs []InputSplit, createdBy string) (*Expense, []Split, error) {
+func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64, currency string, category string, groupID *string, paidBy string, splitType SplitType, inputs []InputSplit, createdBy string) (*Expense, []Split, error) {
 	if desc == "" {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeValidation,
@@ -245,7 +245,7 @@ func (u *Usecase) CreateExpense(ctx context.Context, desc string, amount float64
 }
 
 // SettleUp creates a payment record to clear or reduce debt between a payer and a payee.
-func (u *Usecase) SettleUp(ctx context.Context, amount float64, currency string, groupID *string, paidBy string, receivedBy string, createdBy string) (*Expense, *Split, error) {
+func (u *UseCase) SettleUp(ctx context.Context, amount float64, currency string, groupID *string, paidBy string, receivedBy string, createdBy string) (*Expense, *Split, error) {
 	if amount <= 0 {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeValidation,
@@ -375,7 +375,7 @@ func (u *Usecase) SettleUp(ctx context.Context, amount float64, currency string,
 }
 
 // GetExpenseDetails retrieves an expense and its splits, checking view permissions.
-func (u *Usecase) GetExpenseDetails(ctx context.Context, expenseID, userID string) (*Expense, []Split, error) {
+func (u *UseCase) GetExpenseDetails(ctx context.Context, expenseID, userID string) (*Expense, []Split, error) {
 	e, err := u.repo.GetExpenseByID(ctx, expenseID)
 	if err != nil {
 		return nil, nil, &response.AppError{
@@ -422,7 +422,7 @@ func (u *Usecase) GetExpenseDetails(ctx context.Context, expenseID, userID strin
 }
 
 // ListExpenses returns a cursor-paginated list of expenses filtered by group, personal, or friend type.
-func (u *Usecase) ListExpenses(ctx context.Context, filterType, filterID, userID string, p pagination.Params) (pagination.Response[Expense], error) {
+func (u *UseCase) ListExpenses(ctx context.Context, filterType, filterID, userID string, p pagination.Params) (pagination.Response[Expense], error) {
 	cursor := pagination.ParseCursor(p.Cursor)
 	encodeFn := func(e Expense) string { return pagination.EncodeCursor(e.CreatedAt, e.ID) }
 
@@ -458,7 +458,7 @@ func (u *Usecase) ListExpenses(ctx context.Context, filterType, filterID, userID
 }
 
 // GetBalances returns direct or group balances and recommended settlements.
-func (u *Usecase) GetBalances(ctx context.Context, groupID *string, userID string, simplified bool) (*BalanceResponse, error) {
+func (u *UseCase) GetBalances(ctx context.Context, groupID *string, userID string, simplified bool) (*BalanceResponse, error) {
 	if groupID != nil && *groupID != "" {
 		_, _, err := u.groupSvc.GetGroupDetails(ctx, *groupID, userID)
 		if err != nil {
@@ -534,7 +534,7 @@ func (u *Usecase) GetBalances(ctx context.Context, groupID *string, userID strin
 }
 
 // DeleteExpense soft deletes the expense record. Only the creator of the expense can do this.
-func (u *Usecase) DeleteExpense(ctx context.Context, expenseID, userID string) error {
+func (u *UseCase) DeleteExpense(ctx context.Context, expenseID, userID string) error {
 	e, err := u.repo.GetExpenseByID(ctx, expenseID)
 	if err != nil {
 		return &response.AppError{

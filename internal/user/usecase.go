@@ -22,20 +22,20 @@ type Repository interface {
 	ListFriends(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]User, error)
 }
 
-// Usecase handles business operations for users.
-type Usecase struct {
+// UseCase handles business operations for users.
+type UseCase struct {
 	repo Repository
 }
 
-// NewUsecase creates a new Usecase instance.
-func NewUsecase(repo Repository) *Usecase {
-	return &Usecase{
+// NewUseCase creates a new UseCase instance.
+func NewUseCase(repo Repository) *UseCase {
+	return &UseCase{
 		repo: repo,
 	}
 }
 
 // RegisterUser registers a new user in the system if they do not exist.
-func (u *Usecase) RegisterUser(ctx context.Context, firebaseUID string, email, phone *string, name string) (*User, error) {
+func (u *UseCase) RegisterUser(ctx context.Context, firebaseUID string, email, phone *string, name string) (*User, error) {
 	if firebaseUID == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
@@ -74,7 +74,7 @@ func (u *Usecase) RegisterUser(ctx context.Context, firebaseUID string, email, p
 }
 
 // GetUserProfile retrieves the profile of a user by local ID.
-func (u *Usecase) GetUserProfile(ctx context.Context, id string) (*User, error) {
+func (u *UseCase) GetUserProfile(ctx context.Context, id string) (*User, error) {
 	if id == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
@@ -99,7 +99,7 @@ func (u *Usecase) GetUserProfile(ctx context.Context, id string) (*User, error) 
 }
 
 // GetUserByFirebaseUID retrieves the profile of a user by Firebase UID.
-func (u *Usecase) GetUserByFirebaseUID(ctx context.Context, firebaseUID string) (*User, error) {
+func (u *UseCase) GetUserByFirebaseUID(ctx context.Context, firebaseUID string) (*User, error) {
 	if firebaseUID == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
@@ -124,7 +124,7 @@ func (u *Usecase) GetUserByFirebaseUID(ctx context.Context, firebaseUID string) 
 }
 
 // UpdateProfile updates the name and default currency of a user.
-func (u *Usecase) UpdateProfile(ctx context.Context, userID string, name string, defaultCurrency string) (*User, error) {
+func (u *UseCase) UpdateProfile(ctx context.Context, userID string, name string, defaultCurrency string) (*User, error) {
 	usr, err := u.repo.GetByID(ctx, userID)
 	if err != nil {
 		return nil, &response.AppError{
@@ -165,7 +165,7 @@ func (u *Usecase) UpdateProfile(ctx context.Context, userID string, name string,
 }
 
 // AddFriendByEmailOrPhone matches a user profile by email or phone and establishes a friendship relation.
-func (u *Usecase) AddFriendByEmailOrPhone(ctx context.Context, userID string, email string, phone string) (*User, error) {
+func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, email string, phone string) (*User, error) {
 	if email == "" && phone == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
@@ -219,7 +219,7 @@ func (u *Usecase) AddFriendByEmailOrPhone(ctx context.Context, userID string, em
 }
 
 // RemoveFriend deletes a friendship link.
-func (u *Usecase) RemoveFriend(ctx context.Context, userID string, friendID string) error {
+func (u *UseCase) RemoveFriend(ctx context.Context, userID string, friendID string) error {
 	if friendID == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
@@ -253,7 +253,7 @@ func (u *Usecase) RemoveFriend(ctx context.Context, userID string, friendID stri
 }
 
 // ListFriends returns a cursor-paginated list of the user's friends.
-func (u *Usecase) ListFriends(ctx context.Context, userID string, p pagination.Params) (pagination.Response[User], error) {
+func (u *UseCase) ListFriends(ctx context.Context, userID string, p pagination.Params) (pagination.Response[User], error) {
 	if userID == "" {
 		return pagination.Response[User]{}, &response.AppError{Type: response.TypeValidation, Message: "userID is required"}
 	}

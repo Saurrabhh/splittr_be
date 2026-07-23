@@ -40,7 +40,7 @@ func TestGetGroupFeed_CursorParsing(t *testing.T) {
 		},
 	}
 
-	u := NewUsecase(mockRepo)
+	u := NewUseCase(mockRepo)
 	_, err := u.GetGroupFeed(context.Background(), "user-uuid", "group-uuid", pagination.Params{Limit: 10, Cursor: "2026-07-18T18:00:00Z_uuid-test"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

@@ -48,17 +48,17 @@ type NotificationSender interface {
 	CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) (*notification.Notification, error)
 }
 
-// Usecase manages business workflows for the group domain.
-type Usecase struct {
+// UseCase manages business workflows for the group domain.
+type UseCase struct {
 	repo         Repository
 	tx           db.Transactor
 	activity     ActivityLogger
 	notification NotificationSender
 }
 
-// NewUsecase instantiates a new Usecase.
-func NewUsecase(repo Repository, tx db.Transactor, activitySvc ActivityLogger, notificationSvc NotificationSender) *Usecase {
-	return &Usecase{
+// NewUseCase instantiates a new UseCase.
+func NewUseCase(repo Repository, tx db.Transactor, activitySvc ActivityLogger, notificationSvc NotificationSender) *UseCase {
+	return &UseCase{
 		repo:         repo,
 		tx:           tx,
 		activity:     activitySvc,
@@ -67,7 +67,7 @@ func NewUsecase(repo Repository, tx db.Transactor, activitySvc ActivityLogger, n
 }
 
 // CreateGroup creates a new group and adds the creator as the first admin.
-func (u *Usecase) CreateGroup(ctx context.Context, name, description string, creatorID string) (*Group, error) {
+func (u *UseCase) CreateGroup(ctx context.Context, name, description string, creatorID string) (*Group, error) {
 	if name == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
@@ -131,7 +131,7 @@ func (u *Usecase) CreateGroup(ctx context.Context, name, description string, cre
 }
 
 // GetGroupDetails retrieves a group and its members, verifying the requester belongs to it.
-func (u *Usecase) GetGroupDetails(ctx context.Context, groupID, userID string) (*Group, []Member, error) {
+func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (*Group, []Member, error) {
 	if groupID == "" || userID == "" {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeValidation,
@@ -182,7 +182,7 @@ func (u *Usecase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 }
 
 // ListUserGroups returns a cursor-paginated list of groups the user belongs to.
-func (u *Usecase) ListUserGroups(ctx context.Context, userID string, p pagination.Params) (pagination.Response[DetailsResponse], error) {
+func (u *UseCase) ListUserGroups(ctx context.Context, userID string, p pagination.Params) (pagination.Response[DetailsResponse], error) {
 	if userID == "" {
 		return pagination.Response[DetailsResponse]{}, &response.AppError{Type: response.TypeValidation, Message: "user ID is required"}
 	}
@@ -201,7 +201,7 @@ func (u *Usecase) ListUserGroups(ctx context.Context, userID string, p paginatio
 }
 
 // AddMember adds a new user to the group. Requires requester to be an admin.
-func (u *Usecase) AddMember(ctx context.Context, groupID, targetUserID, actionByUserID string) error {
+func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionByUserID string) error {
 	if groupID == "" || targetUserID == "" || actionByUserID == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
@@ -288,7 +288,7 @@ func (u *Usecase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 
 // RemoveMember removes a user from the group.
 // A user can remove themselves (leave). Admins can remove anyone.
-func (u *Usecase) RemoveMember(ctx context.Context, groupID, targetUserID, actionByUserID string) error {
+func (u *UseCase) RemoveMember(ctx context.Context, groupID, targetUserID, actionByUserID string) error {
 	if groupID == "" || targetUserID == "" || actionByUserID == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
@@ -432,7 +432,7 @@ func (u *Usecase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 }
 
 // UpdateMemberRole changes a member's role (admin <-> member).
-func (u *Usecase) UpdateMemberRole(ctx context.Context, groupID, targetUserID, role, actionByUserID string) error {
+func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID, role, actionByUserID string) error {
 	if role != "admin" && role != "member" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
@@ -546,7 +546,7 @@ func (u *Usecase) UpdateMemberRole(ctx context.Context, groupID, targetUserID, r
 }
 
 // ArchiveGroup soft-deletes the group. Requires requester to be an admin.
-func (u *Usecase) ArchiveGroup(ctx context.Context, groupID, actionByUserID string) error {
+func (u *UseCase) ArchiveGroup(ctx context.Context, groupID, actionByUserID string) error {
 	isAdmin, err := u.checkIsAdmin(ctx, groupID, actionByUserID)
 	if err != nil {
 		return err
@@ -615,7 +615,7 @@ func (u *Usecase) ArchiveGroup(ctx context.Context, groupID, actionByUserID stri
 }
 
 // JoinGroup matches a group by invite code and adds the user as a member.
-func (u *Usecase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Group, error) {
+func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Group, error) {
 	if inviteCode == "" || userID == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
@@ -690,7 +690,7 @@ func (u *Usecase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Gr
 }
 
 // GetGroupPreview looks up group details for user preview before joining.
-func (u *Usecase) GetGroupPreview(ctx context.Context, inviteCode string) (*Preview, error) {
+func (u *UseCase) GetGroupPreview(ctx context.Context, inviteCode string) (*Preview, error) {
 	if inviteCode == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
@@ -713,7 +713,7 @@ func (u *Usecase) GetGroupPreview(ctx context.Context, inviteCode string) (*Prev
 }
 
 // checkIsAdmin is a helper to verify a user's admin status in a group.
-func (u *Usecase) checkIsAdmin(ctx context.Context, groupID, userID string) (bool, error) {
+func (u *UseCase) checkIsAdmin(ctx context.Context, groupID, userID string) (bool, error) {
 	member, err := u.repo.GetGroupMember(ctx, groupID, userID)
 	if err != nil {
 		return false, &response.AppError{

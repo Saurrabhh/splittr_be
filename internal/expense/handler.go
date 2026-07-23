@@ -14,11 +14,11 @@ import (
 
 // Handler handles HTTP requests for expenses and balances.
 type Handler struct {
-	uc *Usecase
+	uc *UseCase
 }
 
 // NewHandler creates a new Handler.
-func NewHandler(uc *Usecase) *Handler {
+func NewHandler(uc *UseCase) *Handler {
 	return &Handler{uc: uc}
 }
 
