@@ -19,7 +19,7 @@ func (m *mockRepository) CreateActivityVisibility(_ context.Context, _, _ string
 func (m *mockRepository) ListUserActivities(_ context.Context, _ string, _ int32, _ *time.Time, _ *string) ([]Activity, error) {
 	return nil, nil
 }
-func (m *mockRepository) ListGroupFeed(ctx context.Context, groupID string, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Activity, error) {
+func (m *mockRepository) ListGroupFeed(_ context.Context, groupID string, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Activity, error) {
 	return m.listGroupFeedMock(groupID, userID, limit, lastTime, lastID)
 }
 
