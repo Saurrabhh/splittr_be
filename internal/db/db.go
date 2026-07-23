@@ -50,4 +50,3 @@ func (db *DB) Ping(ctx context.Context) error {
 	}
 	return db.Pool.Ping(ctx)
 }
-

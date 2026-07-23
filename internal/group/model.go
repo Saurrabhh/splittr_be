@@ -50,4 +50,3 @@ type GroupPreview struct {
 	MemberCount int64   `json:"memberCount"`
 	CreatorName string  `json:"creatorName"`
 }
-

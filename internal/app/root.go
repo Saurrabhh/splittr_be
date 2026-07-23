@@ -14,7 +14,7 @@ type rootResponse struct {
 	Environment string `json:"environment"`
 	Status      string `json:"status"`
 	Docs        string `json:"docs"`
-	Health        string `json:"health"`
+	Health      string `json:"health"`
 }
 
 func (app *Application) rootHandler(w http.ResponseWriter, r *http.Request) {

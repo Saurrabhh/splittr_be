@@ -30,6 +30,7 @@ func NewHandler(uc *Usecase, activityUC *activity.Usecase) *Handler {
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Route("/groups", func(r chi.Router) {
 		r.Post("/", h.Create)
+		r.Get("/preview", h.Preview)
 		r.Post("/join", h.Join)
 		r.Get("/", h.List)
 
@@ -128,6 +129,49 @@ func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, g)
 }
 
+type groupPreviewResponse struct {
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
+	MemberCount int64   `json:"memberCount"`
+	CreatorName string  `json:"creatorName"`
+}
+
+// Preview retrieves group basic info before joining.
+// @Summary      Get group preview
+// @Description  Get group details (name, description, member count, creator name) using invite code.
+// @Tags         groups
+// @Produce      json
+// @Param        inviteCode   query  string  true  "Group invite code"
+// @Success      200  {object}  groupPreviewResponse
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      404  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /groups/preview [get]
+// @Security     BearerAuth
+func (h *Handler) Preview(w http.ResponseWriter, r *http.Request) {
+	inviteCode := r.URL.Query().Get("inviteCode")
+	if inviteCode == "" {
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "inviteCode query parameter is required",
+		})
+		return
+	}
+
+	preview, err := h.uc.GetGroupPreview(r.Context(), inviteCode)
+	if err != nil {
+		response.HandleError(w, err)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, groupPreviewResponse{
+		Name:        preview.Name,
+		Description: preview.Description,
+		MemberCount: preview.MemberCount,
+		CreatorName: preview.CreatorName,
+	})
+}
+
 // List retrieves all groups the user is a member of.
 // @Summary      List groups
 // @Description  Retrieve a cursor-paginated list of groups the current user belongs to.
@@ -150,7 +194,6 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	response.JSON(w, http.StatusOK, result)
 }
-
 
 // GetDetails returns the group metadata and its members list.
 // @Summary      Get group details
@@ -384,4 +427,3 @@ func (h *Handler) GetFeed(w http.ResponseWriter, r *http.Request) {
 
 	response.JSON(w, http.StatusOK, feed)
 }
-

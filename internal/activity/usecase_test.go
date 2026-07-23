@@ -13,8 +13,12 @@ type mockRepository struct {
 }
 
 func (m *mockRepository) CreateActivity(ctx context.Context, act *Activity) error { return nil }
-func (m *mockRepository) CreateActivityVisibility(ctx context.Context, activityID string, userID string) error { return nil }
-func (m *mockRepository) ListUserActivities(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Activity, error) { return nil, nil }
+func (m *mockRepository) CreateActivityVisibility(ctx context.Context, activityID string, userID string) error {
+	return nil
+}
+func (m *mockRepository) ListUserActivities(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Activity, error) {
+	return nil, nil
+}
 func (m *mockRepository) ListGroupFeed(ctx context.Context, groupID string, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Activity, error) {
 	return m.listGroupFeedMock(groupID, userID, limit, lastTime, lastID)
 }

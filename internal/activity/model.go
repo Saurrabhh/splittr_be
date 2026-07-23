@@ -46,8 +46,8 @@ type Activity struct {
 	EntityType  EntityType `json:"entityType"`
 	EntityID    *string    `json:"entityId,omitempty"`
 	// Snapshot metadata. Shape matches the entity response: EXPENSE (CreateExpenseResponse), SETTLEMENT (SettleExpenseResponse), MEMBER (Member), GROUP (GroupDetailsResponse)
-	Metadata    json.RawMessage `json:"metadata,omitempty" swaggertype:"object"`
-	CreatedAt   time.Time       `json:"createdAt"`
+	Metadata  json.RawMessage `json:"metadata,omitempty" swaggertype:"object"`
+	CreatedAt time.Time       `json:"createdAt"`
 }
 
 type FeedItemResponse struct {
@@ -59,7 +59,7 @@ type FeedItemResponse struct {
 	Description string     `json:"description"`
 	CreatedAt   time.Time  `json:"createdAt"`
 	// Verbatim entity snapshot. Shape matches the entity response: EXPENSE (CreateExpenseResponse), SETTLEMENT (SettleExpenseResponse), MEMBER (Member), GROUP (GroupDetailsResponse)
-	Payload     json.RawMessage `json:"payload,omitempty" swaggertype:"object"`
+	Payload json.RawMessage `json:"payload,omitempty" swaggertype:"object"`
 }
 
 type ActorInfo struct {
@@ -78,4 +78,3 @@ type ListActivitiesResponse struct {
 	Data       []Activity      `json:"data"`
 	Pagination pagination.Meta `json:"pagination"`
 }
-

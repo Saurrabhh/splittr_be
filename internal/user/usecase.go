@@ -270,5 +270,3 @@ func (u *Usecase) ListFriends(ctx context.Context, userID string, p pagination.P
 		return pagination.EncodeCursor(usr.CreatedAt, usr.ID)
 	}), nil
 }
-
-

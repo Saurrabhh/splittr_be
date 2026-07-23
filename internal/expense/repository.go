@@ -335,7 +335,6 @@ func (r *DBRepository) ListUserFriendExpenses(ctx context.Context, userID string
 	return toExpensesFromFriendPaginated(rows), nil
 }
 
-
 // DeleteExpense soft deletes an expense.
 func (r *DBRepository) DeleteExpense(ctx context.Context, id string) error {
 	parsedID, err := uuid.Parse(id)

@@ -142,7 +142,6 @@ func (r *DBRepository) GetPreviewByInviteCode(ctx context.Context, inviteCode st
 	}, nil
 }
 
-
 // Update updates group name and description.
 func (r *DBRepository) Update(ctx context.Context, g *Group) error {
 	parsedID, err := uuid.Parse(g.ID)
@@ -373,7 +372,6 @@ func (r *DBRepository) ListUserGroupsWithMembers(ctx context.Context, userID str
 	}
 	return result, nil
 }
-
 
 // Helper converters
 func toDomainGroup(dbg dbgen.Group) *Group {

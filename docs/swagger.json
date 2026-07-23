@@ -539,6 +539,23 @@
                 },
                 "type": "object"
             },
+            "group.groupPreviewResponse": {
+                "properties": {
+                    "creatorName": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "memberCount": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "group.joinGroupRequest": {
                 "properties": {
                     "inviteCode": {
@@ -1639,6 +1656,73 @@
                     }
                 ],
                 "summary": "Join group",
+                "tags": [
+                    "groups"
+                ]
+            }
+        },
+        "/groups/preview": {
+            "get": {
+                "description": "Get group details (name, description, member count, creator name) using invite code.",
+                "parameters": [
+                    {
+                        "description": "Group invite code",
+                        "in": "query",
+                        "name": "inviteCode",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/group.groupPreviewResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Get group preview",
                 "tags": [
                     "groups"
                 ]

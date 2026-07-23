@@ -167,7 +167,6 @@ func (r *DBRepository) ListUserActivities(ctx context.Context, userID string, li
 	return activities, nil
 }
 
-
 // ListGroupFeed queries a group activity feed chronologically with cursor pagination.
 func (r *DBRepository) ListGroupFeed(ctx context.Context, groupID string, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Activity, error) {
 	gUUID, err := uuid.Parse(groupID)
