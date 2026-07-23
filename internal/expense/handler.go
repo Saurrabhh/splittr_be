@@ -1,6 +1,7 @@
 package expense
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
@@ -51,43 +52,39 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
-	req, ok := request.DecodeBody[createExpenseRequest](w, r)
-	if !ok {
-		return
-	}
+	request.Run(w, r, http.StatusCreated, func(ctx context.Context, req createExpenseRequest) (CreateExpenseResponse, error) {
+		// Default paidBy to the current user if not supplied
+		paidBy := req.PaidBy
+		if paidBy == "" {
+			paidBy = currUser.ID
+		}
 
-	// Default paidBy to the current user if not supplied
-	paidBy := req.PaidBy
-	if paidBy == "" {
-		paidBy = currUser.ID
-	}
+		// Default category to 'Other' if not supplied
+		category := "Other"
+		if req.Category != nil && *req.Category != "" {
+			category = *req.Category
+		}
 
-	// Default category to 'Other' if not supplied
-	category := "Other"
-	if req.Category != nil && *req.Category != "" {
-		category = *req.Category
-	}
+		exp, splits, err := h.uc.CreateExpense(
+			ctx,
+			req.Description,
+			req.Amount,
+			req.Currency,
+			category,
+			req.GroupID,
+			paidBy,
+			req.SplitType,
+			req.Splits,
+			currUser.ID,
+		)
+		if err != nil {
+			return CreateExpenseResponse{}, err
+		}
 
-	exp, splits, err := h.uc.CreateExpense(
-		r.Context(),
-		req.Description,
-		req.Amount,
-		req.Currency,
-		category,
-		req.GroupID,
-		paidBy,
-		req.SplitType,
-		req.Splits,
-		currUser.ID,
-	)
-	if err != nil {
-		response.HandleError(w, err)
-		return
-	}
-
-	response.JSON(w, http.StatusCreated, CreateExpenseResponse{
-		Expense: exp,
-		Splits:  splits,
+		return CreateExpenseResponse{
+			Expense: exp,
+			Splits:  splits,
+		}, nil
 	})
 }
 
@@ -107,34 +104,30 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Settle(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
-	req, ok := request.DecodeBody[settleExpenseRequest](w, r)
-	if !ok {
-		return
-	}
+	request.Run(w, r, http.StatusCreated, func(ctx context.Context, req settleExpenseRequest) (SettleExpenseResponse, error) {
+		// Default paidBy to current user if not specified
+		paidBy := req.PaidBy
+		if paidBy == "" {
+			paidBy = currUser.ID
+		}
 
-	// Default paidBy to current user if not specified
-	paidBy := req.PaidBy
-	if paidBy == "" {
-		paidBy = currUser.ID
-	}
+		exp, split, err := h.uc.SettleUp(
+			ctx,
+			req.Amount,
+			req.Currency,
+			req.GroupID,
+			paidBy,
+			req.ReceivedBy,
+			currUser.ID,
+		)
+		if err != nil {
+			return SettleExpenseResponse{}, err
+		}
 
-	exp, split, err := h.uc.SettleUp(
-		r.Context(),
-		req.Amount,
-		req.Currency,
-		req.GroupID,
-		paidBy,
-		req.ReceivedBy,
-		currUser.ID,
-	)
-	if err != nil {
-		response.HandleError(w, err)
-		return
-	}
-
-	response.JSON(w, http.StatusCreated, SettleExpenseResponse{
-		Expense: exp,
-		Split:   split,
+		return SettleExpenseResponse{
+			Expense: exp,
+			Split:   split,
+		}, nil
 	})
 }
 

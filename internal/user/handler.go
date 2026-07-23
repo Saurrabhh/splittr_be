@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/Saurrabhh/splittr_be/internal/auth"
@@ -64,33 +65,26 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req, ok := request.DecodeBody[registerRequest](w, r)
-	if !ok {
-		return
-	}
+	request.Run(w, r, http.StatusCreated, func(ctx context.Context, req registerRequest) (*User, error) {
+		if req.Name == "" {
+			return nil, &response.AppError{
+				Type:    response.TypeValidation,
+				Message: "name is required",
+			}
+		}
 
-	if req.Name == "" {
-		response.Error(w, http.StatusBadRequest, response.ErrNameRequired, "name is required")
-		return
-	}
+		var emailPtr *string
+		if identity.Email != "" {
+			emailPtr = &identity.Email
+		}
 
-	var emailPtr *string
-	if identity.Email != "" {
-		emailPtr = &identity.Email
-	}
+		var phonePtr *string
+		if identity.Phone != "" {
+			phonePtr = &identity.Phone
+		}
 
-	var phonePtr *string
-	if identity.Phone != "" {
-		phonePtr = &identity.Phone
-	}
-
-	u, err := h.uc.RegisterUser(r.Context(), identity.UserID, emailPtr, phonePtr, req.Name)
-	if err != nil {
-		response.HandleError(w, err)
-		return
-	}
-
-	response.JSON(w, http.StatusCreated, u)
+		return h.uc.RegisterUser(ctx, identity.UserID, emailPtr, phonePtr, req.Name)
+	})
 }
 
 // GetMe retrieves the profile of the currently authenticated user.
@@ -124,18 +118,9 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	currUser := MustFrom(r.Context())
 
-	req, ok := request.DecodeBody[updateProfileRequest](w, r)
-	if !ok {
-		return
-	}
-
-	u, err := h.uc.UpdateProfile(r.Context(), currUser.ID, req.Name, req.DefaultCurrency)
-	if err != nil {
-		response.HandleError(w, err)
-		return
-	}
-
-	response.JSON(w, http.StatusOK, u)
+	request.Run(w, r, http.StatusOK, func(ctx context.Context, req updateProfileRequest) (*User, error) {
+		return h.uc.UpdateProfile(ctx, currUser.ID, req.Name, req.DefaultCurrency)
+	})
 }
 
 // AddFriend adds a user as a friend by email or phone.
@@ -154,18 +139,9 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) AddFriend(w http.ResponseWriter, r *http.Request) {
 	currUser := MustFrom(r.Context())
 
-	req, ok := request.DecodeBody[addFriendRequest](w, r)
-	if !ok {
-		return
-	}
-
-	friend, err := h.uc.AddFriendByEmailOrPhone(r.Context(), currUser.ID, req.FriendEmail, req.FriendPhone)
-	if err != nil {
-		response.HandleError(w, err)
-		return
-	}
-
-	response.JSON(w, http.StatusOK, friend)
+	request.Run(w, r, http.StatusOK, func(ctx context.Context, req addFriendRequest) (*User, error) {
+		return h.uc.AddFriendByEmailOrPhone(ctx, currUser.ID, req.FriendEmail, req.FriendPhone)
+	})
 }
 
 // GetFriends returns all friends of the current user.

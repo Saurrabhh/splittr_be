@@ -1,6 +1,7 @@
 package group
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/Saurrabhh/splittr_be/internal/activity"
@@ -75,18 +76,9 @@ type joinGroupRequest struct {
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
-	req, ok := request.DecodeBody[createGroupRequest](w, r)
-	if !ok {
-		return
-	}
-
-	g, err := h.uc.CreateGroup(r.Context(), req.Name, req.Description, currUser.ID)
-	if err != nil {
-		response.HandleError(w, err)
-		return
-	}
-
-	response.JSON(w, http.StatusCreated, g)
+	request.Run(w, r, http.StatusCreated, func(ctx context.Context, req createGroupRequest) (*Group, error) {
+		return h.uc.CreateGroup(ctx, req.Name, req.Description, currUser.ID)
+	})
 }
 
 // Join joins a group via its invite code.
@@ -105,26 +97,15 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
-	req, ok := request.DecodeBody[joinGroupRequest](w, r)
-	if !ok {
-		return
-	}
-
-	if req.InviteCode == "" {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeValidation,
-			Message: "inviteCode is required",
-		})
-		return
-	}
-
-	g, err := h.uc.JoinGroup(r.Context(), req.InviteCode, currUser.ID)
-	if err != nil {
-		response.HandleError(w, err)
-		return
-	}
-
-	response.JSON(w, http.StatusOK, g)
+	request.Run(w, r, http.StatusOK, func(ctx context.Context, req joinGroupRequest) (*Group, error) {
+		if req.InviteCode == "" {
+			return nil, &response.AppError{
+				Type:    response.TypeValidation,
+				Message: "inviteCode is required",
+			}
+		}
+		return h.uc.JoinGroup(ctx, req.InviteCode, currUser.ID)
+	})
 }
 
 type groupPreviewResponse struct {
@@ -259,26 +240,21 @@ func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
 
 	currUser := user.MustFrom(r.Context())
 
-	req, ok := request.DecodeBody[addMemberRequest](w, r)
-	if !ok {
-		return
-	}
+	request.Run(w, r, http.StatusOK, func(ctx context.Context, req addMemberRequest) (response.MessageResponse, error) {
+		if req.UserID == "" {
+			return response.MessageResponse{}, &response.AppError{
+				Type:    response.TypeValidation,
+				Message: "userId is required",
+			}
+		}
 
-	if req.UserID == "" {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeValidation,
-			Message: "userId is required",
-		})
-		return
-	}
+		err := h.uc.AddMember(ctx, groupID, req.UserID, currUser.ID)
+		if err != nil {
+			return response.MessageResponse{}, err
+		}
 
-	err := h.uc.AddMember(r.Context(), groupID, req.UserID, currUser.ID)
-	if err != nil {
-		response.HandleError(w, err)
-		return
-	}
-
-	response.JSON(w, http.StatusOK, response.MessageResponse{Message: "member added successfully"})
+		return response.MessageResponse{Message: "member added successfully"}, nil
+	})
 }
 
 // RemoveMember removes a user from the group (or leaves the group).
@@ -347,18 +323,14 @@ func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 
 	currUser := user.MustFrom(r.Context())
 
-	req, ok := request.DecodeBody[updateRoleRequest](w, r)
-	if !ok {
-		return
-	}
+	request.Run(w, r, http.StatusOK, func(ctx context.Context, req updateRoleRequest) (response.MessageResponse, error) {
+		err := h.uc.UpdateMemberRole(ctx, groupID, targetUserID, req.Role, currUser.ID)
+		if err != nil {
+			return response.MessageResponse{}, err
+		}
 
-	err := h.uc.UpdateMemberRole(r.Context(), groupID, targetUserID, req.Role, currUser.ID)
-	if err != nil {
-		response.HandleError(w, err)
-		return
-	}
-
-	response.JSON(w, http.StatusOK, response.MessageResponse{Message: "role updated successfully"})
+		return response.MessageResponse{Message: "role updated successfully"}, nil
+	})
 }
 
 // Archive archives (soft-deletes) the group.
