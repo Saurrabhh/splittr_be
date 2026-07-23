@@ -82,7 +82,6 @@ const docTemplate = `{
             },
             "activity.EntityType": {
                 "enum": [
-                    "SYSTEM",
                     "EXPENSE",
                     "SETTLEMENT",
                     "MEMBER",
@@ -90,7 +89,6 @@ const docTemplate = `{
                 ],
                 "type": "string",
                 "x-enum-varnames": [
-                    "EntityTypeSystem",
                     "EntityTypeExpense",
                     "EntityTypeSettlement",
                     "EntityTypeMember",
@@ -421,36 +419,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "group.Group": {
-                "properties": {
-                    "archivedAt": {
-                        "type": "string"
-                    },
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "createdBy": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "inviteCode": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "updatedAt": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "group.GroupDetailsResponse": {
+            "group.DetailsResponse": {
                 "properties": {
                     "archivedAt": {
                         "type": "string"
@@ -486,11 +455,40 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "group.Group": {
+                "properties": {
+                    "archivedAt": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "createdBy": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "inviteCode": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "group.ListGroupsResponse": {
                 "properties": {
                     "data": {
                         "items": {
-                            "$ref": "#/components/schemas/group.GroupDetailsResponse"
+                            "$ref": "#/components/schemas/group.DetailsResponse"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -1819,7 +1817,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/group.GroupDetailsResponse"
+                                    "$ref": "#/components/schemas/group.DetailsResponse"
                                 }
                             }
                         },

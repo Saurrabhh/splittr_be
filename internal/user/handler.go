@@ -46,8 +46,8 @@ func (h *Handler) RegisterRoutes(r chi.Router, authMiddleware func(http.Handler)
 // @Summary      Register user
 // @Description  Create a new user profile using Firebase identities.
 // @Tags         users
-// @Accept       JSON
-// @Produce      JSON
+// @Accept       json
+// @Produce      json
 // @Param        request body registerRequest true "Registration data"
 // @Success      201  {object}  User
 // @Failure      400  {object}  response.ErrorResponse
@@ -91,7 +91,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 // @Summary      Get current user profile
 // @Description  Retrieve the profile details of the logged-in user.
 // @Tags         users
-// @Produce      JSON
+// @Produce      json
 // @Success      200  {object}  User
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -106,8 +106,8 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 // @Summary      Update user profile
 // @Description  Update name or default currency for the current user.
 // @Tags         users
-// @Accept       JSON
-// @Produce      JSON
+// @Accept       json
+// @Produce      json
 // @Param        request body updateProfileRequest true "Profile details to update"
 // @Success      200  {object}  User
 // @Failure      400  {object}  response.ErrorResponse
@@ -127,8 +127,8 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 // @Summary      Add friend
 // @Description  Create a friendship link with another user by their email or phone.
 // @Tags         friends
-// @Accept       JSON
-// @Produce      JSON
+// @Accept       json
+// @Produce      json
 // @Param        request body addFriendRequest true "Friend email or phone"
 // @Success      200  {object}  User
 // @Failure      400  {object}  response.ErrorResponse
@@ -148,7 +148,7 @@ func (h *Handler) AddFriend(w http.ResponseWriter, r *http.Request) {
 // @Summary      List friends
 // @Description  Get a cursor-paginated list of the current user's friends.
 // @Tags         friends
-// @Produce      JSON
+// @Produce      json
 // @Param        limit   query  int     false  "Items per page (max 100, default 20)"
 // @Param        cursor  query  string  false  "Opaque cursor token from a previous response"
 // @Success      200  {object}  ListFriendsResponse

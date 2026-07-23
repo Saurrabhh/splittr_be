@@ -180,7 +180,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 // @Tags         groups
 // @Produce      json
 // @Param        id path string true "Group ID"
-// @Success      200  {object}  GroupDetailsResponse
+// @Success      200  {object}  DetailsResponse
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse

@@ -57,14 +57,12 @@ components:
       type: object
     activity.EntityType:
       enum:
-      - SYSTEM
       - EXPENSE
       - SETTLEMENT
       - MEMBER
       - GROUP
       type: string
       x-enum-varnames:
-      - EntityTypeSystem
       - EntityTypeExpense
       - EntityTypeSettlement
       - EntityTypeMember
@@ -287,26 +285,7 @@ components:
         receivedBy:
           type: string
       type: object
-    group.Group:
-      properties:
-        archivedAt:
-          type: string
-        createdAt:
-          type: string
-        createdBy:
-          type: string
-        description:
-          type: string
-        id:
-          type: string
-        inviteCode:
-          type: string
-        name:
-          type: string
-        updatedAt:
-          type: string
-      type: object
-    group.GroupDetailsResponse:
+    group.DetailsResponse:
       properties:
         archivedAt:
           type: string
@@ -330,11 +309,30 @@ components:
         updatedAt:
           type: string
       type: object
+    group.Group:
+      properties:
+        archivedAt:
+          type: string
+        createdAt:
+          type: string
+        createdBy:
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        inviteCode:
+          type: string
+        name:
+          type: string
+        updatedAt:
+          type: string
+      type: object
     group.ListGroupsResponse:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/group.GroupDetailsResponse'
+            $ref: '#/components/schemas/group.DetailsResponse'
           type: array
           uniqueItems: false
         pagination:
@@ -1057,7 +1055,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/group.GroupDetailsResponse'
+                $ref: '#/components/schemas/group.DetailsResponse'
           description: OK
         "400":
           content:
