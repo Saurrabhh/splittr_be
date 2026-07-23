@@ -689,6 +689,29 @@ func (u *Usecase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Gr
 	return g, nil
 }
 
+// GetGroupPreview looks up group details for user preview before joining.
+func (u *Usecase) GetGroupPreview(ctx context.Context, inviteCode string) (*GroupPreview, error) {
+	if inviteCode == "" {
+		return nil, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "invite code is required",
+		}
+	}
+
+	preview, err := u.repo.GetPreviewByInviteCode(ctx, inviteCode)
+	if err != nil {
+		return nil, err
+	}
+	if preview == nil {
+		return nil, &response.AppError{
+			Type:    response.TypeNotFound,
+			Message: "invalid or expired invite code",
+		}
+	}
+
+	return preview, nil
+}
+
 // checkIsAdmin is a helper to verify a user's admin status in a group.
 func (u *Usecase) checkIsAdmin(ctx context.Context, groupID, userID string) (bool, error) {
 	member, err := u.repo.GetGroupMember(ctx, groupID, userID)
