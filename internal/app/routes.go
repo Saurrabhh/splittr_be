@@ -34,31 +34,14 @@ func (app *Application) routes(deps *dependencies) http.Handler {
 		// Register domain-specific routes
 		deps.userHandler.RegisterRoutes(r, deps.authMiddleware.Authenticate)
 
-		// Group routes (requires authentication & local user resolution)
+		// Authenticated API routes
 		r.Group(func(r chi.Router) {
 			r.Use(deps.authMiddleware.Authenticate)
 			r.Use(deps.userHandler.UserContext)
+
 			deps.groupHandler.RegisterRoutes(r)
-		})
-
-		// Expense routes (requires authentication & local user resolution)
-		r.Group(func(r chi.Router) {
-			r.Use(deps.authMiddleware.Authenticate)
-			r.Use(deps.userHandler.UserContext)
 			deps.expenseHandler.RegisterRoutes(r)
-		})
-
-		// Activity routes (requires authentication & local user resolution)
-		r.Group(func(r chi.Router) {
-			r.Use(deps.authMiddleware.Authenticate)
-			r.Use(deps.userHandler.UserContext)
 			deps.activityHandler.RegisterRoutes(r)
-		})
-
-		// Notification routes (requires authentication & local user resolution)
-		r.Group(func(r chi.Router) {
-			r.Use(deps.authMiddleware.Authenticate)
-			r.Use(deps.userHandler.UserContext)
 			deps.notificationHandler.RegisterRoutes(r)
 		})
 	})
