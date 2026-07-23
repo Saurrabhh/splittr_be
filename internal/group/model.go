@@ -29,22 +29,22 @@ type Member struct {
 	Phone    *string   `json:"phone,omitempty"`
 }
 
-// GroupDetailsResponse is the canonical shape for any endpoint or feed payload that
+// DetailsResponse is the canonical shape for any endpoint or feed payload that
 // returns group data. It embeds Group (all fields inline) and adds the Members array.
 // Both the list and detail endpoints return this type so Flutter only needs one class.
-type GroupDetailsResponse struct {
+type DetailsResponse struct {
 	Group
 	Members []Member `json:"members"`
 }
 
 // ListGroupsResponse represents the paginated groups list response.
 type ListGroupsResponse struct {
-	Data       []GroupDetailsResponse `json:"data"`
-	Pagination pagination.Meta        `json:"pagination"`
+	Data       []DetailsResponse `json:"data"`
+	Pagination pagination.Meta   `json:"pagination"`
 }
 
-// GroupPreview represents a summary of a group's details before joining.
-type GroupPreview struct {
+// Preview represents a summary of a group's details before joining.
+type Preview struct {
 	Name        string  `json:"name"`
 	Description *string `json:"description,omitempty"`
 	MemberCount int64   `json:"memberCount"`

@@ -18,10 +18,10 @@ import (
 type Repository interface {
 	GetByID(ctx context.Context, id string) (*Group, error)
 	GetByInviteCode(ctx context.Context, inviteCode string) (*Group, error)
-	GetPreviewByInviteCode(ctx context.Context, inviteCode string) (*GroupPreview, error)
+	GetPreviewByInviteCode(ctx context.Context, inviteCode string) (*Preview, error)
 	GetGroupMember(ctx context.Context, groupID, userID string) (*Member, error)
 	ListGroupMembers(ctx context.Context, groupID string) ([]Member, error)
-	ListUserGroupsWithMembers(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]GroupDetailsResponse, error)
+	ListUserGroupsWithMembers(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]DetailsResponse, error)
 	CreateGroup(ctx context.Context, g *Group) error
 	Update(ctx context.Context, g *Group) error
 	Archive(ctx context.Context, id string) error
@@ -105,7 +105,7 @@ func (u *Usecase) CreateGroup(ctx context.Context, name, description string, cre
 			return err
 		}
 
-		snapshot, err := json.Marshal(GroupDetailsResponse{
+		snapshot, err := json.Marshal(DetailsResponse{
 			Group:   *newGroup,
 			Members: members,
 		})
@@ -182,20 +182,20 @@ func (u *Usecase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 }
 
 // ListUserGroups returns a cursor-paginated list of groups the user belongs to.
-func (u *Usecase) ListUserGroups(ctx context.Context, userID string, p pagination.Params) (pagination.Response[GroupDetailsResponse], error) {
+func (u *Usecase) ListUserGroups(ctx context.Context, userID string, p pagination.Params) (pagination.Response[DetailsResponse], error) {
 	if userID == "" {
-		return pagination.Response[GroupDetailsResponse]{}, &response.AppError{Type: response.TypeValidation, Message: "user ID is required"}
+		return pagination.Response[DetailsResponse]{}, &response.AppError{Type: response.TypeValidation, Message: "user ID is required"}
 	}
 	cursor := pagination.ParseCursor(p.Cursor)
 	rows, err := u.repo.ListUserGroupsWithMembers(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
 	if err != nil {
-		return pagination.Response[GroupDetailsResponse]{}, &response.AppError{
+		return pagination.Response[DetailsResponse]{}, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: "failed to retrieve user groups",
 			Err:     err,
 		}
 	}
-	return pagination.BuildResponse(rows, p.Limit, func(g GroupDetailsResponse) string {
+	return pagination.BuildResponse(rows, p.Limit, func(g DetailsResponse) string {
 		return pagination.EncodeCursor(g.Group.CreatedAt, g.Group.ID)
 	}), nil
 }
@@ -590,7 +590,7 @@ func (u *Usecase) ArchiveGroup(ctx context.Context, groupID, actionByUserID stri
 		now := time.Now()
 		g.ArchivedAt = &now
 
-		snapshot, err := json.Marshal(GroupDetailsResponse{
+		snapshot, err := json.Marshal(DetailsResponse{
 			Group:   *g,
 			Members: members,
 		})
@@ -690,7 +690,7 @@ func (u *Usecase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Gr
 }
 
 // GetGroupPreview looks up group details for user preview before joining.
-func (u *Usecase) GetGroupPreview(ctx context.Context, inviteCode string) (*GroupPreview, error) {
+func (u *Usecase) GetGroupPreview(ctx context.Context, inviteCode string) (*Preview, error) {
 	if inviteCode == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,

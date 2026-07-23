@@ -108,7 +108,7 @@ func (r *DBRepository) GetByInviteCode(ctx context.Context, inviteCode string) (
 }
 
 // GetPreviewByInviteCode retrieves preview details of a group using its invite code.
-func (r *DBRepository) GetPreviewByInviteCode(ctx context.Context, inviteCode string) (*GroupPreview, error) {
+func (r *DBRepository) GetPreviewByInviteCode(ctx context.Context, inviteCode string) (*Preview, error) {
 	if inviteCode == "" {
 		return nil, errors.New("invite code is required")
 	}
@@ -134,7 +134,7 @@ func (r *DBRepository) GetPreviewByInviteCode(ctx context.Context, inviteCode st
 		creatorName = row.CreatorName.String
 	}
 
-	return &GroupPreview{
+	return &Preview{
 		Name:        row.GroupName,
 		Description: desc,
 		MemberCount: row.MemberCount,
@@ -319,7 +319,7 @@ func (r *DBRepository) ListGroupMembers(ctx context.Context, groupID string) ([]
 }
 
 // ListUserGroupsWithMembers lists all groups a user is a member of with cursor-based pagination.
-func (r *DBRepository) ListUserGroupsWithMembers(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]GroupDetailsResponse, error) {
+func (r *DBRepository) ListUserGroupsWithMembers(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]DetailsResponse, error) {
 	parsedUserID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user uuid: %w", err)
@@ -349,7 +349,7 @@ func (r *DBRepository) ListUserGroupsWithMembers(ctx context.Context, userID str
 		return nil, fmt.Errorf("list user groups with members paginated: %w", err)
 	}
 
-	result := make([]GroupDetailsResponse, 0, len(rows))
+	result := make([]DetailsResponse, 0, len(rows))
 	for _, row := range rows {
 		g := toDomainGroup(dbgen.Group{
 			ID:          row.ID,
@@ -368,7 +368,7 @@ func (r *DBRepository) ListUserGroupsWithMembers(ctx context.Context, userID str
 			return nil, fmt.Errorf("decode members json for group %s: %w", row.ID, err)
 		}
 
-		result = append(result, GroupDetailsResponse{Group: *g, Members: members})
+		result = append(result, DetailsResponse{Group: *g, Members: members})
 	}
 	return result, nil
 }

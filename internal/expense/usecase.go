@@ -677,10 +677,7 @@ func simplifyDebts(balances []UserBalance) []Settlement {
 		d := &debtors[debtorIdx]
 		c := &creditors[creditorIdx]
 
-		amountCents := d.bal
-		if c.bal < amountCents {
-			amountCents = c.bal
-		}
+		amountCents := min(c.bal, d.bal)
 
 		if amountCents > 0 {
 			settlements = append(settlements, Settlement{

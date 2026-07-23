@@ -225,7 +225,7 @@ func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, GroupDetailsResponse{
+	response.JSON(w, http.StatusOK, DetailsResponse{
 		Group:   *g,
 		Members: members,
 	})
