@@ -63,20 +63,26 @@ Before getting started, make sure you have the following installed on your machi
 
 Follow these steps to configure and spin up the project locally:
 
-### 1. Configure Firebase Admin SDK
+### 1. Configure Environment Variables
+Copy the local environment template and configure your local settings:
+```bash
+cp env/local/.env.example env/local/.env
+```
+Open `env/local/.env` to configure port, database URLs, and other service-specific environment settings.
+
+### 2. Configure Firebase Admin SDK
 1. Go to your **Firebase Console** -> **Project Settings** -> **Service Accounts**.
 2. Generate a new private key and download the JSON file.
-3. Save the downloaded file to the root of the project with the filename `firebase-key.json` (this file is already included in `.gitignore` to prevent leaking credentials).
+3. Save the downloaded file to the local environment folder as `env/local/firebase-key.json` (as configured by `GOOGLE_APPLICATION_CREDENTIALS` in your `.env` file).
 
-### 2. Spin up PostgreSQL
+### 3. Spin up PostgreSQL
 Use Docker Compose to run a local PostgreSQL instance in the background:
 ```bash
 docker compose up -d
 ```
 
-### 3. Run Schema Migrations
-Apply database migrations using `goose` against your local PostgreSQL database. The repository provides command shortcuts in the `Makefile` to automatically load env files:
-
+### 4. Run Schema Migrations
+Apply database migrations using `goose` against your local PostgreSQL database:
 ```bash
 # Run migrations for the local environment
 make goose-up local
@@ -84,7 +90,7 @@ make goose-up local
 
 *(You can run other goose commands similarly: `make goose-status local` or `make goose-down local`.)*
 
-### 4. Generate Database Code (Optional)
+### 5. Generate Database Code (Optional)
 If you add or update SQL queries inside `internal/db/queries/` or migration schemas in `internal/db/migrations/`, generate the Go boilerplate using `sqlc`:
 ```bash
 sqlc generate
@@ -117,6 +123,9 @@ Start your local server (`make local`) and navigate to:
 ```text
 http://localhost:8080/swagger/index.html
 ```
+
+> [!NOTE]
+> The Swagger playground is protected by Basic Authentication. Use the `SWAGGER_USER` and `SWAGGER_PASSWORD` values defined in your environment file (default credentials are `admin` / `admin`).
 
 ### Regenerating Documentation
 If you update request/response structs or handler functions, regenerate the Swagger schema files by running:
