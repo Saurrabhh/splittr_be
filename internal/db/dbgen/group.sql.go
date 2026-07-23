@@ -143,6 +143,38 @@ func (q *Queries) GetGroupMember(ctx context.Context, arg GetGroupMemberParams) 
 	return i, err
 }
 
+const getGroupPreviewByInviteCode = `-- name: GetGroupPreviewByInviteCode :one
+SELECT 
+    g.name AS group_name,
+    g.description AS group_description,
+    COUNT(gm.user_id)::BIGINT AS member_count,
+    u.name AS creator_name
+FROM groups g
+LEFT JOIN group_members gm ON g.id = gm.group_id
+LEFT JOIN users u ON g.created_by = u.id
+WHERE g.invite_code = $1 AND g.archived_at IS NULL
+GROUP BY g.id, g.name, g.description, u.name
+`
+
+type GetGroupPreviewByInviteCodeRow struct {
+	GroupName        string
+	GroupDescription pgtype.Text
+	MemberCount      int64
+	CreatorName      pgtype.Text
+}
+
+func (q *Queries) GetGroupPreviewByInviteCode(ctx context.Context, inviteCode pgtype.Text) (GetGroupPreviewByInviteCodeRow, error) {
+	row := q.db.QueryRow(ctx, getGroupPreviewByInviteCode, inviteCode)
+	var i GetGroupPreviewByInviteCodeRow
+	err := row.Scan(
+		&i.GroupName,
+		&i.GroupDescription,
+		&i.MemberCount,
+		&i.CreatorName,
+	)
+	return i, err
+}
+
 const listGroupMembers = `-- name: ListGroupMembers :many
 SELECT gm.group_id, gm.user_id, gm.role, gm.joined_at, u.name, u.email, u.phone
 FROM group_members gm

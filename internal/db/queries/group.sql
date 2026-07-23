@@ -115,3 +115,17 @@ GROUP BY g.id
 ORDER BY g.created_at DESC, g.id DESC
 LIMIT $2;
 
+
+-- name: GetGroupPreviewByInviteCode :one
+SELECT 
+    g.name AS group_name,
+    g.description AS group_description,
+    COUNT(gm.user_id)::BIGINT AS member_count,
+    u.name AS creator_name
+FROM groups g
+LEFT JOIN group_members gm ON g.id = gm.group_id
+LEFT JOIN users u ON g.created_by = u.id
+WHERE g.invite_code = $1 AND g.archived_at IS NULL
+GROUP BY g.id, g.name, g.description, u.name;
+
+
