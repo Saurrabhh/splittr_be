@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"testing"
-
 	"time"
 
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
+	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type mockUserRepository struct {
@@ -62,17 +64,427 @@ func (m *mockUserRepository) GetFriendship(ctx context.Context, userID, friendID
 }
 
 func (m *mockUserRepository) ListFriends(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]user.User, error) {
-	// Not needed for simple test
-	return nil, nil
+	args := m.Called(ctx, userID, limit, lastTime, lastID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]user.User), args.Error(1)
 }
 
-func TestGetUserProfile_Error(t *testing.T) {
+// --- RegisterUser Tests ---
+
+func TestRegisterUser_Success(t *testing.T) {
 	mockRepo := new(mockUserRepository)
-	mockRepo.On("GetByID", mock.Anything, "non-existent").Return(nil, errors.New("not found"))
+	ctx := context.Background()
+
+	email := "alice@example.com"
+	mockRepo.On("GetByFirebaseUID", ctx, "fb-123").Return(nil, nil)
+	mockRepo.On("Create", ctx, mock.AnythingOfType("*user.User")).Return(nil)
 
 	uc := user.NewUseCase(mockRepo)
-	_, err := uc.GetUserProfile(context.Background(), "non-existent")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to retrieve user profile")
+	u, err := uc.RegisterUser(ctx, "fb-123", &email, nil, "Alice")
+	require.NoError(t, err)
+	assert.NotNil(t, u)
+	assert.Equal(t, "fb-123", u.FirebaseUID)
+	assert.Equal(t, "Alice", u.Name)
+	assert.Equal(t, &email, u.Email)
 	mockRepo.AssertExpectations(t)
+}
+
+func TestRegisterUser_AlreadyExists(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+
+	email := "alice@example.com"
+	existingUser := &user.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice", Email: &email}
+	mockRepo.On("GetByFirebaseUID", ctx, "fb-123").Return(existingUser, nil)
+
+	uc := user.NewUseCase(mockRepo)
+	u, err := uc.RegisterUser(ctx, "fb-123", &email, nil, "Alice")
+	require.NoError(t, err)
+	assert.Equal(t, existingUser, u)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestRegisterUser_MissingFirebaseUID(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+	email := "alice@example.com"
+
+	uc := user.NewUseCase(mockRepo)
+	_, err := uc.RegisterUser(ctx, "", &email, nil, "Alice")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeValidation, appErr.Type)
+	assert.Contains(t, appErr.Message, "firebaseUID is required")
+}
+
+func TestRegisterUser_MissingEmailAndPhone(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+
+	uc := user.NewUseCase(mockRepo)
+	_, err := uc.RegisterUser(ctx, "fb-123", nil, nil, "Alice")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeValidation, appErr.Type)
+	assert.Contains(t, appErr.Message, "either email or phone is required")
+}
+
+func TestRegisterUser_RepoCreateError(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+	email := "alice@example.com"
+
+	mockRepo.On("GetByFirebaseUID", ctx, "fb-123").Return(nil, nil)
+	mockRepo.On("Create", ctx, mock.AnythingOfType("*user.User")).Return(errors.New("db error"))
+
+	uc := user.NewUseCase(mockRepo)
+	_, err := uc.RegisterUser(ctx, "fb-123", &email, nil, "Alice")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeInternal, appErr.Type)
+	assert.Contains(t, appErr.Message, "failed to register user")
+	mockRepo.AssertExpectations(t)
+}
+
+// --- GetUserProfile Tests ---
+
+func TestGetUserProfile_Success(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+	expectedUser := &user.User{ID: "usr-1", Name: "Alice"}
+	mockRepo.On("GetByID", ctx, "usr-1").Return(expectedUser, nil)
+
+	uc := user.NewUseCase(mockRepo)
+	u, err := uc.GetUserProfile(ctx, "usr-1")
+	require.NoError(t, err)
+	assert.Equal(t, expectedUser, u)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestGetUserProfile_EmptyID(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+
+	uc := user.NewUseCase(mockRepo)
+	_, err := uc.GetUserProfile(ctx, "")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeValidation, appErr.Type)
+	assert.Contains(t, appErr.Message, "id is required")
+}
+
+func TestGetUserProfile_NotFound(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+	mockRepo.On("GetByID", ctx, "non-existent").Return(nil, nil)
+
+	uc := user.NewUseCase(mockRepo)
+	_, err := uc.GetUserProfile(ctx, "non-existent")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeNotFound, appErr.Type)
+	assert.Contains(t, appErr.Message, "user not found")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestGetUserProfile_RepoError(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+	mockRepo.On("GetByID", ctx, "usr-1").Return(nil, errors.New("db error"))
+
+	uc := user.NewUseCase(mockRepo)
+	_, err := uc.GetUserProfile(ctx, "usr-1")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeInternal, appErr.Type)
+	assert.Contains(t, appErr.Message, "failed to retrieve user profile")
+	mockRepo.AssertExpectations(t)
+}
+
+// --- GetUserByFirebaseUID Tests ---
+
+func TestGetUserByFirebaseUID_Success(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+	expectedUser := &user.User{ID: "usr-1", FirebaseUID: "fb-123"}
+	mockRepo.On("GetByFirebaseUID", ctx, "fb-123").Return(expectedUser, nil)
+
+	uc := user.NewUseCase(mockRepo)
+	u, err := uc.GetUserByFirebaseUID(ctx, "fb-123")
+	require.NoError(t, err)
+	assert.Equal(t, expectedUser, u)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestGetUserByFirebaseUID_EmptyUID(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+
+	uc := user.NewUseCase(mockRepo)
+	_, err := uc.GetUserByFirebaseUID(ctx, "")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeValidation, appErr.Type)
+}
+
+func TestGetUserByFirebaseUID_NotFound(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+	mockRepo.On("GetByFirebaseUID", ctx, "fb-999").Return(nil, nil)
+
+	uc := user.NewUseCase(mockRepo)
+	_, err := uc.GetUserByFirebaseUID(ctx, "fb-999")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeNotFound, appErr.Type)
+}
+
+// --- UpdateProfile Tests ---
+
+func TestUpdateProfile_Success(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+	existingUser := &user.User{ID: "usr-1", Name: "Old Name", DefaultCurrency: "INR"}
+	mockRepo.On("GetByID", ctx, "usr-1").Return(existingUser, nil)
+	mockRepo.On("UpdateUser", ctx, mock.AnythingOfType("*user.User")).Return(nil)
+
+	uc := user.NewUseCase(mockRepo)
+	u, err := uc.UpdateProfile(ctx, "usr-1", "New Name", "USD")
+	require.NoError(t, err)
+	assert.Equal(t, "New Name", u.Name)
+	assert.Equal(t, "USD", u.DefaultCurrency)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestUpdateProfile_InvalidCurrencyLength(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+	existingUser := &user.User{ID: "usr-1", Name: "Alice", DefaultCurrency: "INR"}
+	mockRepo.On("GetByID", ctx, "usr-1").Return(existingUser, nil)
+
+	uc := user.NewUseCase(mockRepo)
+	_, err := uc.UpdateProfile(ctx, "usr-1", "Alice", "US")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeValidation, appErr.Type)
+	assert.Contains(t, appErr.Message, "must be 3 characters")
+}
+
+func TestUpdateProfile_UserNotFound(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+	mockRepo.On("GetByID", ctx, "non-existent").Return(nil, nil)
+
+	uc := user.NewUseCase(mockRepo)
+	_, err := uc.UpdateProfile(ctx, "non-existent", "New Name", "USD")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeNotFound, appErr.Type)
+}
+
+func TestUpdateProfile_RepoUpdateError(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+	existingUser := &user.User{ID: "usr-1", Name: "Alice", DefaultCurrency: "INR"}
+	mockRepo.On("GetByID", ctx, "usr-1").Return(existingUser, nil)
+	mockRepo.On("UpdateUser", ctx, mock.AnythingOfType("*user.User")).Return(errors.New("db error"))
+
+	uc := user.NewUseCase(mockRepo)
+	_, err := uc.UpdateProfile(ctx, "usr-1", "New Name", "USD")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeInternal, appErr.Type)
+}
+
+// --- AddFriendByEmailOrPhone Tests ---
+
+func TestAddFriendByEmailOrPhone_Success(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+
+	friendUser := &user.User{ID: "usr-2", Name: "Bob"}
+	mockRepo.On("GetByEmailOrPhone", ctx, "bob@example.com", "").Return(friendUser, nil)
+	mockRepo.On("GetFriendship", ctx, "usr-1", "usr-2").Return(false, nil)
+	mockRepo.On("CreateFriendship", ctx, "usr-1", "usr-2").Return(nil)
+
+	uc := user.NewUseCase(mockRepo)
+	friend, err := uc.AddFriendByEmailOrPhone(ctx, "usr-1", "bob@example.com", "")
+	require.NoError(t, err)
+	assert.Equal(t, friendUser, friend)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestAddFriendByEmailOrPhone_AlreadyFriends(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+
+	friendUser := &user.User{ID: "usr-2", Name: "Bob"}
+	mockRepo.On("GetByEmailOrPhone", ctx, "bob@example.com", "").Return(friendUser, nil)
+	mockRepo.On("GetFriendship", ctx, "usr-1", "usr-2").Return(true, nil)
+
+	uc := user.NewUseCase(mockRepo)
+	friend, err := uc.AddFriendByEmailOrPhone(ctx, "usr-1", "bob@example.com", "")
+	require.NoError(t, err)
+	assert.Equal(t, friendUser, friend)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestAddFriendByEmailOrPhone_MissingParams(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+
+	uc := user.NewUseCase(mockRepo)
+	_, err := uc.AddFriendByEmailOrPhone(ctx, "usr-1", "", "")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeValidation, appErr.Type)
+}
+
+func TestAddFriendByEmailOrPhone_FriendNotFound(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+
+	mockRepo.On("GetByEmailOrPhone", ctx, "unknown@example.com", "").Return(nil, nil)
+
+	uc := user.NewUseCase(mockRepo)
+	_, err := uc.AddFriendByEmailOrPhone(ctx, "usr-1", "unknown@example.com", "")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeNotFound, appErr.Type)
+}
+
+func TestAddFriendByEmailOrPhone_AddSelfError(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+
+	selfUser := &user.User{ID: "usr-1", Name: "Alice"}
+	mockRepo.On("GetByEmailOrPhone", ctx, "alice@example.com", "").Return(selfUser, nil)
+
+	uc := user.NewUseCase(mockRepo)
+	_, err := uc.AddFriendByEmailOrPhone(ctx, "usr-1", "alice@example.com", "")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeValidation, appErr.Type)
+	assert.Contains(t, appErr.Message, "cannot add yourself")
+}
+
+// --- RemoveFriend Tests ---
+
+func TestRemoveFriend_Success(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+
+	mockRepo.On("GetFriendship", ctx, "usr-1", "usr-2").Return(true, nil)
+	mockRepo.On("DeleteFriendship", ctx, "usr-1", "usr-2").Return(nil)
+
+	uc := user.NewUseCase(mockRepo)
+	err := uc.RemoveFriend(ctx, "usr-1", "usr-2")
+	require.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestRemoveFriend_EmptyFriendID(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+
+	uc := user.NewUseCase(mockRepo)
+	err := uc.RemoveFriend(ctx, "usr-1", "")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeValidation, appErr.Type)
+}
+
+func TestRemoveFriend_NotFriends(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+
+	mockRepo.On("GetFriendship", ctx, "usr-1", "usr-2").Return(false, nil)
+
+	uc := user.NewUseCase(mockRepo)
+	err := uc.RemoveFriend(ctx, "usr-1", "usr-2")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeValidation, appErr.Type)
+	assert.Contains(t, appErr.Message, "users are not friends")
+}
+
+// --- ListFriends Tests ---
+
+func TestListFriends_Success(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+
+	friendsList := []user.User{
+		{ID: "usr-2", Name: "Bob", CreatedAt: time.Now()},
+	}
+	mockRepo.On("ListFriends", ctx, "usr-1", int32(21), (*time.Time)(nil), (*string)(nil)).Return(friendsList, nil)
+
+	uc := user.NewUseCase(mockRepo)
+	resp, err := uc.ListFriends(ctx, "usr-1", pagination.Params{Limit: 20})
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(resp.Data))
+	assert.Equal(t, "usr-2", resp.Data[0].ID)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestListFriends_EmptyUserID(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+
+	uc := user.NewUseCase(mockRepo)
+	_, err := uc.ListFriends(ctx, "", pagination.Params{Limit: 20})
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeValidation, appErr.Type)
+}
+
+func TestListFriends_RepoError(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+
+	mockRepo.On("ListFriends", ctx, "usr-1", int32(21), (*time.Time)(nil), (*string)(nil)).Return(nil, errors.New("db error"))
+
+	uc := user.NewUseCase(mockRepo)
+	_, err := uc.ListFriends(ctx, "usr-1", pagination.Params{Limit: 20})
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeInternal, appErr.Type)
 }

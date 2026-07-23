@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/Saurrabhh/splittr_be/internal/auth"
@@ -46,6 +47,11 @@ func (h *Handler) UserContext(next http.Handler) http.Handler {
 
 		u, err := h.uc.GetUserByFirebaseUID(r.Context(), identity.UserID)
 		if err != nil {
+			var appErr *response.AppError
+			if errors.As(err, &appErr) && appErr.Type == response.TypeNotFound {
+				response.Error(w, http.StatusForbidden, response.ErrUserNotFound, "user registration required")
+				return
+			}
 			response.InternalServerError(w, "failed to resolve local user: "+err.Error())
 			return
 		}
