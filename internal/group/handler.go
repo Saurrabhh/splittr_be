@@ -1,11 +1,11 @@
 package group
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/Saurrabhh/splittr_be/internal/activity"
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
+	"github.com/Saurrabhh/splittr_be/internal/request"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 	"github.com/go-chi/chi/v5"
@@ -75,9 +75,8 @@ type joinGroupRequest struct {
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
-	var req createGroupRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
+	req, ok := request.DecodeBody[createGroupRequest](w, r)
+	if !ok {
 		return
 	}
 
@@ -106,9 +105,8 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
-	var req joinGroupRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
+	req, ok := request.DecodeBody[joinGroupRequest](w, r)
+	if !ok {
 		return
 	}
 
@@ -261,9 +259,8 @@ func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
 
 	currUser := user.MustFrom(r.Context())
 
-	var req addMemberRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
+	req, ok := request.DecodeBody[addMemberRequest](w, r)
+	if !ok {
 		return
 	}
 
@@ -350,9 +347,8 @@ func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 
 	currUser := user.MustFrom(r.Context())
 
-	var req updateRoleRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
+	req, ok := request.DecodeBody[updateRoleRequest](w, r)
+	if !ok {
 		return
 	}
 

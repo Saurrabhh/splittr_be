@@ -1,11 +1,11 @@
 package user
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/Saurrabhh/splittr_be/internal/auth"
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
+	"github.com/Saurrabhh/splittr_be/internal/request"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/go-chi/chi/v5"
 )
@@ -64,9 +64,8 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req registerRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
+	req, ok := request.DecodeBody[registerRequest](w, r)
+	if !ok {
 		return
 	}
 
@@ -125,9 +124,8 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	currUser := MustFrom(r.Context())
 
-	var req updateProfileRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
+	req, ok := request.DecodeBody[updateProfileRequest](w, r)
+	if !ok {
 		return
 	}
 
@@ -156,9 +154,8 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) AddFriend(w http.ResponseWriter, r *http.Request) {
 	currUser := MustFrom(r.Context())
 
-	var req addFriendRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
+	req, ok := request.DecodeBody[addFriendRequest](w, r)
+	if !ok {
 		return
 	}
 

@@ -1,11 +1,11 @@
 package expense
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
+	"github.com/Saurrabhh/splittr_be/internal/request"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 	"github.com/go-chi/chi/v5"
@@ -51,9 +51,8 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
-	var req createExpenseRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
+	req, ok := request.DecodeBody[createExpenseRequest](w, r)
+	if !ok {
 		return
 	}
 
@@ -108,9 +107,8 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Settle(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
-	var req settleExpenseRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
+	req, ok := request.DecodeBody[settleExpenseRequest](w, r)
+	if !ok {
 		return
 	}
 
