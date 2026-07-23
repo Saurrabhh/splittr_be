@@ -42,3 +42,12 @@ type ListGroupsResponse struct {
 	Data       []GroupDetailsResponse `json:"data"`
 	Pagination pagination.Meta        `json:"pagination"`
 }
+
+// GroupPreview represents a summary of a group's details before joining.
+type GroupPreview struct {
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
+	MemberCount int64   `json:"memberCount"`
+	CreatorName string  `json:"creatorName"`
+}
+

@@ -107,6 +107,42 @@ func (r *DBRepository) GetByInviteCode(ctx context.Context, inviteCode string) (
 	return toDomainGroup(dbGroup), nil
 }
 
+// GetPreviewByInviteCode retrieves preview details of a group using its invite code.
+func (r *DBRepository) GetPreviewByInviteCode(ctx context.Context, inviteCode string) (*GroupPreview, error) {
+	if inviteCode == "" {
+		return nil, errors.New("invite code is required")
+	}
+
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+
+	row, err := q.GetGroupPreviewByInviteCode(ctx, ptrToText(&inviteCode))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("query group preview by invite code: %w", err)
+	}
+
+	var desc *string
+	if row.GroupDescription.Valid {
+		desc = &row.GroupDescription.String
+	}
+
+	var creatorName string
+	if row.CreatorName.Valid {
+		creatorName = row.CreatorName.String
+	}
+
+	return &GroupPreview{
+		Name:        row.GroupName,
+		Description: desc,
+		MemberCount: row.MemberCount,
+		CreatorName: creatorName,
+	}, nil
+}
+
+
 // Update updates group name and description.
 func (r *DBRepository) Update(ctx context.Context, g *Group) error {
 	parsedID, err := uuid.Parse(g.ID)
