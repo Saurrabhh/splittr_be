@@ -8,11 +8,10 @@ import (
 )
 
 // EntityType represents the type of entity involved in an activity.
-// @enums SYSTEM EXPENSE SETTLEMENT MEMBER GROUP
+// @enums EXPENSE SETTLEMENT MEMBER GROUP
 type EntityType string
 
 const (
-	EntityTypeSystem     EntityType = "SYSTEM"
 	EntityTypeExpense    EntityType = "EXPENSE"
 	EntityTypeSettlement EntityType = "SETTLEMENT"
 	EntityTypeMember     EntityType = "MEMBER"
