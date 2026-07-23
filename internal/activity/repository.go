@@ -112,16 +112,7 @@ func (r *DBRepository) ListUserActivities(ctx context.Context, userID string, li
 		return nil, fmt.Errorf("invalid uuid: %w", err)
 	}
 
-	var pgLastTime pgtype.Timestamptz
-	if lastTime != nil {
-		pgLastTime = pgtype.Timestamptz{Time: *lastTime, Valid: true}
-	}
-	var lastIDUUID uuid.UUID
-	if lastID != nil {
-		if parsed, err := uuid.Parse(*lastID); err == nil {
-			lastIDUUID = parsed
-		}
-	}
+	pgLastTime, lastIDUUID := db.ParseCursor(lastTime, lastID)
 
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)
@@ -178,18 +169,7 @@ func (r *DBRepository) ListGroupFeed(ctx context.Context, groupID string, userID
 		return nil, fmt.Errorf("invalid user uuid: %w", err)
 	}
 
-	var pgLastTime pgtype.Timestamptz
-	if lastTime != nil {
-		pgLastTime = pgtype.Timestamptz{Time: *lastTime, Valid: true}
-	}
-
-	var lastIDUUID uuid.UUID
-	if lastID != nil {
-		parsed, err := uuid.Parse(*lastID)
-		if err == nil {
-			lastIDUUID = parsed
-		}
-	}
+	pgLastTime, lastIDUUID := db.ParseCursor(lastTime, lastID)
 
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)
