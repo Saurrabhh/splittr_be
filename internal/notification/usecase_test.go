@@ -1,0 +1,201 @@
+package notification_test
+
+import (
+	"context"
+	"errors"
+	"testing"
+	"time"
+
+	"github.com/Saurrabhh/splittr_be/internal/notification"
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
+	"github.com/Saurrabhh/splittr_be/internal/response"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+)
+
+type mockNotificationRepository struct {
+	mock.Mock
+}
+
+func (m *mockNotificationRepository) CreateNotification(ctx context.Context, notif *notification.Notification) error {
+	return m.Called(ctx, notif).Error(0)
+}
+
+func (m *mockNotificationRepository) ListUserNotifications(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]notification.Notification, error) {
+	args := m.Called(ctx, userID, limit, lastTime, lastID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]notification.Notification), args.Error(1)
+}
+
+func (m *mockNotificationRepository) MarkNotificationAsRead(ctx context.Context, id, userID string) error {
+	return m.Called(ctx, id, userID).Error(0)
+}
+
+func (m *mockNotificationRepository) MarkAllNotificationsAsRead(ctx context.Context, userID string) error {
+	return m.Called(ctx, userID).Error(0)
+}
+
+// --- CreateAlert Tests ---
+
+func TestCreateAlert_Success(t *testing.T) {
+	mockRepo := new(mockNotificationRepository)
+	ctx := context.Background()
+
+	actorID := "actor-1"
+	activityID := "act-1"
+	userID := "user-1"
+	title := "New Expense"
+	content := "Bob added an expense"
+
+	mockRepo.On("CreateNotification", ctx, mock.AnythingOfType("*notification.Notification")).Return(nil)
+
+	uc := notification.NewUseCase(mockRepo)
+	notif, err := uc.CreateAlert(ctx, userID, &actorID, &activityID, title, content)
+	require.NoError(t, err)
+	require.NotNil(t, notif)
+
+	assert.NotEmpty(t, notif.ID)
+	assert.Equal(t, userID, notif.UserID)
+	assert.Equal(t, &actorID, notif.ActorID)
+	assert.Equal(t, &activityID, notif.ActivityID)
+	assert.Equal(t, title, notif.Title)
+	assert.Equal(t, content, notif.Content)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCreateAlert_RepoError(t *testing.T) {
+	mockRepo := new(mockNotificationRepository)
+	ctx := context.Background()
+
+	mockRepo.On("CreateNotification", ctx, mock.AnythingOfType("*notification.Notification")).Return(errors.New("db insert failure"))
+
+	uc := notification.NewUseCase(mockRepo)
+	_, err := uc.CreateAlert(ctx, "user-1", nil, nil, "Title", "Content")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "create notification: db insert failure")
+	mockRepo.AssertExpectations(t)
+}
+
+// --- ListNotifications Tests ---
+
+func TestListNotifications_Success(t *testing.T) {
+	mockRepo := new(mockNotificationRepository)
+	ctx := context.Background()
+
+	now := time.Now()
+	expectedNotifs := []notification.Notification{
+		{ID: "notif-1", UserID: "user-1", Title: "Alert 1", Content: "Content 1", CreatedAt: now},
+		{ID: "notif-2", UserID: "user-1", Title: "Alert 2", Content: "Content 2", CreatedAt: now.Add(-time.Minute)},
+	}
+
+	mockRepo.On("ListUserNotifications", ctx, "user-1", int32(11), (*time.Time)(nil), (*string)(nil)).Return(expectedNotifs, nil)
+
+	uc := notification.NewUseCase(mockRepo)
+	resp, err := uc.ListNotifications(ctx, "user-1", pagination.Params{Limit: 10})
+	require.NoError(t, err)
+	assert.Len(t, resp.Data, 2)
+	assert.Equal(t, "notif-1", resp.Data[0].ID)
+	assert.Equal(t, "notif-2", resp.Data[1].ID)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestListNotifications_RepoError(t *testing.T) {
+	mockRepo := new(mockNotificationRepository)
+	ctx := context.Background()
+
+	mockRepo.On("ListUserNotifications", ctx, "user-1", int32(11), (*time.Time)(nil), (*string)(nil)).Return(nil, errors.New("db read failure"))
+
+	uc := notification.NewUseCase(mockRepo)
+	_, err := uc.ListNotifications(ctx, "user-1", pagination.Params{Limit: 10})
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeInternal, appErr.Type)
+	assert.Contains(t, appErr.Message, "failed to retrieve notifications")
+	mockRepo.AssertExpectations(t)
+}
+
+// --- MarkAsRead Tests ---
+
+func TestMarkAsRead_Success(t *testing.T) {
+	mockRepo := new(mockNotificationRepository)
+	ctx := context.Background()
+
+	userID := "user-1"
+	notifID := "notif-1"
+
+	// Verifies user ownership check passed to repository
+	mockRepo.On("MarkNotificationAsRead", ctx, notifID, userID).Return(nil)
+
+	uc := notification.NewUseCase(mockRepo)
+	err := uc.MarkAsRead(ctx, notifID, userID)
+	require.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestMarkAsRead_EmptyID(t *testing.T) {
+	mockRepo := new(mockNotificationRepository)
+	ctx := context.Background()
+
+	uc := notification.NewUseCase(mockRepo)
+	err := uc.MarkAsRead(ctx, "", "user-1")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeValidation, appErr.Type)
+	assert.Contains(t, appErr.Message, "notification id is required")
+}
+
+func TestMarkAsRead_RepoError(t *testing.T) {
+	mockRepo := new(mockNotificationRepository)
+	ctx := context.Background()
+
+	mockRepo.On("MarkNotificationAsRead", ctx, "notif-1", "user-1").Return(errors.New("db error"))
+
+	uc := notification.NewUseCase(mockRepo)
+	err := uc.MarkAsRead(ctx, "notif-1", "user-1")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeInternal, appErr.Type)
+	assert.Contains(t, appErr.Message, "failed to mark notification as read")
+	mockRepo.AssertExpectations(t)
+}
+
+// --- MarkAllAsRead Tests ---
+
+func TestMarkAllAsRead_Success(t *testing.T) {
+	mockRepo := new(mockNotificationRepository)
+	ctx := context.Background()
+
+	userID := "user-1"
+	mockRepo.On("MarkAllNotificationsAsRead", ctx, userID).Return(nil)
+
+	uc := notification.NewUseCase(mockRepo)
+	err := uc.MarkAllAsRead(ctx, userID)
+	require.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestMarkAllAsRead_RepoError(t *testing.T) {
+	mockRepo := new(mockNotificationRepository)
+	ctx := context.Background()
+
+	mockRepo.On("MarkAllNotificationsAsRead", ctx, "user-1").Return(errors.New("db update failure"))
+
+	uc := notification.NewUseCase(mockRepo)
+	err := uc.MarkAllAsRead(ctx, "user-1")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeInternal, appErr.Type)
+	assert.Contains(t, appErr.Message, "failed to mark all notifications as read")
+	mockRepo.AssertExpectations(t)
+}
