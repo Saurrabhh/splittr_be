@@ -10,7 +10,8 @@ import (
 
 // DB wraps the connection pool.
 type DB struct {
-	Pool *pgxpool.Pool
+	Pool     *pgxpool.Pool
+	PingFunc func(ctx context.Context) error
 }
 
 // Connect initializes the PostgreSQL connection pool.
@@ -45,6 +46,12 @@ func (db *DB) Close() {
 
 // Ping checks the database connection.
 func (db *DB) Ping(ctx context.Context) error {
+	if db == nil {
+		return fmt.Errorf("database is nil")
+	}
+	if db.PingFunc != nil {
+		return db.PingFunc(ctx)
+	}
 	if db.Pool == nil {
 		return fmt.Errorf("database pool is not initialized")
 	}

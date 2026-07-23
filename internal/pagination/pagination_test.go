@@ -31,10 +31,21 @@ func TestParseCursor_EmptyString(t *testing.T) {
 }
 
 func TestParseCursor_MalformedInput(t *testing.T) {
-	for _, bad := range []string{"notadate_uuid", "_uuid", "2026-07-18T18:00:00Z", "_"} {
+	malformedInputs := []string{
+		"notadate_uuid",
+		"_uuid",
+		"2026-07-18T18:00:00Z",
+		"_",
+		"2026-07-18T18:00:00Zuuid",  // missing underscore
+		"2026-99-99T99:99:99Z_123", // bad RFC3339 date
+		"2026-07-18T18:00:00Z_",     // missing ID after underscore
+		"invalidcursor",
+	}
+
+	for _, bad := range malformedInputs {
 		c := pagination.ParseCursor(bad)
-		if c.LastTime != nil && c.LastID != nil {
-			t.Errorf("expected zero cursor for %q", bad)
+		if c.LastTime != nil || c.LastID != nil {
+			t.Errorf("expected zero cursor for %q, got LastTime=%v, LastID=%v", bad, c.LastTime, c.LastID)
 		}
 	}
 }
@@ -56,6 +67,22 @@ func TestParseParams_DefaultsAndClamping(t *testing.T) {
 	p := pagination.ParseParams(req, 20, 100)
 	if p.Limit != 100 {
 		t.Errorf("expected clamped limit 100, got %d", p.Limit)
+	}
+}
+
+func TestParseParams_ExcessiveLimitClamping(t *testing.T) {
+	req := httptest.NewRequest("GET", "/?limit=9999", nil)
+	p := pagination.ParseParams(req, 20, 100)
+	if p.Limit != 100 {
+		t.Errorf("expected excessive limit to be clamped to maxLimit 100, got %d", p.Limit)
+	}
+}
+
+func TestParseParams_NegativeLimitFallback(t *testing.T) {
+	req := httptest.NewRequest("GET", "/?limit=-10", nil)
+	p := pagination.ParseParams(req, 20, 100)
+	if p.Limit != 20 {
+		t.Errorf("expected negative limit fallback to defaultLimit 20, got %d", p.Limit)
 	}
 }
 
