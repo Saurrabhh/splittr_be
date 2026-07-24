@@ -23,7 +23,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, optionalAuth func(http.Handler) h
 // GetAppConfig godoc
 // @Summary Fetch application startup configuration
 // @Description Returns app version rules, maintenance status, expense categories, currencies, limits, feature flags, and legal links. Supports optional Bearer auth and ETag caching via If-None-Match.
-// @Tags AppConfig
+// @Tags appConfig
 // @Accept json
 // @Produce json
 // @Param If-None-Match header string false "ETag hash for cache validation"
