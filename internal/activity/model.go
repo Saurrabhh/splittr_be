@@ -30,8 +30,10 @@ const (
 	ActionTypeMemberKicked      ActionType = "MEMBER_KICKED"
 	ActionTypeMemberRoleUpdated ActionType = "MEMBER_ROLE_UPDATED"
 	ActionTypeGroupCreated      ActionType = "GROUP_CREATED"
+	ActionTypeGroupUpdated      ActionType = "GROUP_UPDATED"
 	ActionTypeGroupArchived     ActionType = "GROUP_ARCHIVED"
 	ActionTypeMemberJoined      ActionType = "MEMBER_JOINED"
+	ActionTypeMemberRemoved     ActionType = "MEMBER_KICKED"
 )
 
 // Activity represents an audit log entry for actions performed in the system.

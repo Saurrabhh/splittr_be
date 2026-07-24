@@ -26,6 +26,31 @@ type ActivityVisibility struct {
 	UserID     uuid.UUID
 }
 
+type AppVersion struct {
+	ID                  int32
+	MinSupportedVersion string
+	LatestVersion       string
+	ForceUpdate         bool
+	IosUpdateUrl        string
+	AndroidUpdateUrl    string
+	UpdateMessage       string
+}
+
+type ConfigVersion struct {
+	ID          int32
+	VersionHash string
+	UpdatedAt   pgtype.Timestamptz
+}
+
+type Currency struct {
+	Code          string
+	Symbol        string
+	Name          string
+	DecimalPlaces int32
+	IsDefault     bool
+	IsActive      bool
+}
+
 type Expense struct {
 	ID          uuid.UUID
 	Description string
@@ -42,12 +67,27 @@ type Expense struct {
 	DeletedAt   pgtype.Timestamptz
 }
 
+type ExpenseCategory struct {
+	ID           string
+	Name         string
+	IconUrl      string
+	DisplayOrder int32
+	IsActive     bool
+	CreatedAt    pgtype.Timestamptz
+}
+
 type ExpenseSplit struct {
 	ExpenseID  uuid.UUID
 	UserID     uuid.UUID
 	Amount     pgtype.Numeric
 	SplitType  string
 	SplitValue pgtype.Numeric
+}
+
+type FeatureFlag struct {
+	Key         string
+	IsEnabled   bool
+	Description pgtype.Text
 }
 
 type Friendship struct {
@@ -57,14 +97,16 @@ type Friendship struct {
 }
 
 type Group struct {
-	ID          uuid.UUID
-	Name        string
-	Description pgtype.Text
-	InviteCode  pgtype.Text
-	CreatedBy   pgtype.UUID
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
-	ArchivedAt  pgtype.Timestamptz
+	ID                   uuid.UUID
+	Name                 string
+	Description          pgtype.Text
+	InviteCode           pgtype.Text
+	CreatedBy            pgtype.UUID
+	CreatedAt            pgtype.Timestamptz
+	UpdatedAt            pgtype.Timestamptz
+	ArchivedAt           pgtype.Timestamptz
+	InviteCodeExpiresAt  pgtype.Timestamptz
+	RequireAdminApproval bool
 }
 
 type GroupMember struct {
@@ -72,6 +114,23 @@ type GroupMember struct {
 	UserID   uuid.UUID
 	Role     string
 	JoinedAt pgtype.Timestamptz
+	Status   string
+}
+
+type LegalConfig struct {
+	ID                int32
+	TermsOfServiceUrl string
+	PrivacyPolicyUrl  string
+	FaqUrl            string
+	SupportEmail      string
+}
+
+type MaintenanceStatus struct {
+	ID               int32
+	InMaintenance    bool
+	ReadOnlyMode     bool
+	Message          string
+	EstimatedEndTime pgtype.Timestamptz
 }
 
 type Notification struct {
@@ -83,6 +142,15 @@ type Notification struct {
 	Content    string
 	IsRead     bool
 	CreatedAt  pgtype.Timestamptz
+}
+
+type SystemLimit struct {
+	ID                      int32
+	MaxExpenseAmount        pgtype.Numeric
+	MaxGroupMembers         int32
+	MaxSplitParticipants    int32
+	MaxReceiptSizeMb        int32
+	AllowedReceiptMimeTypes []string
 }
 
 type User struct {

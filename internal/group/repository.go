@@ -46,12 +46,21 @@ func (r *DBRepository) CreateGroup(ctx context.Context, g *Group) error {
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)
 
+	var expiresAt pgtype.Timestamptz
+	if g.InviteCodeExpiresAt != nil {
+		expiresAt = pgtype.Timestamptz{Time: *g.InviteCodeExpiresAt, Valid: true}
+	} else {
+		expiresAt = pgtype.Timestamptz{Time: time.Now().Add(7 * 24 * time.Hour), Valid: true}
+	}
+
 	dbGroup, err := q.CreateGroup(ctx, dbgen.CreateGroupParams{
-		ID:          parsedID,
-		Name:        g.Name,
-		Description: ptrToText(g.Description),
-		InviteCode:  ptrToText(g.InviteCode),
-		CreatedBy:   uuidToPg(g.CreatedBy, parsedCreator),
+		ID:                   parsedID,
+		Name:                 g.Name,
+		Description:          ptrToText(g.Description),
+		InviteCode:           ptrToText(g.InviteCode),
+		InviteCodeExpiresAt:  expiresAt,
+		RequireAdminApproval: g.RequireAdminApproval,
+		CreatedBy:            uuidToPg(g.CreatedBy, parsedCreator),
 	})
 	if err != nil {
 		return fmt.Errorf("insert group: %w", err)
@@ -84,7 +93,7 @@ func (r *DBRepository) GetByID(ctx context.Context, id string) (*Group, error) {
 		return nil, fmt.Errorf("query group: %w", err)
 	}
 
-	return toDomainGroup(dbGroup), nil
+	return mapGroupFields(dbGroup.ID, dbGroup.Name, dbGroup.Description, dbGroup.InviteCode, dbGroup.InviteCodeExpiresAt, dbGroup.RequireAdminApproval, dbGroup.CreatedBy, dbGroup.CreatedAt, dbGroup.UpdatedAt, dbGroup.ArchivedAt), nil
 }
 
 // GetByInviteCode retrieves a group by its invite code.
@@ -104,7 +113,7 @@ func (r *DBRepository) GetByInviteCode(ctx context.Context, inviteCode string) (
 		return nil, fmt.Errorf("query group by invite code: %w", err)
 	}
 
-	return toDomainGroup(dbGroup), nil
+	return mapGroupFields(dbGroup.ID, dbGroup.Name, dbGroup.Description, dbGroup.InviteCode, dbGroup.InviteCodeExpiresAt, dbGroup.RequireAdminApproval, dbGroup.CreatedBy, dbGroup.CreatedAt, dbGroup.UpdatedAt, dbGroup.ArchivedAt), nil
 }
 
 // GetPreviewByInviteCode retrieves preview details of a group using its invite code.
@@ -153,9 +162,10 @@ func (r *DBRepository) Update(ctx context.Context, g *Group) error {
 	q := dbgen.New(client)
 
 	dbGroup, err := q.UpdateGroup(ctx, dbgen.UpdateGroupParams{
-		ID:          parsedID,
-		Name:        g.Name,
-		Description: ptrToText(g.Description),
+		ID:                   parsedID,
+		Name:                 g.Name,
+		Description:          ptrToText(g.Description),
+		RequireAdminApproval: g.RequireAdminApproval,
 	})
 	if err != nil {
 		return fmt.Errorf("update group: %w", err)
@@ -163,6 +173,28 @@ func (r *DBRepository) Update(ctx context.Context, g *Group) error {
 
 	g.UpdatedAt = dbGroup.UpdatedAt.Time
 	return nil
+}
+
+// ResetInviteCode resets group invite code and expiration timestamp.
+func (r *DBRepository) ResetInviteCode(ctx context.Context, groupID, newInviteCode string, expiresAt time.Time) (*Group, error) {
+	parsedID, err := uuid.Parse(groupID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid uuid: %w", err)
+	}
+
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+
+	dbGroup, err := q.ResetGroupInviteCode(ctx, dbgen.ResetGroupInviteCodeParams{
+		ID:                  parsedID,
+		InviteCode:          ptrToText(&newInviteCode),
+		InviteCodeExpiresAt: pgtype.Timestamptz{Time: expiresAt, Valid: true},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("reset group invite code: %w", err)
+	}
+
+	return mapGroupFields(dbGroup.ID, dbGroup.Name, dbGroup.Description, dbGroup.InviteCode, dbGroup.InviteCodeExpiresAt, dbGroup.RequireAdminApproval, dbGroup.CreatedBy, dbGroup.CreatedAt, dbGroup.UpdatedAt, dbGroup.ArchivedAt), nil
 }
 
 // Archive soft-deletes a group by setting its archived_at timestamp.
@@ -193,11 +225,14 @@ func parseGroupIDAndUserID(groupID, userID string) (uuid.UUID, uuid.UUID, error)
 	return parsedGroupID, parsedUserID, nil
 }
 
-// AddGroupMember adds a member to the group.
-func (r *DBRepository) AddGroupMember(ctx context.Context, groupID, userID, role string) error {
+// AddGroupMember adds a member to the group with status.
+func (r *DBRepository) AddGroupMember(ctx context.Context, groupID, userID, role, status string) error {
 	parsedGroupID, parsedUserID, err := parseGroupIDAndUserID(groupID, userID)
 	if err != nil {
 		return err
+	}
+	if status == "" {
+		status = string(MemberStatusActive)
 	}
 
 	client := r.tm.GetTxOrPool(ctx)
@@ -207,9 +242,31 @@ func (r *DBRepository) AddGroupMember(ctx context.Context, groupID, userID, role
 		GroupID: parsedGroupID,
 		UserID:  parsedUserID,
 		Role:    role,
+		Status:  status,
 	})
 	if err != nil {
 		return fmt.Errorf("add group member: %w", err)
+	}
+	return nil
+}
+
+// UpdateMemberStatus updates a member's status in a group.
+func (r *DBRepository) UpdateMemberStatus(ctx context.Context, groupID, userID, status string) error {
+	parsedGroupID, parsedUserID, err := parseGroupIDAndUserID(groupID, userID)
+	if err != nil {
+		return err
+	}
+
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+
+	err = q.UpdateMemberStatus(ctx, dbgen.UpdateMemberStatusParams{
+		GroupID: parsedGroupID,
+		UserID:  parsedUserID,
+		Status:  status,
+	})
+	if err != nil {
+		return fmt.Errorf("update member status: %w", err)
 	}
 	return nil
 }
@@ -284,12 +341,13 @@ func (r *DBRepository) GetGroupMember(ctx context.Context, groupID, userID strin
 		GroupID:  gm.GroupID.String(),
 		UserID:   gm.UserID.String(),
 		Role:     gm.Role,
+		Status:   gm.Status,
 		JoinedAt: gm.JoinedAt.Time,
 	}, nil
 }
 
-// ListGroupMembers lists all members of a group with user details.
-func (r *DBRepository) ListGroupMembers(ctx context.Context, groupID string) ([]Member, error) {
+// ListGroupMembers lists members of a group with user details, optionally filtered by status.
+func (r *DBRepository) ListGroupMembers(ctx context.Context, groupID string, status string) ([]Member, error) {
 	parsedGroupID, err := uuid.Parse(groupID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid group uuid: %w", err)
@@ -298,7 +356,10 @@ func (r *DBRepository) ListGroupMembers(ctx context.Context, groupID string) ([]
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)
 
-	rows, err := q.ListGroupMembers(ctx, parsedGroupID)
+	rows, err := q.ListGroupMembers(ctx, dbgen.ListGroupMembersParams{
+		GroupID: parsedGroupID,
+		Column2: status,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("list group members: %w", err)
 	}
@@ -309,6 +370,7 @@ func (r *DBRepository) ListGroupMembers(ctx context.Context, groupID string) ([]
 			GroupID:  row.GroupID.String(),
 			UserID:   row.UserID.String(),
 			Role:     row.Role,
+			Status:   row.Status,
 			JoinedAt: row.JoinedAt.Time,
 			Name:     row.Name,
 			Email:    textToPtr(row.Email),
@@ -318,7 +380,7 @@ func (r *DBRepository) ListGroupMembers(ctx context.Context, groupID string) ([]
 	return members, nil
 }
 
-// ListUserGroupsWithMembers lists all groups a user is a member of with cursor-based pagination.
+// ListUserGroupsWithMembers lists all groups a user is an ACTIVE member of with cursor-based pagination.
 func (r *DBRepository) ListUserGroupsWithMembers(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]DetailsResponse, error) {
 	parsedUserID, err := uuid.Parse(userID)
 	if err != nil {
@@ -351,16 +413,7 @@ func (r *DBRepository) ListUserGroupsWithMembers(ctx context.Context, userID str
 
 	result := make([]DetailsResponse, 0, len(rows))
 	for _, row := range rows {
-		g := toDomainGroup(dbgen.Group{
-			ID:          row.ID,
-			Name:        row.Name,
-			Description: row.Description,
-			InviteCode:  row.InviteCode,
-			CreatedBy:   row.CreatedBy,
-			CreatedAt:   row.CreatedAt,
-			UpdatedAt:   row.UpdatedAt,
-			ArchivedAt:  row.ArchivedAt,
-		})
+		g := mapGroupFields(row.ID, row.Name, row.Description, row.InviteCode, row.InviteCodeExpiresAt, row.RequireAdminApproval, row.CreatedBy, row.CreatedAt, row.UpdatedAt, row.ArchivedAt)
 
 		// Decode the aggregated members JSON blob produced by json_agg.
 		var members []Member
@@ -374,26 +427,33 @@ func (r *DBRepository) ListUserGroupsWithMembers(ctx context.Context, userID str
 }
 
 // Helper converters
-func toDomainGroup(dbg dbgen.Group) *Group {
+func mapGroupFields(id uuid.UUID, name string, description pgtype.Text, inviteCode pgtype.Text, inviteCodeExpiresAt pgtype.Timestamptz, requireAdminApproval bool, createdBy pgtype.UUID, createdAt pgtype.Timestamptz, updatedAt pgtype.Timestamptz, archivedAt pgtype.Timestamptz) *Group {
 	var createdByStr *string
-	if dbg.CreatedBy.Valid {
-		createdByStr = new(uuid.UUID(dbg.CreatedBy.Bytes).String())
+	if createdBy.Valid {
+		createdByStr = new(uuid.UUID(createdBy.Bytes).String())
 	}
 
 	var archivedAtTime *time.Time
-	if dbg.ArchivedAt.Valid {
-		archivedAtTime = &dbg.ArchivedAt.Time
+	if archivedAt.Valid {
+		archivedAtTime = &archivedAt.Time
+	}
+
+	var inviteExpiresAt *time.Time
+	if inviteCodeExpiresAt.Valid {
+		inviteExpiresAt = &inviteCodeExpiresAt.Time
 	}
 
 	return &Group{
-		ID:          dbg.ID.String(),
-		Name:        dbg.Name,
-		Description: textToPtr(dbg.Description),
-		InviteCode:  textToPtr(dbg.InviteCode),
-		CreatedBy:   createdByStr,
-		CreatedAt:   dbg.CreatedAt.Time,
-		UpdatedAt:   dbg.UpdatedAt.Time,
-		ArchivedAt:  archivedAtTime,
+		ID:                   id.String(),
+		Name:                 name,
+		Description:          textToPtr(description),
+		InviteCode:           textToPtr(inviteCode),
+		InviteCodeExpiresAt:  inviteExpiresAt,
+		RequireAdminApproval: requireAdminApproval,
+		CreatedBy:            createdByStr,
+		CreatedAt:            createdAt.Time,
+		UpdatedAt:            updatedAt.Time,
+		ArchivedAt:           archivedAtTime,
 	}
 }
 

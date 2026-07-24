@@ -1,0 +1,15 @@
+-- +goose Up
+ALTER TABLE groups 
+  ADD COLUMN IF NOT EXISTS invite_code_expires_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '7 days'),
+  ADD COLUMN IF NOT EXISTS require_admin_approval BOOLEAN NOT NULL DEFAULT FALSE;
+
+ALTER TABLE group_members 
+  ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE';
+
+-- +goose Down
+ALTER TABLE group_members 
+  DROP COLUMN IF EXISTS status;
+
+ALTER TABLE groups 
+  DROP COLUMN IF EXISTS require_admin_approval,
+  DROP COLUMN IF EXISTS invite_code_expires_at;

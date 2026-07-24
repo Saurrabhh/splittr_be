@@ -27,7 +27,6 @@ func NewHandler(uc *UseCase, activityUC *activity.UseCase) *Handler {
 }
 
 // RegisterRoutes registers the group endpoints on the router.
-// Note: It assumes that the router already has authentication and user context middlewares applied.
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Route("/groups", func(r chi.Router) {
 		r.Post("/", h.Create)
@@ -39,12 +38,15 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 			r.Get("/", h.GetDetails)
 			r.Delete("/", h.Archive)
 			r.Get("/feed", h.GetFeed)
+			r.Post("/invite-code/reset", h.ResetInviteCode)
 
 			r.Route("/members", func(r chi.Router) {
+				r.Get("/", h.ListMembers)
 				r.Post("/", h.AddMember)
 				r.Route("/{userId}", func(r chi.Router) {
 					r.Delete("/", h.RemoveMember)
 					r.Put("/role", h.UpdateMemberRole)
+					r.Post("/decision", h.DecideJoinRequest)
 				})
 			})
 		})
@@ -52,8 +54,9 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 }
 
 type createGroupRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	Name                 string `json:"name"`
+	Description          string `json:"description"`
+	RequireAdminApproval bool   `json:"requireAdminApproval"`
 }
 
 type joinGroupRequest struct {
@@ -62,7 +65,7 @@ type joinGroupRequest struct {
 
 // Create creates a new group.
 // @Summary      Create group
-// @Description  Create a new bill-splitting group.
+// @Description  Create a new bill-splitting group with optional admin approval requirement.
 // @Tags         groups
 // @Accept       json
 // @Produce      json
@@ -77,7 +80,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
 	request.Run(w, r, http.StatusCreated, func(ctx context.Context, req createGroupRequest) (*Group, error) {
-		return h.uc.CreateGroup(ctx, req.Name, req.Description, currUser.ID)
+		return h.uc.CreateGroup(ctx, req.Name, req.Description, req.RequireAdminApproval, currUser.ID)
 	})
 }
 
@@ -88,16 +91,18 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Param        request body joinGroupRequest true "Group join data"
-// @Success      200  {object}  Group
+// @Success      200  {object}  JoinResponse
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
+// @Failure      403  {object}  response.ErrorResponse
+// @Failure      404  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /groups/join [post]
 // @Security     BearerAuth
 func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
-	request.Run(w, r, http.StatusOK, func(ctx context.Context, req joinGroupRequest) (*Group, error) {
+	request.Run(w, r, http.StatusOK, func(ctx context.Context, req joinGroupRequest) (*JoinResponse, error) {
 		if req.InviteCode == "" {
 			return nil, &response.AppError{
 				Type:    response.TypeValidation,
@@ -108,20 +113,13 @@ func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-type groupPreviewResponse struct {
-	Name        string  `json:"name"`
-	Description *string `json:"description,omitempty"`
-	MemberCount int64   `json:"memberCount"`
-	CreatorName string  `json:"creatorName"`
-}
-
 // Preview retrieves group basic info before joining.
 // @Summary      Get group preview
-// @Description  Get group details (name, description, member count, creator name) using invite code.
+// @Description  Get group details using invite code.
 // @Tags         groups
 // @Produce      json
 // @Param        inviteCode   query  string  true  "Group invite code"
-// @Success      200  {object}  groupPreviewResponse
+// @Success      200  {object}  Preview
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      404  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -143,12 +141,7 @@ func (h *Handler) Preview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, groupPreviewResponse{
-		Name:        preview.Name,
-		Description: preview.Description,
-		MemberCount: preview.MemberCount,
-		CreatorName: preview.CreatorName,
-	})
+	response.JSON(w, http.StatusOK, preview)
 }
 
 // List retrieves all groups the user is a member of.
@@ -208,6 +201,32 @@ func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 		Group:   *g,
 		Members: members,
 	})
+}
+
+// ListMembers lists group members with optional status filter (PENDING, REJECTED restricted to admins).
+// @Summary      List group members
+// @Description  Retrieve group members. Query status=PENDING or REJECTED requires admin privileges.
+// @Tags         groups
+// @Produce      json
+// @Param        id path string true "Group ID"
+// @Param        status query string false "Filter status: ACTIVE, PENDING, REJECTED, ALL"
+// @Success      200  {array}   Member
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      403  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /groups/{id}/members [get]
+// @Security     BearerAuth
+func (h *Handler) ListMembers(w http.ResponseWriter, r *http.Request) {
+	groupID := chi.URLParam(r, "id")
+	statusFilter := r.URL.Query().Get("status")
+	currUser := user.MustFrom(r.Context())
+
+	members, err := h.uc.ListMembers(r.Context(), groupID, statusFilter, currUser.ID)
+	if err != nil {
+		response.HandleError(w, err)
+		return
+	}
+	response.JSON(w, http.StatusOK, members)
 }
 
 type addMemberRequest struct {
@@ -333,6 +352,61 @@ func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// DecideJoinRequest approves or rejects a pending join request. Admin only.
+// @Summary      Decide join request
+// @Description  Approve or reject a pending member join request. Admin privileges required.
+// @Tags         groups
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "Group ID"
+// @Param        userId path string true "Target User ID"
+// @Param        request body DecideJoinRequestPayload true "Action (APPROVE or REJECT)"
+// @Success      200  {object}  response.MessageResponse "Success message"
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      403  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /groups/{id}/members/{userId}/decision [post]
+// @Security     BearerAuth
+func (h *Handler) DecideJoinRequest(w http.ResponseWriter, r *http.Request) {
+	groupID := chi.URLParam(r, "id")
+	targetUserID := chi.URLParam(r, "userId")
+	currUser := user.MustFrom(r.Context())
+
+	request.Run(w, r, http.StatusOK, func(ctx context.Context, req DecideJoinRequestPayload) (response.MessageResponse, error) {
+		err := h.uc.DecideJoinRequest(ctx, groupID, targetUserID, req.Action, currUser.ID)
+		if err != nil {
+			return response.MessageResponse{}, err
+		}
+		return response.MessageResponse{Message: "join request decision recorded"}, nil
+	})
+}
+
+// ResetInviteCode generates a new 7-day invite code for the group. Admin only.
+// @Summary      Reset group invite code
+// @Description  Generate a new invite code with a 7-day expiration timestamp. Admin privileges required.
+// @Tags         groups
+// @Produce      json
+// @Param        id path string true "Group ID"
+// @Success      200  {object}  Group
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      403  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /groups/{id}/invite-code/reset [post]
+// @Security     BearerAuth
+func (h *Handler) ResetInviteCode(w http.ResponseWriter, r *http.Request) {
+	groupID := chi.URLParam(r, "id")
+	currUser := user.MustFrom(r.Context())
+
+	g, err := h.uc.ResetInviteCode(r.Context(), groupID, currUser.ID)
+	if err != nil {
+		response.HandleError(w, err)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, g)
+}
+
 // Archive archives (soft-deletes) the group.
 // @Summary      Archive group
 // @Description  Soft-delete a bill splitting group. Only group creators can archive.
@@ -384,7 +458,6 @@ func (h *Handler) GetFeed(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 	groupID := chi.URLParam(r, "id")
 
-	// Shared helper: parses ?limit and ?cursor from query string
 	p := pagination.ParseParams(r, 20, 100)
 
 	feed, err := h.activityUC.GetGroupFeed(r.Context(), currUser.ID, groupID, p)

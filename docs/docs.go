@@ -17,8 +17,10 @@ const docTemplate = `{
                     "MEMBER_KICKED",
                     "MEMBER_ROLE_UPDATED",
                     "GROUP_CREATED",
+                    "GROUP_UPDATED",
                     "GROUP_ARCHIVED",
-                    "MEMBER_JOINED"
+                    "MEMBER_JOINED",
+                    "MEMBER_KICKED"
                 ],
                 "type": "string",
                 "x-enum-varnames": [
@@ -29,8 +31,10 @@ const docTemplate = `{
                     "ActionTypeMemberKicked",
                     "ActionTypeMemberRoleUpdated",
                     "ActionTypeGroupCreated",
+                    "ActionTypeGroupUpdated",
                     "ActionTypeGroupArchived",
-                    "ActionTypeMemberJoined"
+                    "ActionTypeMemberJoined",
+                    "ActionTypeMemberRemoved"
                 ]
             },
             "activity.Activity": {
@@ -650,6 +654,15 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "group.DecideJoinRequestPayload": {
+                "properties": {
+                    "action": {
+                        "description": "\"APPROVE\" or \"REJECT\"",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "group.DetailsResponse": {
                 "properties": {
                     "archivedAt": {
@@ -670,6 +683,9 @@ const docTemplate = `{
                     "inviteCode": {
                         "type": "string"
                     },
+                    "inviteCodeExpiresAt": {
+                        "type": "string"
+                    },
                     "members": {
                         "items": {
                             "$ref": "#/components/schemas/group.Member"
@@ -679,6 +695,9 @@ const docTemplate = `{
                     },
                     "name": {
                         "type": "string"
+                    },
+                    "requireAdminApproval": {
+                        "type": "boolean"
                     },
                     "updatedAt": {
                         "type": "string"
@@ -706,10 +725,30 @@ const docTemplate = `{
                     "inviteCode": {
                         "type": "string"
                     },
+                    "inviteCodeExpiresAt": {
+                        "type": "string"
+                    },
                     "name": {
                         "type": "string"
                     },
+                    "requireAdminApproval": {
+                        "type": "boolean"
+                    },
                     "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "group.JoinResponse": {
+                "properties": {
+                    "group": {
+                        "$ref": "#/components/schemas/group.Group"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "status": {
                         "type": "string"
                     }
                 },
@@ -750,8 +789,31 @@ const docTemplate = `{
                     "role": {
                         "type": "string"
                     },
+                    "status": {
+                        "type": "string"
+                    },
                     "userId": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "group.Preview": {
+                "properties": {
+                    "creatorName": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "memberCount": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "requireAdminApproval": {
+                        "type": "boolean"
                     }
                 },
                 "type": "object"
@@ -771,23 +833,9 @@ const docTemplate = `{
                     },
                     "name": {
                         "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "group.groupPreviewResponse": {
-                "properties": {
-                    "creatorName": {
-                        "type": "string"
                     },
-                    "description": {
-                        "type": "string"
-                    },
-                    "memberCount": {
-                        "type": "integer"
-                    },
-                    "name": {
-                        "type": "string"
+                    "requireAdminApproval": {
+                        "type": "boolean"
                     }
                 },
                 "type": "object"
@@ -1087,7 +1135,7 @@ const docTemplate = `{
                 },
                 "summary": "Fetch application startup configuration",
                 "tags": [
-                    "AppConfig"
+                    "appConfig"
                 ]
             }
         },
@@ -1800,7 +1848,7 @@ const docTemplate = `{
                 ]
             },
             "post": {
-                "description": "Create a new bill-splitting group.",
+                "description": "Create a new bill-splitting group with optional admin approval requirement.",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -1902,7 +1950,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/group.Group"
+                                    "$ref": "#/components/schemas/group.JoinResponse"
                                 }
                             }
                         },
@@ -1928,6 +1976,26 @@ const docTemplate = `{
                         },
                         "description": "Unauthorized"
                     },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
                     "500": {
                         "content": {
                             "application/json": {
@@ -1952,7 +2020,7 @@ const docTemplate = `{
         },
         "/groups/preview": {
             "get": {
-                "description": "Get group details (name, description, member count, creator name) using invite code.",
+                "description": "Get group details using invite code.",
                 "parameters": [
                     {
                         "description": "Group invite code",
@@ -1969,7 +2037,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/group.groupPreviewResponse"
+                                    "$ref": "#/components/schemas/group.Preview"
                                 }
                             }
                         },
@@ -2232,7 +2300,150 @@ const docTemplate = `{
                 ]
             }
         },
+        "/groups/{id}/invite-code/reset": {
+            "post": {
+                "description": "Generate a new invite code with a 7-day expiration timestamp. Admin privileges required.",
+                "parameters": [
+                    {
+                        "description": "Group ID",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/group.Group"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Reset group invite code",
+                "tags": [
+                    "groups"
+                ]
+            }
+        },
         "/groups/{id}/members": {
+            "get": {
+                "description": "Retrieve group members. Query status=PENDING or REJECTED requires admin privileges.",
+                "parameters": [
+                    {
+                        "description": "Group ID",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Filter status: ACTIVE, PENDING, REJECTED, ALL",
+                        "in": "query",
+                        "name": "status",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/group.Member"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "List group members",
+                "tags": [
+                    "groups"
+                ]
+            },
             "post": {
                 "description": "Add a user to a group by their User ID. Only admins can add members.",
                 "parameters": [
@@ -2383,6 +2594,112 @@ const docTemplate = `{
                     }
                 ],
                 "summary": "Remove group member / Leave group",
+                "tags": [
+                    "groups"
+                ]
+            }
+        },
+        "/groups/{id}/members/{userId}/decision": {
+            "post": {
+                "description": "Approve or reject a pending member join request. Admin privileges required.",
+                "parameters": [
+                    {
+                        "description": "Group ID",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Target User ID",
+                        "in": "path",
+                        "name": "userId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/group.DecideJoinRequestPayload",
+                                        "summary": "request",
+                                        "description": "Action (APPROVE or REJECT)"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Action (APPROVE or REJECT)",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response.MessageResponse"
+                                }
+                            }
+                        },
+                        "description": "Success message"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Decide join request",
                 "tags": [
                     "groups"
                 ]
