@@ -26,6 +26,7 @@ A Go-based backend service for **Splittr**, a bill-splitting application. This s
 ├── internal/
 │   ├── activity/             # User activity logs and audit trail
 │   ├── app/                  # Application initialization and routes setup
+│   ├── appconfig/            # Startup app configuration, remote feature flags, and ETag caching
 │   ├── auth/                 # Firebase authentication middleware and token verifiers
 │   ├── config/               # Application configuration parsing (.env files and env vars)
 │   ├── db/                   # Database connection pool, transaction manager, migrations, and queries
@@ -140,6 +141,7 @@ Authorization: Bearer <FIREBASE_ID_TOKEN>
 ```
 
 ### Core API Groups
+- ⚙️ **App Config (`/v1/app-config`)**: App startup remote config, force-update rules, maintenance status, expense categories, currencies, limits, feature flags, legal URLs (supports optional auth & ETag caching).
 - 👤 **Users & Friends (`/v1/users`, `/v1/friends`)**: Register profile, fetch current user info, search & add friends, remove friendships.
 - 👥 **Groups (`/v1/groups`)**: Create & join bill splitting groups, manage members, update member roles.
 - 💸 **Expenses & Balances (`/v1/expenses`, `/v1/balances`)**: Create splits (equal/exact/percentage), settle debts, fetch global or group-simplified balances.

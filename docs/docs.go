@@ -155,6 +155,237 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "appconfig.AppConfigData": {
+                "properties": {
+                    "domain": {
+                        "$ref": "#/components/schemas/appconfig.DomainConfig"
+                    },
+                    "featureFlags": {
+                        "additionalProperties": {
+                            "type": "boolean"
+                        },
+                        "type": "object"
+                    },
+                    "legal": {
+                        "$ref": "#/components/schemas/appconfig.LegalConfig"
+                    },
+                    "system": {
+                        "$ref": "#/components/schemas/appconfig.SystemConfig"
+                    },
+                    "userContext": {
+                        "$ref": "#/components/schemas/appconfig.UserContext"
+                    }
+                },
+                "type": "object"
+            },
+            "appconfig.AppVersion": {
+                "properties": {
+                    "forceUpdate": {
+                        "type": "boolean"
+                    },
+                    "latestVersion": {
+                        "type": "string"
+                    },
+                    "minSupportedVersion": {
+                        "type": "string"
+                    },
+                    "updateMessage": {
+                        "type": "string"
+                    },
+                    "updateUrl": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "appconfig.Category": {
+                "properties": {
+                    "iconUrl": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "appconfig.Currency": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "decimalPlaces": {
+                        "type": "integer"
+                    },
+                    "isDefault": {
+                        "type": "boolean"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "symbol": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "appconfig.DomainConfig": {
+                "properties": {
+                    "categories": {
+                        "items": {
+                            "$ref": "#/components/schemas/appconfig.Category"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "currencies": {
+                        "items": {
+                            "$ref": "#/components/schemas/appconfig.Currency"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "limits": {
+                        "$ref": "#/components/schemas/appconfig.LimitsConfig"
+                    },
+                    "paymentIntegrations": {
+                        "items": {
+                            "$ref": "#/components/schemas/appconfig.PaymentIntegration"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "splitTypes": {
+                        "items": {
+                            "$ref": "#/components/schemas/appconfig.SplitTypeConfig"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "appconfig.LegalConfig": {
+                "properties": {
+                    "faqUrl": {
+                        "type": "string"
+                    },
+                    "privacyPolicyUrl": {
+                        "type": "string"
+                    },
+                    "supportEmail": {
+                        "type": "string"
+                    },
+                    "termsOfServiceUrl": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "appconfig.LimitsConfig": {
+                "properties": {
+                    "allowedReceiptMimeTypes": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "maxExpenseAmount": {
+                        "type": "number"
+                    },
+                    "maxGroupMembers": {
+                        "type": "integer"
+                    },
+                    "maxReceiptSizeMb": {
+                        "type": "integer"
+                    },
+                    "maxSplitParticipants": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "appconfig.MaintenanceConfig": {
+                "properties": {
+                    "estimatedEndTime": {
+                        "type": "string"
+                    },
+                    "inMaintenance": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "readOnlyMode": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "appconfig.PaymentIntegration": {
+                "properties": {
+                    "deepLinkScheme": {
+                        "type": "string"
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "appconfig.SplitTypeConfig": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "appconfig.SystemConfig": {
+                "properties": {
+                    "appVersion": {
+                        "$ref": "#/components/schemas/appconfig.AppVersion"
+                    },
+                    "maintenance": {
+                        "$ref": "#/components/schemas/appconfig.MaintenanceConfig"
+                    }
+                },
+                "type": "object"
+            },
+            "appconfig.UserContext": {
+                "properties": {
+                    "isAuthenticated": {
+                        "type": "boolean"
+                    },
+                    "userFeatureFlags": {
+                        "additionalProperties": {},
+                        "type": "object"
+                    },
+                    "userPreferredCurrency": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "expense.BalanceResponse": {
                 "properties": {
                     "balances": {
@@ -804,6 +1035,59 @@ const docTemplate = `{
                 "summary": "List activity feed",
                 "tags": [
                     "activities"
+                ]
+            }
+        },
+        "/app-config": {
+            "get": {
+                "description": "Returns app version rules, maintenance status, expense categories, currencies, limits, feature flags, and legal links. Supports optional Bearer auth and ETag caching via If-None-Match.",
+                "parameters": [
+                    {
+                        "description": "ETag hash for cache validation",
+                        "in": "header",
+                        "name": "If-None-Match",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/appconfig.AppConfigData"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "304": {
+                        "description": "Not Modified"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "summary": "Fetch application startup configuration",
+                "tags": [
+                    "AppConfig"
                 ]
             }
         },

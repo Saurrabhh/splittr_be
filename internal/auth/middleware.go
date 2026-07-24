@@ -70,3 +70,33 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+
+// OptionalAuthenticate extracts and verifies Bearer token if present, but proceeds even if missing or invalid.
+func (m *Middleware) OptionalAuthenticate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			parts := strings.Split(authHeader, " ")
+			if len(parts) == 2 && strings.EqualFold(parts[0], "bearer") {
+				token, err := m.verifier.VerifyIDToken(r.Context(), parts[1])
+				if err == nil {
+					var email string
+					if emailVal, ok := token.Claims["email"].(string); ok {
+						email = emailVal
+					}
+					var phone string
+					if phoneVal, ok := token.Claims["phone_number"].(string); ok {
+						phone = phoneVal
+					}
+					identity := &Identity{
+						UserID: token.UID,
+						Email:  email,
+						Phone:  phone,
+					}
+					r = r.WithContext(WithIdentity(r.Context(), identity))
+				}
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}

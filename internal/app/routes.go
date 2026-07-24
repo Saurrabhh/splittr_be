@@ -31,7 +31,8 @@ func (app *Application) routes(deps *dependencies) http.Handler {
 
 	// API version 1 routes
 	r.Route("/v1", func(r chi.Router) {
-		// Register domain-specific routes
+		// Register domain-specific public/optional routes
+		deps.appConfigHandler.RegisterRoutes(r, deps.authMiddleware.OptionalAuthenticate)
 		deps.userHandler.RegisterRoutes(r, deps.authMiddleware.Authenticate)
 
 		// Authenticated API routes

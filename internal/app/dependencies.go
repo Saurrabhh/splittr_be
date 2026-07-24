@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Saurrabhh/splittr_be/internal/activity"
+	"github.com/Saurrabhh/splittr_be/internal/appconfig"
 	"github.com/Saurrabhh/splittr_be/internal/auth"
 	"github.com/Saurrabhh/splittr_be/internal/db"
 	"github.com/Saurrabhh/splittr_be/internal/expense"
@@ -21,6 +22,7 @@ type dependencies struct {
 	expenseHandler      *expense.Handler
 	activityHandler     *activity.Handler
 	notificationHandler *notification.Handler
+	appConfigHandler    *appconfig.Handler
 }
 
 // initDependencies bootstraps and wires all application dependencies.
@@ -35,6 +37,11 @@ func initDependencies(ctx context.Context, app *Application) (*dependencies, err
 		return nil, fmt.Errorf("failed to initialize firebase: %w", err)
 	}
 	authMiddleware := auth.NewMiddleware(verifier)
+
+	// AppConfig domain wiring
+	appConfigRepo := appconfig.NewRepository(app.DB)
+	appConfigUseCase := appconfig.NewUsecase(appConfigRepo)
+	appConfigHandler := appconfig.NewHandler(appConfigUseCase)
 
 	// User domain wiring
 	userRepo := user.NewRepository(app.DB, tm)
@@ -68,5 +75,6 @@ func initDependencies(ctx context.Context, app *Application) (*dependencies, err
 		expenseHandler:      expenseHandler,
 		activityHandler:     activityHandler,
 		notificationHandler: notificationHandler,
+		appConfigHandler:    appConfigHandler,
 	}, nil
 }
