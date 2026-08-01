@@ -12,18 +12,23 @@ const (
 
 // Validation & Input Errors
 const (
-	MsgMissingEmailOrPhone  = "Please provide either an email address or phone number."
-	MsgInvalidCurrency      = "Currency code must be a valid 3-letter code."
-	MsgSelfFriendError      = "You cannot add yourself as a friend."
-	MsgNotFriends           = "You are not friends with this user."
-	MsgMissingGroupName     = "Please enter a group name."
-	MsgInvalidStatusFilter  = "Please select a valid status filter option."
-	MsgInvalidAmount        = "Amount must be greater than zero."
-	MsgMissingRecipient     = "Please select a recipient for the payment."
-	MsgSamePayerPayee       = "Payer and recipient cannot be the same user."
-	MsgPayerNotGroupMember  = "The payer must be a member of the group."
-	MsgSplitUserNotMember   = "All split users must be members of the group."
-	MsgExpenseCreatorOnly   = "Only the person who created this expense can delete it."
+	MsgMissingEmailOrPhone   = "Please provide either an email address or phone number."
+	MsgInvalidCurrency       = "Currency code must be a valid 3-letter code."
+	MsgSelfFriendError       = "You cannot add yourself as a friend."
+	MsgNotFriends            = "You are not friends with this user."
+	MsgMissingGroupName      = "Please enter a group name."
+	MsgInvalidStatusFilter   = "Please select a valid status filter option."
+	MsgInvalidAmount         = "Amount must be greater than zero."
+	MsgMissingRecipient      = "Please select a recipient for the payment."
+	MsgSamePayerPayee        = "Payer and recipient cannot be the same user."
+	MsgPayerNotGroupMember   = "The payer must be a member of the group."
+	MsgSplitUserNotMember    = "All split users must be members of the group."
+	MsgExpenseCreatorOnly    = "Only the person who created this expense can delete it."
+	MsgInvalidExpenseFilter  = "Expense filter must be group, personal, or friend."
+	MsgAdminRequiredNonActive = "Only admins can query pending or non-active members."
+	MsgAlreadyInGroup        = "You are already a member of this group."
+	MsgCannotRemoveCreator   = "The group creator cannot be removed."
+	MsgAlertRequired         = "Alert payload is required."
 )
 
 // Domain Specific Errors

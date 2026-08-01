@@ -72,13 +72,13 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 	if amount <= 0 {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "amount must be greater than zero",
+			Message: response.MsgInvalidAmount,
 		}
 	}
 	if len(inputs) == 0 {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "expense must be split with at least one user",
+			Message: response.MsgInvalidSplit,
 		}
 	}
 	if currency == "" {
@@ -101,7 +101,7 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 		if !memberMap[paidBy] {
 			return nil, nil, &response.AppError{
 				Type:    response.TypeValidation,
-				Message: "payer must be a member of the group",
+				Message: response.MsgPayerNotGroupMember,
 			}
 		}
 
@@ -109,7 +109,7 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 			if !memberMap[split.UserID] {
 				return nil, nil, &response.AppError{
 					Type:    response.TypeValidation,
-					Message: fmt.Sprintf("split user %s is not a member of the group", split.UserID),
+					Message: response.MsgSplitUserNotMember,
 				}
 			}
 		}
@@ -224,19 +224,19 @@ func (u *UseCase) SettleUp(ctx context.Context, amount float64, currency string,
 	if amount <= 0 {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "settlement amount must be greater than zero",
+			Message: response.MsgInvalidAmount,
 		}
 	}
 	if receivedBy == "" {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "recipient is required",
+			Message: response.MsgMissingRecipient,
 		}
 	}
 	if paidBy == receivedBy {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "payer and payee must be different users",
+			Message: response.MsgSamePayerPayee,
 		}
 	}
 	if currency == "" {
@@ -416,7 +416,7 @@ func (u *UseCase) ListExpenses(ctx context.Context, filterType, filterID, userID
 			return pagination.Response[ExpenseWithSplits]{}, &response.AppError{Type: response.TypeInternal, Message: "failed to list friend expenses", Err: err}
 		}
 	default:
-		return pagination.Response[ExpenseWithSplits]{}, &response.AppError{Type: response.TypeValidation, Message: "invalid filter type: must be group, personal, or friend"}
+		return pagination.Response[ExpenseWithSplits]{}, &response.AppError{Type: response.TypeValidation, Message: response.MsgInvalidExpenseFilter}
 	}
 
 	// Bulk-fetch all splits in a single query — always 2 DB round-trips total, never N+1.
@@ -534,14 +534,14 @@ func (u *UseCase) DeleteExpense(ctx context.Context, expenseID, userID string) e
 	if e == nil {
 		return &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "expense not found",
+			Message: response.MsgExpenseNotFound,
 		}
 	}
 
 	if e.CreatedBy != userID {
 		return &response.AppError{
 			Type:    response.TypeForbidden,
-			Message: "unauthorized: only the creator can delete this expense",
+			Message: response.MsgExpenseCreatorOnly,
 		}
 	}
 

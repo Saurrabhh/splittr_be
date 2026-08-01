@@ -25,7 +25,7 @@ func (u *UseCase) CreateAlert(ctx context.Context, userID string, actorID *strin
 	if alert == nil {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "alert is required",
+			Message: response.MsgAlertRequired,
 		}
 	}
 

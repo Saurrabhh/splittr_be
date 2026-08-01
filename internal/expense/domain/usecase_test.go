@@ -310,13 +310,13 @@ func TestCreateExpense_ValidationErrors(t *testing.T) {
 	_, _, err = uc.CreateExpense(ctx, "Desc", 0.0, "INR", "Cat", nil, "usr-1", domain.SplitTypeEqual, []domain.InputSplit{{UserID: "usr-1"}}, "usr-1")
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
-	assert.Contains(t, appErr.Message, "amount must be greater than zero")
+	assert.Contains(t, appErr.Message, response.MsgInvalidAmount)
 
 	// Empty splits inputs
 	_, _, err = uc.CreateExpense(ctx, "Desc", 100.0, "INR", "Cat", nil, "usr-1", domain.SplitTypeEqual, nil, "usr-1")
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
-	assert.Contains(t, appErr.Message, "expense must be split with at least one user")
+	assert.Contains(t, appErr.Message, response.MsgInvalidSplit)
 
 	// Exact split sum mismatch (total 100, splits 50+40=90)
 	amt1 := 50.0
@@ -372,7 +372,7 @@ func TestCreateExpense_ValidationErrors(t *testing.T) {
 	_, _, err = uc.CreateExpense(ctx, "Desc", 100.0, "INR", "Cat", &groupID, "usr-1", domain.SplitTypeEqual, []domain.InputSplit{{UserID: "usr-non-member"}}, "usr-1")
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
-	assert.Contains(t, appErr.Message, "is not a member of the group")
+	assert.Contains(t, appErr.Message, response.MsgSplitUserNotMember)
 }
 
 func TestCreateExpense_TransactionFailure(t *testing.T) {
@@ -477,13 +477,13 @@ func TestSettleUp_ValidationErrors(t *testing.T) {
 	_, _, err = uc.SettleUp(ctx, 50.0, "INR", nil, "usr-1", "usr-1", "usr-1")
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
-	assert.Contains(t, appErr.Message, "payer and payee must be different users")
+	assert.Contains(t, appErr.Message, response.MsgSamePayerPayee)
 
 	// empty receivedBy
 	_, _, err = uc.SettleUp(ctx, 50.0, "INR", nil, "usr-1", "", "usr-1")
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
-	assert.Contains(t, appErr.Message, "recipient is required")
+	assert.Contains(t, appErr.Message, response.MsgMissingRecipient)
 }
 
 // --- GetExpenseDetails Tests ---
@@ -616,13 +616,13 @@ func TestDeleteExpense_NonCreator_Forbidden(t *testing.T) {
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeForbidden, appErr.Type)
-	assert.Contains(t, appErr.Message, "only the creator can delete this expense")
+	assert.Contains(t, appErr.Message, response.MsgExpenseCreatorOnly)
 
 	// Admin attempt (since expense deletion is restricted to creator)
 	err = uc.DeleteExpense(ctx, expID, adminID)
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeForbidden, appErr.Type)
-	assert.Contains(t, appErr.Message, "only the creator can delete this expense")
+	assert.Contains(t, appErr.Message, response.MsgExpenseCreatorOnly)
 }
 
 func TestDeleteExpense_NotFound(t *testing.T) {

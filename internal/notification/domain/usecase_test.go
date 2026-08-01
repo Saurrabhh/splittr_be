@@ -77,7 +77,7 @@ func TestCreateAlert_NilAlert(t *testing.T) {
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
-	assert.Contains(t, appErr.Message, "alert is required")
+	assert.Contains(t, appErr.Message, response.MsgAlertRequired)
 }
 
 func TestCreateAlert_RepoError(t *testing.T) {

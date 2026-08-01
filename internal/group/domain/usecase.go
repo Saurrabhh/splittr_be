@@ -72,13 +72,13 @@ func (u *UseCase) CreateGroup(ctx context.Context, name, description string, req
 	if name == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "group name is required",
+			Message: response.MsgMissingGroupName,
 		}
 	}
 	if creatorID == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "creator id is required",
+			Message: response.MsgInvalidParam,
 		}
 	}
 
@@ -134,7 +134,7 @@ func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 	if groupID == "" || userID == "" {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "group id and user id are required",
+			Message: response.MsgInvalidParam,
 		}
 	}
 
@@ -149,7 +149,7 @@ func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 	if member == nil || member.Status != MemberStatusActive {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeForbidden,
-			Message: "access denied: not an active group member",
+			Message: response.MsgNotGroupMember,
 		}
 	}
 
@@ -183,7 +183,7 @@ func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 // ListUserGroups returns a cursor-paginated list of groups the user actively belongs to.
 func (u *UseCase) ListUserGroups(ctx context.Context, userID string, p pagination.Params) (pagination.Response[DetailsResponse], error) {
 	if userID == "" {
-		return pagination.Response[DetailsResponse]{}, &response.AppError{Type: response.TypeValidation, Message: "user id is required"}
+		return pagination.Response[DetailsResponse]{}, &response.AppError{Type: response.TypeValidation, Message: response.MsgInvalidParam}
 	}
 	cursor := pagination.ParseCursor(p.Cursor)
 	rows, err := u.repo.ListUserGroupsWithMembers(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
@@ -210,7 +210,7 @@ func (u *UseCase) ListMembers(ctx context.Context, groupID, statusFilter, action
 	if groupID == "" || actionByUserID == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "group id and user id are required",
+			Message: response.MsgInvalidParam,
 		}
 	}
 
@@ -220,7 +220,7 @@ func (u *UseCase) ListMembers(ctx context.Context, groupID, statusFilter, action
 	default:
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "status must be one of: ACTIVE, PENDING, REJECTED, ALL",
+			Message: response.MsgInvalidStatusFilter,
 		}
 	}
 
@@ -232,7 +232,7 @@ func (u *UseCase) ListMembers(ctx context.Context, groupID, statusFilter, action
 		if !isAdmin {
 			return nil, &response.AppError{
 				Type:    response.TypeForbidden,
-				Message: "only admins can query pending or non-active members",
+				Message: response.MsgAdminRequiredNonActive,
 			}
 		}
 	} else {
@@ -241,7 +241,7 @@ func (u *UseCase) ListMembers(ctx context.Context, groupID, statusFilter, action
 			return nil, &response.AppError{Type: response.TypeInternal, Message: "failed to verify member role", Err: err}
 		}
 		if member == nil || member.Status != MemberStatusActive {
-			return nil, &response.AppError{Type: response.TypeForbidden, Message: "access denied: not an active group member"}
+			return nil, &response.AppError{Type: response.TypeForbidden, Message: response.MsgNotGroupMember}
 		}
 	}
 
