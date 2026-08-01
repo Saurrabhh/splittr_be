@@ -47,12 +47,12 @@ func createTestActivity(t *testing.T, actRepo *activity.DBRepository, actorID st
 	ctx := context.Background()
 	act := &activity.Activity{
 		ID:          uuid.New().String(),
-		ActorID:     &actorID,
+		Actor:       activity.ActorInfo{ID: actorID},
 		ActionType:  activity.ActionTypeExpenseCreated,
 		Description: desc,
 		EntityType:  activity.EntityTypeExpense,
 	}
-	err := actRepo.CreateActivity(ctx, act)
+	err := actRepo.CreateActivity(ctx, act, nil)
 	require.NoError(t, err)
 	return act
 }

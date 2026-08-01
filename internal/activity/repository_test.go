@@ -71,13 +71,13 @@ func TestRepository_CreateActivity_And_Visibility(t *testing.T) {
 	groupAct := &activity.Activity{
 		ID:          actID,
 		GroupID:     &g.ID,
-		ActorID:     &actor.ID,
+		Actor:       activity.ActorInfo{ID: actor.ID, Name: actor.Name},
 		ActionType:  activity.ActionTypeExpenseCreated,
 		Description: "Added flight expense",
 		EntityType:  activity.EntityTypeExpense,
 	}
 
-	err := actRepo.CreateActivity(ctx, groupAct)
+	err := actRepo.CreateActivity(ctx, groupAct, nil)
 	require.NoError(t, err)
 	assert.False(t, groupAct.CreatedAt.IsZero())
 
@@ -85,12 +85,12 @@ func TestRepository_CreateActivity_And_Visibility(t *testing.T) {
 	nonGroupActID := uuid.New().String()
 	nonGroupAct := &activity.Activity{
 		ID:          nonGroupActID,
-		ActorID:     &actor.ID,
+		Actor:       activity.ActorInfo{ID: actor.ID, Name: actor.Name},
 		ActionType:  activity.ActionTypeSettlementCreated,
 		Description: "Settled payment",
 		EntityType:  activity.EntityTypeSettlement,
 	}
-	err = actRepo.CreateActivity(ctx, nonGroupAct)
+	err = actRepo.CreateActivity(ctx, nonGroupAct, nil)
 	require.NoError(t, err)
 
 	err = actRepo.CreateActivityVisibility(ctx, nonGroupActID, u1.ID)
@@ -98,25 +98,25 @@ func TestRepository_CreateActivity_And_Visibility(t *testing.T) {
 
 	// Invalid UUID errors
 	invalidAct := &activity.Activity{ID: "invalid-uuid", ActionType: activity.ActionTypeGroupCreated, Description: "Desc", EntityType: activity.EntityTypeGroup}
-	err = actRepo.CreateActivity(ctx, invalidAct)
+	err = actRepo.CreateActivity(ctx, invalidAct, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid activity uuid")
 
 	invalidGroup := "invalid-uuid"
 	invalidGroupAct := &activity.Activity{ID: uuid.New().String(), GroupID: &invalidGroup, ActionType: activity.ActionTypeGroupCreated, Description: "Desc", EntityType: activity.EntityTypeGroup}
-	err = actRepo.CreateActivity(ctx, invalidGroupAct)
+	err = actRepo.CreateActivity(ctx, invalidGroupAct, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid group uuid")
 
 	invalidActor := "invalid-uuid"
-	invalidActorAct := &activity.Activity{ID: uuid.New().String(), ActorID: &invalidActor, ActionType: activity.ActionTypeGroupCreated, Description: "Desc", EntityType: activity.EntityTypeGroup}
-	err = actRepo.CreateActivity(ctx, invalidActorAct)
+	invalidActorAct := &activity.Activity{ID: uuid.New().String(), Actor: activity.ActorInfo{ID: invalidActor}, ActionType: activity.ActionTypeGroupCreated, Description: "Desc", EntityType: activity.EntityTypeGroup}
+	err = actRepo.CreateActivity(ctx, invalidActorAct, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid actor uuid")
 
 	invalidEntity := "invalid-uuid"
 	invalidEntityAct := &activity.Activity{ID: uuid.New().String(), EntityID: &invalidEntity, ActionType: activity.ActionTypeGroupCreated, Description: "Desc", EntityType: activity.EntityTypeGroup}
-	err = actRepo.CreateActivity(ctx, invalidEntityAct)
+	err = actRepo.CreateActivity(ctx, invalidEntityAct, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid entity uuid")
 
@@ -138,11 +138,11 @@ func TestRepository_ListUserActivities(t *testing.T) {
 	u1 := createTestUser(t, userRepo, "User One")
 	u2 := createTestUser(t, userRepo, "User Two")
 
-	act1 := &activity.Activity{ID: uuid.New().String(), ActorID: &u1.ID, ActionType: activity.ActionTypeSettlementCreated, Description: "Act 1", EntityType: activity.EntityTypeSettlement}
-	act2 := &activity.Activity{ID: uuid.New().String(), ActorID: &u2.ID, ActionType: activity.ActionTypeSettlementCreated, Description: "Act 2", EntityType: activity.EntityTypeSettlement}
+	act1 := &activity.Activity{ID: uuid.New().String(), Actor: activity.ActorInfo{ID: u1.ID, Name: u1.Name}, ActionType: activity.ActionTypeSettlementCreated, Description: "Act 1", EntityType: activity.EntityTypeSettlement}
+	act2 := &activity.Activity{ID: uuid.New().String(), Actor: activity.ActorInfo{ID: u2.ID, Name: u2.Name}, ActionType: activity.ActionTypeSettlementCreated, Description: "Act 2", EntityType: activity.EntityTypeSettlement}
 
-	require.NoError(t, actRepo.CreateActivity(ctx, act1))
-	require.NoError(t, actRepo.CreateActivity(ctx, act2))
+	require.NoError(t, actRepo.CreateActivity(ctx, act1, nil))
+	require.NoError(t, actRepo.CreateActivity(ctx, act2, nil))
 
 	require.NoError(t, actRepo.CreateActivityVisibility(ctx, act1.ID, u1.ID))
 	require.NoError(t, actRepo.CreateActivityVisibility(ctx, act2.ID, u2.ID))
@@ -171,13 +171,13 @@ func TestRepository_ListGroupFeed_And_Pagination(t *testing.T) {
 	require.NoError(t, groupRepo.AddGroupMember(ctx, g.ID, member.ID, group.MemberRoleMember, group.MemberStatusActive))
 
 	// Create 3 group activities
-	act1 := &activity.Activity{ID: uuid.New().String(), GroupID: &g.ID, ActorID: &admin.ID, ActionType: activity.ActionTypeGroupCreated, Description: "Created group", EntityType: activity.EntityTypeGroup}
-	act2 := &activity.Activity{ID: uuid.New().String(), GroupID: &g.ID, ActorID: &member.ID, ActionType: activity.ActionTypeMemberJoined, Description: "Joined group", EntityType: activity.EntityTypeMember}
-	act3 := &activity.Activity{ID: uuid.New().String(), GroupID: &g.ID, ActorID: &admin.ID, ActionType: activity.ActionTypeExpenseCreated, Description: "Added gas expense", EntityType: activity.EntityTypeExpense}
+	act1 := &activity.Activity{ID: uuid.New().String(), GroupID: &g.ID, Actor: activity.ActorInfo{ID: admin.ID, Name: admin.Name}, ActionType: activity.ActionTypeGroupCreated, Description: "Created group", EntityType: activity.EntityTypeGroup}
+	act2 := &activity.Activity{ID: uuid.New().String(), GroupID: &g.ID, Actor: activity.ActorInfo{ID: member.ID, Name: member.Name}, ActionType: activity.ActionTypeMemberJoined, Description: "Joined group", EntityType: activity.EntityTypeMember}
+	act3 := &activity.Activity{ID: uuid.New().String(), GroupID: &g.ID, Actor: activity.ActorInfo{ID: admin.ID, Name: admin.Name}, ActionType: activity.ActionTypeExpenseCreated, Description: "Added gas expense", EntityType: activity.EntityTypeExpense}
 
-	require.NoError(t, actRepo.CreateActivity(ctx, act1))
-	require.NoError(t, actRepo.CreateActivity(ctx, act2))
-	require.NoError(t, actRepo.CreateActivity(ctx, act3))
+	require.NoError(t, actRepo.CreateActivity(ctx, act1, nil))
+	require.NoError(t, actRepo.CreateActivity(ctx, act2, nil))
+	require.NoError(t, actRepo.CreateActivity(ctx, act3, nil))
 
 	// Fetch page 1 (limit 2)
 	feed1, err := actRepo.ListGroupFeed(ctx, g.ID, member.ID, 2, nil, nil)

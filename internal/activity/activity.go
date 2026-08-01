@@ -23,6 +23,9 @@ type Repository = domain.Repository
 type UseCase = domain.UseCase
 type Handler = activityhttp.Handler
 
+// Data Type Aliases
+type DBRepository = data.DBRepository
+
 // Response DTOs
 type ListActivitiesResponse struct {
 	Data       []domain.Activity `json:"data"`
@@ -72,7 +75,7 @@ var (
 )
 
 // Factory functions for repository, usecase, and handler initialization
-func NewRepository(database *db.DB, tm *db.TransactionManager) domain.Repository {
+func NewRepository(database *db.DB, tm *db.TransactionManager) *DBRepository {
 	return data.NewRepository(database, tm)
 }
 
