@@ -221,7 +221,17 @@ func (q *Queries) ListUserActivities(ctx context.Context, userID uuid.UUID) ([]L
 }
 
 const listUserActivitiesPaginated = `-- name: ListUserActivitiesPaginated :many
-SELECT a.id, a.group_id, a.actor_id, a.action_type, a.description, a.created_at, u.name as actor_name
+SELECT 
+    a.id, 
+    a.group_id, 
+    a.actor_id, 
+    COALESCE(u.name, 'System')::varchar as actor_name, 
+    a.entity_type, 
+    a.entity_id, 
+    a.action_type, 
+    a.description, 
+    a.metadata, 
+    a.created_at
 FROM activities a
 LEFT JOIN users u ON a.actor_id = u.id
 WHERE (
@@ -253,10 +263,13 @@ type ListUserActivitiesPaginatedRow struct {
 	ID          uuid.UUID
 	GroupID     pgtype.UUID
 	ActorID     pgtype.UUID
+	ActorName   string
+	EntityType  string
+	EntityID    pgtype.UUID
 	ActionType  string
 	Description string
+	Metadata    []byte
 	CreatedAt   pgtype.Timestamptz
-	ActorName   pgtype.Text
 }
 
 func (q *Queries) ListUserActivitiesPaginated(ctx context.Context, arg ListUserActivitiesPaginatedParams) ([]ListUserActivitiesPaginatedRow, error) {
@@ -277,10 +290,13 @@ func (q *Queries) ListUserActivitiesPaginated(ctx context.Context, arg ListUserA
 			&i.ID,
 			&i.GroupID,
 			&i.ActorID,
+			&i.ActorName,
+			&i.EntityType,
+			&i.EntityID,
 			&i.ActionType,
 			&i.Description,
+			&i.Metadata,
 			&i.CreatedAt,
-			&i.ActorName,
 		); err != nil {
 			return nil, err
 		}

@@ -2,12 +2,12 @@ package activity_test
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"testing"
 	"time"
 
 	"github.com/Saurrabhh/splittr_be/internal/activity"
+	"github.com/Saurrabhh/splittr_be/internal/activity/domain"
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/stretchr/testify/assert"
@@ -19,79 +19,75 @@ type mockActivityRepository struct {
 	mock.Mock
 }
 
-func (m *mockActivityRepository) CreateActivity(ctx context.Context, act *activity.Activity) error {
-	return m.Called(ctx, act).Error(0)
+func (m *mockActivityRepository) CreateActivity(ctx context.Context, act *domain.Activity, rawPayload []byte) error {
+	return m.Called(ctx, act, rawPayload).Error(0)
 }
 
 func (m *mockActivityRepository) CreateActivityVisibility(ctx context.Context, activityID string, userID string) error {
 	return m.Called(ctx, activityID, userID).Error(0)
 }
 
-func (m *mockActivityRepository) ListUserActivities(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]activity.Activity, error) {
+func (m *mockActivityRepository) ListUserActivities(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]domain.Activity, error) {
 	args := m.Called(ctx, userID, limit, lastTime, lastID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]activity.Activity), args.Error(1)
+	return args.Get(0).([]domain.Activity), args.Error(1)
 }
 
-func (m *mockActivityRepository) ListGroupFeed(ctx context.Context, groupID string, userID string, limit int32, lastTime *time.Time, lastID *string) ([]activity.Activity, error) {
+func (m *mockActivityRepository) ListGroupFeed(ctx context.Context, groupID string, userID string, limit int32, lastTime *time.Time, lastID *string) ([]domain.Activity, error) {
 	args := m.Called(ctx, groupID, userID, limit, lastTime, lastID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]activity.Activity), args.Error(1)
+	return args.Get(0).([]domain.Activity), args.Error(1)
 }
 
-// --- LogActivity Tests ---
+// --- LogEvent Tests ---
 
-func TestLogActivity_GroupActivity_Success(t *testing.T) {
+func TestLogEvent_GroupActivity_Success(t *testing.T) {
 	mockRepo := new(mockActivityRepository)
 	ctx := context.Background()
 
 	actorID := "usr-actor"
 	groupID := "grp-1"
-	actionType := activity.ActionTypeExpenseCreated
-	desc := "Created expense for lunch"
-	entityType := activity.EntityTypeExpense
-	entityID := "exp-1"
-	metadata := []byte(`{"amount": 50}`)
+	payload := activity.ExpensePayload{Expense: map[string]interface{}{"amount": 50.0}}
+	event := activity.NewExpenseCreatedEvent("exp-1", payload, "Created expense for lunch")
 
-	mockRepo.On("CreateActivity", ctx, mock.AnythingOfType("*activity.Activity")).Return(nil)
+	mockRepo.On("CreateActivity", ctx, mock.AnythingOfType("*domain.Activity"), mock.Anything).Return(nil)
 
 	uc := activity.NewUseCase(mockRepo)
-	act, err := uc.LogActivity(ctx, actorID, &groupID, actionType, desc, nil, entityType, entityID, metadata)
+	act, err := uc.LogEvent(ctx, actorID, &groupID, nil, event)
 	require.NoError(t, err)
 	require.NotNil(t, act)
 
 	assert.NotEmpty(t, act.ID)
 	assert.Equal(t, &groupID, act.GroupID)
-	assert.Equal(t, &actorID, act.ActorID)
-	assert.Equal(t, actionType, act.ActionType)
-	assert.Equal(t, desc, act.Description)
-	assert.Equal(t, entityType, act.EntityType)
-	assert.Equal(t, &entityID, act.EntityID)
-	assert.Equal(t, json.RawMessage(metadata), act.Metadata)
+	assert.Equal(t, actorID, act.Actor.ID)
+	assert.Equal(t, activity.ActionTypeExpenseCreated, act.ActionType)
+	assert.Equal(t, "Created expense for lunch", act.Description)
+	assert.Equal(t, activity.EntityTypeExpense, act.EntityType)
+	assert.Equal(t, "exp-1", *act.EntityID)
 
 	mockRepo.AssertExpectations(t)
 	mockRepo.AssertNotCalled(t, "CreateActivityVisibility", mock.Anything, mock.Anything, mock.Anything)
 }
 
-func TestLogActivity_NonGroupActivity_WithVisibility_Success(t *testing.T) {
+func TestLogEvent_NonGroupActivity_WithVisibility_Success(t *testing.T) {
 	mockRepo := new(mockActivityRepository)
 	ctx := context.Background()
 
 	actorID := "usr-actor"
-	actionType := activity.ActionTypeSettlementCreated
-	desc := "Settled up balance"
 	visibleUsers := []string{"usr-1", "usr-2"}
+	payload := activity.SettlementPayload{Expense: map[string]interface{}{"amount": 50.0}}
+	event := activity.NewSettlementCreatedEvent("settle-1", payload, "Settled up balance")
 
-	mockRepo.On("CreateActivity", ctx, mock.AnythingOfType("*activity.Activity")).Return(nil)
+	mockRepo.On("CreateActivity", ctx, mock.AnythingOfType("*domain.Activity"), mock.Anything).Return(nil)
 	mockRepo.On("CreateActivityVisibility", ctx, mock.AnythingOfType("string"), "usr-1").Return(nil)
 	mockRepo.On("CreateActivityVisibility", ctx, mock.AnythingOfType("string"), "usr-2").Return(nil)
 
 	uc := activity.NewUseCase(mockRepo)
-	act, err := uc.LogActivity(ctx, actorID, nil, actionType, desc, visibleUsers, activity.EntityTypeSettlement, "settle-1", nil)
+	act, err := uc.LogEvent(ctx, actorID, nil, visibleUsers, event)
 	require.NoError(t, err)
 	require.NotNil(t, act)
 
@@ -99,28 +95,30 @@ func TestLogActivity_NonGroupActivity_WithVisibility_Success(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
-func TestLogActivity_CreateActivityError(t *testing.T) {
+func TestLogEvent_CreateActivityError(t *testing.T) {
 	mockRepo := new(mockActivityRepository)
 	ctx := context.Background()
 
-	mockRepo.On("CreateActivity", ctx, mock.AnythingOfType("*activity.Activity")).Return(errors.New("db insert failure"))
+	event := activity.NewGroupCreatedEvent("grp-1", activity.GroupPayload{})
+	mockRepo.On("CreateActivity", ctx, mock.AnythingOfType("*domain.Activity"), mock.Anything).Return(errors.New("db insert failure"))
 
 	uc := activity.NewUseCase(mockRepo)
-	_, err := uc.LogActivity(ctx, "usr-actor", nil, activity.ActionTypeGroupCreated, "Created group", nil, activity.EntityTypeGroup, "grp-1", nil)
+	_, err := uc.LogEvent(ctx, "usr-actor", nil, nil, event)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "create activity: db insert failure")
 	mockRepo.AssertExpectations(t)
 }
 
-func TestLogActivity_CreateVisibilityError(t *testing.T) {
+func TestLogEvent_CreateVisibilityError(t *testing.T) {
 	mockRepo := new(mockActivityRepository)
 	ctx := context.Background()
 
-	mockRepo.On("CreateActivity", ctx, mock.AnythingOfType("*activity.Activity")).Return(nil)
+	event := activity.NewSettlementCreatedEvent("s-1", activity.SettlementPayload{}, "Desc")
+	mockRepo.On("CreateActivity", ctx, mock.AnythingOfType("*domain.Activity"), mock.Anything).Return(nil)
 	mockRepo.On("CreateActivityVisibility", ctx, mock.AnythingOfType("string"), "usr-1").Return(errors.New("visibility map failure"))
 
 	uc := activity.NewUseCase(mockRepo)
-	_, err := uc.LogActivity(ctx, "usr-actor", nil, activity.ActionTypeSettlementCreated, "Desc", []string{"usr-1"}, activity.EntityTypeSettlement, "s-1", nil)
+	_, err := uc.LogEvent(ctx, "usr-actor", nil, []string{"usr-1"}, event)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "create visibility maps: visibility map failure")
 	mockRepo.AssertExpectations(t)
@@ -133,7 +131,7 @@ func TestListActivities_Success(t *testing.T) {
 	ctx := context.Background()
 
 	now := time.Now()
-	expectedActs := []activity.Activity{
+	expectedActs := []domain.Activity{
 		{ID: "act-1", Description: "Activity 1", CreatedAt: now},
 		{ID: "act-2", Description: "Activity 2", CreatedAt: now.Add(-time.Minute)},
 	}
@@ -175,11 +173,10 @@ func TestGetGroupFeed_Success(t *testing.T) {
 	now := time.Now()
 	actorName := "Alice"
 	actorID := "usr-actor"
-	expectedActs := []activity.Activity{
+	expectedActs := []domain.Activity{
 		{
 			ID:          "act-1",
-			ActorID:     &actorID,
-			ActorName:   &actorName,
+			Actor:       domain.ActorInfo{ID: actorID, Name: actorName},
 			ActionType:  activity.ActionTypeExpenseCreated,
 			EntityType:  activity.EntityTypeExpense,
 			Description: "Created expense",
@@ -187,8 +184,7 @@ func TestGetGroupFeed_Success(t *testing.T) {
 		},
 		{
 			ID:          "act-2",
-			ActorID:     nil, // System actor
-			ActorName:   nil,
+			Actor:       domain.ActorInfo{ID: "", Name: "System"},
 			ActionType:  activity.ActionTypeMemberJoined,
 			EntityType:  activity.EntityTypeMember,
 			Description: "Joined group",
@@ -201,7 +197,6 @@ func TestGetGroupFeed_Success(t *testing.T) {
 	uc := activity.NewUseCase(mockRepo)
 	resp, err := uc.GetGroupFeed(ctx, "usr-1", "grp-1", pagination.Params{Limit: 10})
 	require.NoError(t, err)
-	require.NotNil(t, resp)
 	assert.Len(t, resp.Data, 2)
 
 	assert.Equal(t, "usr-actor", resp.Data[0].Actor.ID)
@@ -220,7 +215,7 @@ func TestGetGroupFeed_CursorParsing(t *testing.T) {
 	expectedTime, _ := time.Parse(time.RFC3339, "2026-07-18T18:00:00Z")
 	lastID := "uuid-test"
 
-	mockRepo.On("ListGroupFeed", ctx, "grp-1", "usr-1", int32(11), &expectedTime, &lastID).Return([]activity.Activity{}, nil)
+	mockRepo.On("ListGroupFeed", ctx, "grp-1", "usr-1", int32(11), &expectedTime, &lastID).Return([]domain.Activity{}, nil)
 
 	uc := activity.NewUseCase(mockRepo)
 	_, err := uc.GetGroupFeed(ctx, "usr-1", "grp-1", pagination.Params{Limit: 10, Cursor: "2026-07-18T18:00:00Z_uuid-test"})

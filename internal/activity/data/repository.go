@@ -1,10 +1,11 @@
-package activity
+package data
 
 import (
 	"context"
 	"fmt"
 	"time"
 
+	"github.com/Saurrabhh/splittr_be/internal/activity/domain"
 	"github.com/Saurrabhh/splittr_be/internal/db"
 	"github.com/Saurrabhh/splittr_be/internal/db/dbgen"
 	"github.com/google/uuid"
@@ -13,20 +14,20 @@ import (
 
 // DBRepository handles activity transactions in PostgreSQL.
 type DBRepository struct {
-	db *db.DB
-	tm *db.TransactionManager
+	database *db.DB
+	tm       *db.TransactionManager
 }
 
 // NewRepository instantiates a new DBRepository.
 func NewRepository(database *db.DB, tm *db.TransactionManager) *DBRepository {
 	return &DBRepository{
-		db: database,
-		tm: tm,
+		database: database,
+		tm:       tm,
 	}
 }
 
 // CreateActivity logs a new activity.
-func (r *DBRepository) CreateActivity(ctx context.Context, act *Activity) error {
+func (r *DBRepository) CreateActivity(ctx context.Context, act *domain.Activity, rawPayload []byte) error {
 	parsedID, err := uuid.Parse(act.ID)
 	if err != nil {
 		return fmt.Errorf("invalid activity uuid: %w", err)
@@ -42,8 +43,8 @@ func (r *DBRepository) CreateActivity(ctx context.Context, act *Activity) error 
 	}
 
 	var pgActorID pgtype.UUID
-	if act.ActorID != nil && *act.ActorID != "" {
-		aUUID, err := uuid.Parse(*act.ActorID)
+	if act.Actor.ID != "" {
+		aUUID, err := uuid.Parse(act.Actor.ID)
 		if err != nil {
 			return fmt.Errorf("invalid actor uuid: %w", err)
 		}
@@ -59,11 +60,6 @@ func (r *DBRepository) CreateActivity(ctx context.Context, act *Activity) error 
 		pgEntityID = pgtype.UUID{Bytes: eUUID, Valid: true}
 	}
 
-	var metadataBytes []byte
-	if len(act.Metadata) > 0 {
-		metadataBytes = act.Metadata
-	}
-
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)
 
@@ -75,7 +71,7 @@ func (r *DBRepository) CreateActivity(ctx context.Context, act *Activity) error 
 		Description: act.Description,
 		EntityType:  string(act.EntityType),
 		EntityID:    pgEntityID,
-		Metadata:    metadataBytes,
+		Metadata:    rawPayload,
 	})
 	if err != nil {
 		return fmt.Errorf("insert activity: %w", err)
@@ -106,7 +102,7 @@ func (r *DBRepository) CreateActivityVisibility(ctx context.Context, activityID 
 }
 
 // ListUserActivities lists activities visible to the current user with cursor-based pagination.
-func (r *DBRepository) ListUserActivities(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Activity, error) {
+func (r *DBRepository) ListUserActivities(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]domain.Activity, error) {
 	parsedID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid uuid: %w", err)
@@ -127,39 +123,16 @@ func (r *DBRepository) ListUserActivities(ctx context.Context, userID string, li
 		return nil, fmt.Errorf("list user activities: %w", err)
 	}
 
-	activities := make([]Activity, 0, len(rows))
+	activities := make([]domain.Activity, 0, len(rows))
 	for _, row := range rows {
-		var groupIDStr *string
-		if row.GroupID.Valid {
-			groupIDStr = new(uuid.UUID(row.GroupID.Bytes).String())
-		}
-
-		var actorIDStr *string
-		if row.ActorID.Valid {
-			actorIDStr = new(uuid.UUID(row.ActorID.Bytes).String())
-		}
-
-		var actorName *string
-		if row.ActorName.Valid {
-			actorName = &row.ActorName.String
-		}
-
-		activities = append(activities, Activity{
-			ID:          row.ID.String(),
-			GroupID:     groupIDStr,
-			ActorID:     actorIDStr,
-			ActorName:   actorName,
-			ActionType:  ActionType(row.ActionType),
-			Description: row.Description,
-			CreatedAt:   row.CreatedAt.Time,
-		})
+		activities = append(activities, mapUserActivityRowToActivity(row))
 	}
 
 	return activities, nil
 }
 
 // ListGroupFeed queries a group activity feed chronologically with cursor pagination.
-func (r *DBRepository) ListGroupFeed(ctx context.Context, groupID string, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Activity, error) {
+func (r *DBRepository) ListGroupFeed(ctx context.Context, groupID string, userID string, limit int32, lastTime *time.Time, lastID *string) ([]domain.Activity, error) {
 	gUUID, err := uuid.Parse(groupID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid group uuid: %w", err)
@@ -185,33 +158,9 @@ func (r *DBRepository) ListGroupFeed(ctx context.Context, groupID string, userID
 		return nil, fmt.Errorf("query list group feed: %w", err)
 	}
 
-	activities := make([]Activity, 0, len(rows))
+	activities := make([]domain.Activity, 0, len(rows))
 	for _, row := range rows {
-		var groupIDStr *string
-		if row.GroupID.Valid {
-			groupIDStr = new(uuid.UUID(row.GroupID.Bytes).String())
-		}
-		var actorIDStr *string
-		if row.ActorID.Valid {
-			actorIDStr = new(uuid.UUID(row.ActorID.Bytes).String())
-		}
-		var entityIDStr *string
-		if row.EntityID.Valid {
-			entityIDStr = new(uuid.UUID(row.EntityID.Bytes).String())
-		}
-
-		activities = append(activities, Activity{
-			ID:          row.ID.String(),
-			GroupID:     groupIDStr,
-			ActorID:     actorIDStr,
-			ActorName:   &row.ActorName,
-			ActionType:  ActionType(row.ActionType),
-			Description: row.Description,
-			EntityType:  EntityType(row.EntityType),
-			EntityID:    entityIDStr,
-			Metadata:    row.Metadata,
-			CreatedAt:   row.CreatedAt.Time,
-		})
+		activities = append(activities, mapGroupFeedRowToActivity(row))
 	}
 	return activities, nil
 }

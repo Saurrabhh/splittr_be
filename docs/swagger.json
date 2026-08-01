@@ -1,147 +1,11 @@
 {
     "components": {
         "schemas": {
-            "activity.ActionType": {
-                "enum": [
-                    "EXPENSE_CREATED",
-                    "SETTLEMENT",
-                    "MEMBER_ADDED",
-                    "MEMBER_LEFT",
-                    "MEMBER_KICKED",
-                    "MEMBER_ROLE_UPDATED",
-                    "GROUP_CREATED",
-                    "GROUP_UPDATED",
-                    "GROUP_ARCHIVED",
-                    "MEMBER_JOINED",
-                    "MEMBER_KICKED"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "ActionTypeExpenseCreated",
-                    "ActionTypeSettlementCreated",
-                    "ActionTypeMemberAdded",
-                    "ActionTypeMemberLeft",
-                    "ActionTypeMemberKicked",
-                    "ActionTypeMemberRoleUpdated",
-                    "ActionTypeGroupCreated",
-                    "ActionTypeGroupUpdated",
-                    "ActionTypeGroupArchived",
-                    "ActionTypeMemberJoined",
-                    "ActionTypeMemberRemoved"
-                ]
-            },
-            "activity.Activity": {
-                "properties": {
-                    "actionType": {
-                        "$ref": "#/components/schemas/activity.ActionType"
-                    },
-                    "actorId": {
-                        "type": "string"
-                    },
-                    "actorName": {
-                        "type": "string"
-                    },
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "entityId": {
-                        "type": "string"
-                    },
-                    "entityType": {
-                        "$ref": "#/components/schemas/activity.EntityType"
-                    },
-                    "groupId": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "metadata": {
-                        "description": "Snapshot metadata. Shape matches the entity response: EXPENSE (CreateExpenseResponse), SETTLEMENT (SettleExpenseResponse), MEMBER (Member), GROUP (GroupDetailsResponse)",
-                        "type": "object"
-                    }
-                },
-                "type": "object"
-            },
-            "activity.ActorInfo": {
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "activity.EntityType": {
-                "enum": [
-                    "EXPENSE",
-                    "SETTLEMENT",
-                    "MEMBER",
-                    "GROUP"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "EntityTypeExpense",
-                    "EntityTypeSettlement",
-                    "EntityTypeMember",
-                    "EntityTypeGroup"
-                ]
-            },
-            "activity.FeedItemResponse": {
-                "properties": {
-                    "actionType": {
-                        "$ref": "#/components/schemas/activity.ActionType"
-                    },
-                    "actor": {
-                        "$ref": "#/components/schemas/activity.ActorInfo"
-                    },
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "entityId": {
-                        "type": "string"
-                    },
-                    "entityType": {
-                        "$ref": "#/components/schemas/activity.EntityType"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "payload": {
-                        "description": "Verbatim entity snapshot. Shape matches the entity response: EXPENSE (CreateExpenseResponse), SETTLEMENT (SettleExpenseResponse), MEMBER (Member), GROUP (GroupDetailsResponse)",
-                        "type": "object"
-                    }
-                },
-                "type": "object"
-            },
             "activity.FeedResponse": {
                 "properties": {
                     "data": {
                         "items": {
-                            "$ref": "#/components/schemas/activity.FeedItemResponse"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "pagination": {
-                        "$ref": "#/components/schemas/pagination.Meta"
-                    }
-                },
-                "type": "object"
-            },
-            "activity.ListActivitiesResponse": {
-                "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/activity.Activity"
+                            "$ref": "#/components/schemas/domain.Activity"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -382,6 +246,93 @@
                     }
                 },
                 "type": "object"
+            },
+            "domain.ActionType": {
+                "enum": [
+                    "EXPENSE_CREATED",
+                    "SETTLEMENT",
+                    "MEMBER_ADDED",
+                    "MEMBER_LEFT",
+                    "MEMBER_KICKED",
+                    "MEMBER_ROLE_UPDATED",
+                    "GROUP_CREATED",
+                    "GROUP_UPDATED",
+                    "GROUP_ARCHIVED",
+                    "MEMBER_JOINED",
+                    "MEMBER_KICKED"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "ActionTypeExpenseCreated",
+                    "ActionTypeSettlementCreated",
+                    "ActionTypeMemberAdded",
+                    "ActionTypeMemberLeft",
+                    "ActionTypeMemberKicked",
+                    "ActionTypeMemberRoleUpdated",
+                    "ActionTypeGroupCreated",
+                    "ActionTypeGroupUpdated",
+                    "ActionTypeGroupArchived",
+                    "ActionTypeMemberJoined",
+                    "ActionTypeMemberRemoved"
+                ]
+            },
+            "domain.Activity": {
+                "properties": {
+                    "actionType": {
+                        "$ref": "#/components/schemas/domain.ActionType"
+                    },
+                    "actor": {
+                        "$ref": "#/components/schemas/domain.ActorInfo"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "entityId": {
+                        "type": "string"
+                    },
+                    "entityType": {
+                        "$ref": "#/components/schemas/domain.EntityType"
+                    },
+                    "groupId": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "payload": {
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "domain.ActorInfo": {
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "domain.EntityType": {
+                "enum": [
+                    "EXPENSE",
+                    "SETTLEMENT",
+                    "MEMBER",
+                    "GROUP"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "EntityTypeExpense",
+                    "EntityTypeSettlement",
+                    "EntityTypeMember",
+                    "EntityTypeGroup"
+                ]
             },
             "expense.BalanceResponse": {
                 "properties": {
@@ -849,6 +800,21 @@
                 },
                 "type": "object"
             },
+            "http.ListActivitiesResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.Activity"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/pagination.Meta"
+                    }
+                },
+                "type": "object"
+            },
             "notification.ListNotificationsResponse": {
                 "properties": {
                     "data": {
@@ -1041,7 +1007,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/activity.ListActivitiesResponse"
+                                    "$ref": "#/components/schemas/http.ListActivitiesResponse"
                                 }
                             }
                         },

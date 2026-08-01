@@ -2,7 +2,6 @@ package expense
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -38,16 +37,12 @@ type GroupService interface {
 }
 
 type ActivityLogger interface {
-	LogActivity(
+	LogEvent(
 		ctx context.Context,
 		actorID string,
 		groupID *string,
-		actionType activity.ActionType,
-		description string,
 		visibleToUserIDs []string,
-		entityType activity.EntityType,
-		entityID string,
-		metadata []byte,
+		event activity.Event,
 	) (*activity.Activity, error)
 }
 
@@ -188,17 +183,13 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 			return err
 		}
 
-		snapshot, err := json.Marshal(CreateExpenseResponse{
+		actPayload := activity.ExpensePayload{
 			Expense: newExpense,
 			Splits:  enrichedSplits,
-		})
-		if err != nil {
-			return err
 		}
-
-		act, err := u.activity.LogActivity(
-			txCtx, createdBy, groupID, activity.ActionTypeExpenseCreated, activityDesc, visibleTo,
-			activity.EntityTypeExpense, newExpense.ID, snapshot,
+		actEvent := activity.NewExpenseCreatedEvent(newExpense.ID, actPayload, activityDesc)
+		act, err := u.activity.LogEvent(
+			txCtx, createdBy, groupID, visibleTo, actEvent,
 		)
 		if err != nil {
 			return err
@@ -329,17 +320,13 @@ func (u *UseCase) SettleUp(ctx context.Context, amount float64, currency string,
 			finalSplit = split
 		}
 
-		snapshot, err := json.Marshal(SettleExpenseResponse{
+		actPayload := activity.SettlementPayload{
 			Expense: newExpense,
 			Split:   finalSplit,
-		})
-		if err != nil {
-			return err
 		}
-
-		act, err := u.activity.LogActivity(
-			txCtx, createdBy, groupID, activity.ActionTypeSettlementCreated, activityDesc, visibleTo,
-			activity.EntityTypeSettlement, newExpense.ID, snapshot,
+		actEvent := activity.NewSettlementCreatedEvent(newExpense.ID, actPayload, activityDesc)
+		act, err := u.activity.LogEvent(
+			txCtx, createdBy, groupID, visibleTo, actEvent,
 		)
 		if err != nil {
 			return err

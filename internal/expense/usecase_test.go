@@ -117,18 +117,14 @@ type mockActivityLogger struct {
 	mock.Mock
 }
 
-func (m *mockActivityLogger) LogActivity(
+func (m *mockActivityLogger) LogEvent(
 	ctx context.Context,
 	actorID string,
 	groupID *string,
-	actionType activity.ActionType,
-	description string,
 	visibleToUserIDs []string,
-	entityType activity.EntityType,
-	entityID string,
-	metadata []byte,
+	event activity.Event,
 ) (*activity.Activity, error) {
-	args := m.Called(ctx, actorID, groupID, actionType, description, visibleToUserIDs, entityType, entityID, metadata)
+	args := m.Called(ctx, actorID, groupID, visibleToUserIDs, event)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -182,9 +178,8 @@ func TestCreateExpense_Success_EqualSplit(t *testing.T) {
 		{ExpenseID: "exp-1", UserID: "usr-2", Amount: 50.0},
 	}, nil)
 
-	mockAct.On("LogActivity",
-		ctx, creatorID, (*string)(nil), activity.ActionTypeExpenseCreated, "added expense 'Dinner' of 100.00 INR",
-		mock.Anything, activity.EntityTypeExpense, mock.AnythingOfType("string"), mock.Anything,
+	mockAct.On("LogEvent",
+		ctx, creatorID, (*string)(nil), mock.Anything, mock.Anything,
 	).Return(&activity.Activity{ID: "act-1"}, nil)
 
 	mockNotif.On("CreateAlert", ctx, "usr-2", &creatorID, mock.Anything, "New Expense", "New expense 'Dinner' of 100.00 INR added").Return(&notification.Notification{ID: "notif-1"}, nil)
@@ -236,9 +231,8 @@ func TestCreateExpense_Success_GroupExactSplit(t *testing.T) {
 		{ExpenseID: "exp-1", UserID: "usr-2", Amount: 40.0},
 	}, nil)
 
-	mockAct.On("LogActivity",
-		ctx, creatorID, &groupID, activity.ActionTypeExpenseCreated, "added expense 'Hotel' of 100.00 INR",
-		([]string)(nil), activity.EntityTypeExpense, mock.AnythingOfType("string"), mock.Anything,
+	mockAct.On("LogEvent",
+		ctx, creatorID, &groupID, ([]string)(nil), mock.Anything,
 	).Return(&activity.Activity{ID: "act-1"}, nil)
 
 	mockNotif.On("CreateAlert", ctx, "usr-2", &creatorID, mock.Anything, "New Expense", "New expense 'Hotel' of 100.00 INR added").Return(&notification.Notification{ID: "notif-1"}, nil)
@@ -276,9 +270,8 @@ func TestCreateExpense_Success_PercentageSplit(t *testing.T) {
 		{ExpenseID: "exp-1", UserID: "usr-2", Amount: 60.0},
 	}, nil)
 
-	mockAct.On("LogActivity",
-		ctx, creatorID, (*string)(nil), activity.ActionTypeExpenseCreated, "added expense 'Party' of 200.00 USD",
-		mock.Anything, activity.EntityTypeExpense, mock.AnythingOfType("string"), mock.Anything,
+	mockAct.On("LogEvent",
+		ctx, creatorID, (*string)(nil), mock.Anything, mock.Anything,
 	).Return(&activity.Activity{ID: "act-1"}, nil)
 
 	mockNotif.On("CreateAlert", ctx, "usr-2", &creatorID, mock.Anything, "New Expense", "New expense 'Party' of 200.00 USD added").Return(&notification.Notification{ID: "notif-1"}, nil)
@@ -414,9 +407,8 @@ func TestSettleUp_Success(t *testing.T) {
 		{ExpenseID: "exp-1", UserID: receivedBy, Amount: 50.0},
 	}, nil)
 
-	mockAct.On("LogActivity",
-		ctx, createdBy, (*string)(nil), activity.ActionTypeSettlementCreated, "settled 50.00 INR",
-		mock.Anything, activity.EntityTypeSettlement, mock.AnythingOfType("string"), mock.Anything,
+	mockAct.On("LogEvent",
+		ctx, createdBy, (*string)(nil), mock.Anything, mock.Anything,
 	).Return(&activity.Activity{ID: "act-1"}, nil)
 
 	mockNotif.On("CreateAlert", ctx, receivedBy, &paidBy, mock.Anything, "Payment Received", "Payment of 50.00 INR received").Return(&notification.Notification{ID: "notif-1"}, nil)

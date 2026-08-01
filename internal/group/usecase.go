@@ -2,7 +2,6 @@ package group
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -34,16 +33,12 @@ type Repository interface {
 }
 
 type ActivityLogger interface {
-	LogActivity(
+	LogEvent(
 		ctx context.Context,
 		actorID string,
 		groupID *string,
-		actionType activity.ActionType,
-		description string,
 		visibleToUserIDs []string,
-		entityType activity.EntityType,
-		entityID string,
-		metadata []byte,
+		event activity.Event,
 	) (*activity.Activity, error)
 }
 
@@ -111,17 +106,13 @@ func (u *UseCase) CreateGroup(ctx context.Context, name, description string, req
 			return err
 		}
 
-		snapshot, err := json.Marshal(DetailsResponse{
+		payload := activity.GroupPayload{
 			Group:   *newGroup,
 			Members: members,
-		})
-		if err != nil {
-			return err
 		}
-
-		_, err = u.activity.LogActivity(
-			txCtx, creatorID, &newGroup.ID, activity.ActionTypeGroupCreated, "created the group", nil,
-			activity.EntityTypeGroup, newGroup.ID, snapshot,
+		_, err = u.activity.LogEvent(
+			txCtx, creatorID, &newGroup.ID, nil,
+			activity.NewGroupCreatedEvent(newGroup.ID, payload),
 		)
 		return err
 	})
@@ -306,14 +297,12 @@ func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 			}
 		}
 
-		snapshot, err := json.Marshal(targetMember)
-		if err != nil {
-			return err
+		payload := activity.MemberPayload{
+			Member: targetMember,
 		}
-
-		_, err = u.activity.LogActivity(
-			txCtx, actionByUserID, &groupID, activity.ActionTypeMemberAdded, "added a member to the group", nil,
-			activity.EntityTypeMember, targetUserID, snapshot,
+		_, err = u.activity.LogEvent(
+			txCtx, actionByUserID, &groupID, nil,
+			activity.NewMemberAddedEvent(targetUserID, payload),
 		)
 		return err
 	})
@@ -393,21 +382,18 @@ func (u *UseCase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 			return err
 		}
 
-		snapshot, err := json.Marshal(targetMember)
-		if err != nil {
-			return err
+		payload := activity.MemberPayload{
+			Member: targetMember,
 		}
-
-		actionType := activity.ActionTypeMemberRemoved
-		desc := "removed a member from the group"
+		var evt activity.Event
 		if targetUserID == actionByUserID {
-			actionType = activity.ActionTypeMemberLeft
-			desc = "left the group"
+			evt = activity.NewMemberLeftEvent(targetUserID, payload)
+		} else {
+			evt = activity.NewMemberKickedEvent(targetUserID, payload)
 		}
 
-		_, err = u.activity.LogActivity(
-			txCtx, actionByUserID, &groupID, actionType, desc, nil,
-			activity.EntityTypeMember, targetUserID, snapshot,
+		_, err = u.activity.LogEvent(
+			txCtx, actionByUserID, &groupID, nil, evt,
 		)
 		return err
 	})
@@ -472,14 +458,12 @@ func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID, n
 		if err != nil {
 			return err
 		}
-		snapshot, err := json.Marshal(member)
-		if err != nil {
-			return err
+		payload := activity.MemberPayload{
+			Member: member,
 		}
-
-		_, err = u.activity.LogActivity(
-			txCtx, actionByUserID, &groupID, activity.ActionTypeMemberRoleUpdated, fmt.Sprintf("updated member role to %s", newRole), nil,
-			activity.EntityTypeMember, targetUserID, snapshot,
+		_, err = u.activity.LogEvent(
+			txCtx, actionByUserID, &groupID, nil,
+			activity.NewMemberRoleUpdatedEvent(targetUserID, newRole, payload),
 		)
 		return err
 	})
@@ -542,14 +526,12 @@ func (u *UseCase) UpdateGroup(ctx context.Context, groupID, name, description st
 			return err
 		}
 
-		snapshot, err := json.Marshal(g)
-		if err != nil {
-			return err
+		payload := activity.GroupPayload{
+			Group: g,
 		}
-
-		_, err = u.activity.LogActivity(
-			txCtx, actionByUserID, &groupID, activity.ActionTypeGroupUpdated, "updated group details", nil,
-			activity.EntityTypeGroup, groupID, snapshot,
+		_, err = u.activity.LogEvent(
+			txCtx, actionByUserID, &groupID, nil,
+			activity.NewGroupUpdatedEvent(groupID, payload),
 		)
 		return err
 	})
@@ -604,14 +586,12 @@ func (u *UseCase) ArchiveGroup(ctx context.Context, groupID, actionByUserID stri
 			return err
 		}
 
-		snapshot, err := json.Marshal(g)
-		if err != nil {
-			return err
+		payload := activity.GroupPayload{
+			Group: g,
 		}
-
-		_, err = u.activity.LogActivity(
-			txCtx, actionByUserID, &groupID, activity.ActionTypeGroupArchived, "archived the group", nil,
-			activity.EntityTypeGroup, groupID, snapshot,
+		_, err = u.activity.LogEvent(
+			txCtx, actionByUserID, &groupID, nil,
+			activity.NewGroupArchivedEvent(groupID, payload),
 		)
 		return err
 	})
@@ -718,14 +698,12 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 			}
 		}
 
-		snapshot, err := json.Marshal(targetMember)
-		if err != nil {
-			return err
+		payload := activity.MemberPayload{
+			Member: targetMember,
 		}
-
-		_, err = u.activity.LogActivity(
-			txCtx, userID, &g.ID, activity.ActionTypeMemberJoined, "joined the group via invite code", nil,
-			activity.EntityTypeMember, userID, snapshot,
+		_, err = u.activity.LogEvent(
+			txCtx, userID, &g.ID, nil,
+			activity.NewMemberJoinedEvent(userID, payload),
 		)
 		return err
 	})
@@ -784,10 +762,12 @@ func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID, 
 		if newStatus == MemberStatusActive {
 			member, err := u.repo.GetGroupMember(txCtx, groupID, targetUserID)
 			if err == nil && member != nil {
-				snapshot, _ := json.Marshal(member)
-				_, _ = u.activity.LogActivity(
-					txCtx, adminUserID, &groupID, activity.ActionTypeMemberJoined, "approved join request", nil,
-					activity.EntityTypeMember, targetUserID, snapshot,
+				payload := activity.MemberPayload{
+					Member: *member,
+				}
+				_, _ = u.activity.LogEvent(
+					txCtx, adminUserID, &groupID, nil,
+					activity.NewMemberJoinedEvent(targetUserID, payload),
 				)
 			}
 		}

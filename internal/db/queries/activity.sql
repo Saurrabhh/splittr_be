@@ -48,7 +48,17 @@ ORDER BY a.created_at DESC, a.id DESC
 LIMIT $2;
 
 -- name: ListUserActivitiesPaginated :many
-SELECT a.id, a.group_id, a.actor_id, a.action_type, a.description, a.created_at, u.name as actor_name
+SELECT 
+    a.id, 
+    a.group_id, 
+    a.actor_id, 
+    COALESCE(u.name, 'System')::varchar as actor_name, 
+    a.entity_type, 
+    a.entity_id, 
+    a.action_type, 
+    a.description, 
+    a.metadata, 
+    a.created_at
 FROM activities a
 LEFT JOIN users u ON a.actor_id = u.id
 WHERE (

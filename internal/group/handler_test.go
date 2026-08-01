@@ -24,8 +24,8 @@ type mockActivityRepo struct {
 	mock.Mock
 }
 
-func (m *mockActivityRepo) CreateActivity(ctx context.Context, act *activity.Activity) error {
-	return m.Called(ctx, act).Error(0)
+func (m *mockActivityRepo) CreateActivity(ctx context.Context, act *activity.Activity, rawPayload []byte) error {
+	return m.Called(ctx, act, rawPayload).Error(0)
 }
 
 func (m *mockActivityRepo) CreateActivityVisibility(ctx context.Context, activityID, userID string) error {
@@ -85,9 +85,8 @@ func TestHandler_CreateGroup_Success(t *testing.T) {
 		{GroupID: "grp-1", UserID: currentUser.ID, Role: "admin", Status: string(group.MemberStatusActive)},
 	}, nil)
 
-	mockAct.On("LogActivity",
-		mock.Anything, currentUser.ID, mock.Anything, activity.ActionTypeGroupCreated, "created the group",
-		mock.Anything, activity.EntityTypeGroup, mock.Anything, mock.Anything,
+	mockAct.On("LogEvent",
+		mock.Anything, currentUser.ID, mock.Anything, mock.Anything, mock.Anything,
 	).Return(&activity.Activity{ID: "act-1"}, nil)
 
 	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
@@ -244,7 +243,7 @@ func TestHandler_AddMember_Success(t *testing.T) {
 	}, nil)
 
 	act := &activity.Activity{ID: "act-1"}
-	mockAct.On("LogActivity", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(act, nil)
+	mockAct.On("LogEvent", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(act, nil)
 	mockNotif.On("CreateAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&notification.Notification{}, nil)
 
 	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
@@ -364,7 +363,7 @@ func TestHandler_RemoveMember_Success(t *testing.T) {
 	mockRepo.On("RemoveGroupMember", mock.Anything, groupID, targetUserID).Return(nil)
 
 	act := &activity.Activity{ID: "act-1"}
-	mockAct.On("LogActivity", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(act, nil)
+	mockAct.On("LogEvent", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(act, nil)
 	mockNotif.On("CreateAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&notification.Notification{}, nil)
 
 	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
@@ -482,7 +481,7 @@ func TestHandler_UpdateMemberRole_Success(t *testing.T) {
 	mockRepo.On("UpdateGroupMemberRole", mock.Anything, groupID, targetUserID, "admin").Return(nil)
 
 	act := &activity.Activity{ID: "act-1"}
-	mockAct.On("LogActivity", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(act, nil)
+	mockAct.On("LogEvent", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(act, nil)
 	mockNotif.On("CreateAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&notification.Notification{}, nil)
 
 	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
@@ -599,7 +598,7 @@ func TestHandler_Archive_Success(t *testing.T) {
 	mockRepo.On("ListGroupMembers", mock.Anything, groupID, mock.Anything).Return([]group.Member{*adminMember}, nil)
 	mockRepo.On("Archive", mock.Anything, groupID).Return(nil)
 
-	mockAct.On("LogActivity", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&activity.Activity{ID: "act-1"}, nil)
+	mockAct.On("LogEvent", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&activity.Activity{ID: "act-1"}, nil)
 
 	uc := group.NewUseCase(mockRepo, mockTx, mockAct, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
@@ -688,7 +687,7 @@ func TestHandler_JoinGroup_Success(t *testing.T) {
 	mockRepo.On("AddGroupMember", mock.Anything, groupID, currentUser.ID, "member", mock.Anything).Return(nil)
 	mockRepo.On("ListGroupMembers", mock.Anything, groupID, mock.Anything).Return([]group.Member{newMember}, nil)
 
-	mockAct.On("LogActivity", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&activity.Activity{ID: "act-1"}, nil)
+	mockAct.On("LogEvent", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&activity.Activity{ID: "act-1"}, nil)
 
 	uc := group.NewUseCase(mockRepo, mockTx, mockAct, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
@@ -899,7 +898,7 @@ func TestHandler_DecideJoinRequest_Success(t *testing.T) {
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(adminMember, nil)
 	mockRepo.On("UpdateMemberStatus", mock.Anything, groupID, targetUserID, string(group.MemberStatusActive)).Return(nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, targetUserID).Return(approvedMember, nil)
-	mockAct.On("LogActivity", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&activity.Activity{ID: "act-1"}, nil)
+	mockAct.On("LogEvent", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&activity.Activity{ID: "act-1"}, nil)
 	mockNotif.On("CreateAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&notification.Notification{}, nil)
 
 	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)

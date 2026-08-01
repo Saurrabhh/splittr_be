@@ -107,18 +107,14 @@ type mockActivityLogger struct {
 	mock.Mock
 }
 
-func (m *mockActivityLogger) LogActivity(
+func (m *mockActivityLogger) LogEvent(
 	ctx context.Context,
 	actorID string,
 	groupID *string,
-	actionType activity.ActionType,
-	description string,
 	visibleToUserIDs []string,
-	entityType activity.EntityType,
-	entityID string,
-	metadata []byte,
+	event activity.Event,
 ) (*activity.Activity, error) {
-	args := m.Called(ctx, actorID, groupID, actionType, description, visibleToUserIDs, entityType, entityID, metadata)
+	args := m.Called(ctx, actorID, groupID, visibleToUserIDs, event)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -167,9 +163,8 @@ func TestCreateGroup_Success(t *testing.T) {
 		{GroupID: "grp-1", UserID: creatorID, Role: "admin", Status: string(group.MemberStatusActive)},
 	}, nil)
 
-	mockAct.On("LogActivity",
-		ctx, creatorID, mock.AnythingOfType("*string"), activity.ActionTypeGroupCreated, "created the group",
-		([]string)(nil), activity.EntityTypeGroup, mock.AnythingOfType("string"), mock.AnythingOfType("[]uint8"),
+	mockAct.On("LogEvent",
+		ctx, creatorID, mock.Anything, ([]string)(nil), mock.Anything,
 	).Return(&activity.Activity{ID: "act-1"}, nil)
 
 	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
@@ -274,9 +269,8 @@ func TestJoinGroup_NewMember_Success(t *testing.T) {
 	mockRepo.On("AddGroupMember", ctx, groupID, userID, "member", string(group.MemberStatusActive)).Return(nil)
 	mockRepo.On("ListGroupMembers", ctx, groupID, string(group.MemberStatusActive)).Return([]group.Member{newMember}, nil)
 
-	mockAct.On("LogActivity",
-		ctx, userID, &groupID, activity.ActionTypeMemberJoined, mock.AnythingOfType("string"),
-		([]string)(nil), activity.EntityTypeMember, userID, mock.AnythingOfType("[]uint8"),
+	mockAct.On("LogEvent",
+		ctx, userID, &groupID, ([]string)(nil), mock.Anything,
 	).Return(&activity.Activity{ID: "act-join"}, nil)
 
 	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
@@ -365,9 +359,8 @@ func TestDecideJoinRequest_Approve(t *testing.T) {
 	mockRepo.On("UpdateMemberStatus", ctx, groupID, targetUserID, string(group.MemberStatusActive)).Return(nil)
 	mockRepo.On("GetGroupMember", ctx, groupID, targetUserID).Return(approvedMember, nil)
 
-	mockAct.On("LogActivity",
-		ctx, adminUserID, &groupID, activity.ActionTypeMemberJoined, "approved join request",
-		([]string)(nil), activity.EntityTypeMember, targetUserID, mock.AnythingOfType("[]uint8"),
+	mockAct.On("LogEvent",
+		ctx, adminUserID, &groupID, ([]string)(nil), mock.Anything,
 	).Return(&activity.Activity{ID: "act-approved"}, nil)
 
 	mockNotif.On("CreateAlert", ctx, targetUserID, &adminUserID, (*string)(nil), "Join Request Approved", mock.AnythingOfType("string")).Return(&notification.Notification{ID: "n-1"}, nil)

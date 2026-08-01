@@ -56,9 +56,8 @@ func TestHandler_CreateExpense_Success(t *testing.T) {
 		{ExpenseID: "exp-1", UserID: currentUser.ID, Amount: 100.0},
 	}, nil)
 
-	mockAct.On("LogActivity",
-		mock.Anything, currentUser.ID, (*string)(nil), activity.ActionTypeExpenseCreated, mock.Anything,
-		mock.Anything, activity.EntityTypeExpense, mock.Anything, mock.Anything,
+	mockAct.On("LogEvent",
+		mock.Anything, currentUser.ID, (*string)(nil), mock.Anything, mock.Anything,
 	).Return(&activity.Activity{ID: "act-1"}, nil)
 
 	uc := expense.NewUseCase(mockRepo, mockTx, mockGroupSvc, mockAct, mockNotif)
@@ -147,9 +146,8 @@ func TestHandler_SettleUp_Success(t *testing.T) {
 		{ExpenseID: "exp-1", UserID: "usr-2", Amount: 50.0},
 	}, nil)
 
-	mockAct.On("LogActivity",
-		mock.Anything, currentUser.ID, (*string)(nil), activity.ActionTypeSettlementCreated, mock.Anything,
-		mock.Anything, activity.EntityTypeSettlement, mock.Anything, mock.Anything,
+	mockAct.On("LogEvent",
+		mock.Anything, currentUser.ID, (*string)(nil), mock.Anything, mock.Anything,
 	).Return(&activity.Activity{ID: "act-1"}, nil)
 
 	mockNotif.On("CreateAlert", mock.Anything, "usr-2", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&notification.Notification{ID: "notif-1"}, nil)

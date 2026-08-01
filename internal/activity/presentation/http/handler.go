@@ -1,8 +1,9 @@
-package activity
+package http
 
 import (
 	"net/http"
 
+	"github.com/Saurrabhh/splittr_be/internal/activity/domain"
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/Saurrabhh/splittr_be/internal/user"
@@ -11,11 +12,11 @@ import (
 
 // Handler handles HTTP requests for user activities.
 type Handler struct {
-	uc *UseCase
+	uc *domain.UseCase
 }
 
 // NewHandler creates a new Handler instance.
-func NewHandler(uc *UseCase) *Handler {
+func NewHandler(uc *domain.UseCase) *Handler {
 	return &Handler{uc: uc}
 }
 
