@@ -40,14 +40,14 @@ type NotificationSender interface {
 type DetailsResponse struct {
 	Group   Group    `json:"group"`
 	Members []Member `json:"members"`
-}
+} // @name DetailsResponse
 
 // JoinResponse is returned when joining a group, either as an active member or pending approval.
 type JoinResponse struct {
 	Status  MemberStatus `json:"status"`
 	Message string       `json:"message,omitempty"`
 	Group   *Group       `json:"group,omitempty"`
-}
+} // @name JoinResponse
 
 // UseCase manages business workflows for the group domain.
 type UseCase struct {

@@ -12,4 +12,4 @@ type User struct {
 	DefaultCurrency string    `json:"defaultCurrency"`
 	CreatedAt       time.Time `json:"createdAt"`
 	UpdatedAt       time.Time `json:"updatedAt"`
-}
+} // @name User

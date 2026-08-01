@@ -2,7 +2,6 @@ package http
 
 import (
 	"github.com/Saurrabhh/splittr_be/internal/expense/domain"
-	"github.com/Saurrabhh/splittr_be/internal/pagination"
 )
 
 // ExpenseResponse is the unified shape for create, get-by-ID, and list items.
@@ -19,7 +18,7 @@ type CreateExpenseRequest struct {
 	PaidBy      string              `json:"paidBy"`
 	SplitType   domain.SplitType    `json:"splitType"`
 	Splits      []domain.InputSplit `json:"splits"`
-}
+} // @name CreateExpenseRequest
 
 // SettleExpenseRequest is the payload for POST /expenses/settle.
 type SettleExpenseRequest struct {
@@ -28,10 +27,4 @@ type SettleExpenseRequest struct {
 	GroupID    *string `json:"groupId"`
 	PaidBy     string  `json:"paidBy"`
 	ReceivedBy string  `json:"receivedBy"`
-}
-
-// ListExpensesResponse is the paginated list response — each item includes its splits.
-type ListExpensesResponse struct {
-	Data       []domain.ExpenseWithSplits `json:"data"`
-	Pagination pagination.Meta            `json:"pagination"`
-}
+} // @name SettleExpenseRequest

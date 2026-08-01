@@ -29,10 +29,7 @@ type (
 type DBRepository = data.DBRepository
 
 // Presentation DTO & Handler Aliases
-type (
-	Handler              = http.Handler
-	ListExpensesResponse = http.ListExpensesResponse
-)
+type Handler = http.Handler
 
 // Constants
 const (

@@ -78,13 +78,13 @@ func ParseParams(r *http.Request, defaultLimit, maxLimit int32) Params {
 type Meta struct {
 	NextCursor string `json:"nextCursor,omitempty"`
 	HasMore    bool   `json:"hasMore"`
-}
+} // @name Meta
 
 // Response is the standard paginated response wrapper used by all domains.
 type Response[T any] struct {
 	Data       []T  `json:"data"`
 	Pagination Meta `json:"pagination"`
-}
+} // @name Page
 
 // BuildResponse trims the N+1 sentinel item from items (callers query limit+1)
 // and builds the paginated response. encodeCursorFn extracts the cursor from

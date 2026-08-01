@@ -9,7 +9,7 @@ import (
 type ActorInfo struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
-}
+} // @name ActorInfo
 
 // Activity represents an audit log entry for actions performed in the system.
 type Activity struct {
@@ -22,7 +22,7 @@ type Activity struct {
 	Description string          `json:"description"`
 	Payload     ActivityPayload `json:"payload,omitempty" swaggertype:"object"`
 	CreatedAt   time.Time       `json:"createdAt"`
-}
+} // @name Activity
 
 // UnmarshalJSON customizes deserialization of Activity to unmarshal payload into its concrete type.
 func (a *Activity) UnmarshalJSON(b []byte) error {

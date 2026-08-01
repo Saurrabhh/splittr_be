@@ -8,16 +8,16 @@ type CreateGroupRequest struct {
 	Name                 string `json:"name"`
 	Description          string `json:"description"`
 	RequireAdminApproval bool   `json:"requireAdminApproval"`
-}
+} // @name CreateGroupRequest
 
 type JoinGroupRequest struct {
 	InviteCode string `json:"inviteCode"`
-}
+} // @name JoinGroupRequest
 
 type AddMemberRequest struct {
 	UserID string `json:"userId"`
-}
+} // @name AddMemberRequest
 
 type UpdateRoleRequest struct {
 	Role domain.MemberRole `json:"role"`
-}
+} // @name UpdateRoleRequest

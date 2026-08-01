@@ -8,39 +8,7 @@ const docTemplate = `{
     "schemes": {{ marshal .Schemes }},
     "components": {
         "schemas": {
-            "github_com_Saurrabhh_splittr_be_internal_activity.Activity": {
-                "properties": {
-                    "actionType": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_activity_domain.ActionType"
-                    },
-                    "actor": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_activity_domain.ActorInfo"
-                    },
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "entityId": {
-                        "type": "string"
-                    },
-                    "entityType": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_activity_domain.EntityType"
-                    },
-                    "groupId": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "payload": {
-                        "type": "object"
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_Saurrabhh_splittr_be_internal_activity_domain.ActionType": {
+            "ActionType": {
                 "enum": [
                     "EXPENSE_CREATED",
                     "SETTLEMENT",
@@ -69,13 +37,13 @@ const docTemplate = `{
                     "ActionTypeMemberRemoved"
                 ]
             },
-            "github_com_Saurrabhh_splittr_be_internal_activity_domain.Activity": {
+            "Activity": {
                 "properties": {
                     "actionType": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_activity_domain.ActionType"
+                        "$ref": "#/components/schemas/ActionType"
                     },
                     "actor": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_activity_domain.ActorInfo"
+                        "$ref": "#/components/schemas/ActorInfo"
                     },
                     "createdAt": {
                         "type": "string"
@@ -87,7 +55,7 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "entityType": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_activity_domain.EntityType"
+                        "$ref": "#/components/schemas/EntityType"
                     },
                     "groupId": {
                         "type": "string"
@@ -101,7 +69,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_activity_domain.ActorInfo": {
+            "ActorInfo": {
                 "properties": {
                     "id": {
                         "type": "string"
@@ -112,25 +80,29 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_activity_domain.EntityType": {
-                "enum": [
-                    "EXPENSE",
-                    "SETTLEMENT",
-                    "MEMBER",
-                    "GROUP"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "EntityTypeExpense",
-                    "EntityTypeSettlement",
-                    "EntityTypeMember",
-                    "EntityTypeGroup"
-                ]
+            "AddFriendRequest": {
+                "properties": {
+                    "friendEmail": {
+                        "type": "string"
+                    },
+                    "friendPhone": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_appconfig_domain.AppConfigData": {
+            "AddMemberRequest": {
+                "properties": {
+                    "userId": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "AppConfigData": {
                 "properties": {
                     "domain": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_appconfig_domain.DomainConfig"
+                        "$ref": "#/components/schemas/DomainConfig"
                     },
                     "featureFlags": {
                         "additionalProperties": {
@@ -139,18 +111,18 @@ const docTemplate = `{
                         "type": "object"
                     },
                     "legal": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_appconfig_domain.LegalConfig"
+                        "$ref": "#/components/schemas/LegalConfig"
                     },
                     "system": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_appconfig_domain.SystemConfig"
+                        "$ref": "#/components/schemas/SystemConfig"
                     },
                     "userContext": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_appconfig_domain.UserContext"
+                        "$ref": "#/components/schemas/UserContext"
                     }
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_appconfig_domain.AppVersion": {
+            "AppVersion": {
                 "properties": {
                     "forceUpdate": {
                         "type": "boolean"
@@ -173,7 +145,26 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_appconfig_domain.Category": {
+            "BalanceResponse": {
+                "properties": {
+                    "balances": {
+                        "items": {
+                            "$ref": "#/components/schemas/UserBalance"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "settlements": {
+                        "items": {
+                            "$ref": "#/components/schemas/Settlement"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "Category": {
                 "properties": {
                     "iconUrl": {
                         "type": "string"
@@ -187,7 +178,54 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_appconfig_domain.Currency": {
+            "CreateExpenseRequest": {
+                "properties": {
+                    "amount": {
+                        "type": "number"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "groupId": {
+                        "type": "string"
+                    },
+                    "paidBy": {
+                        "type": "string"
+                    },
+                    "splitType": {
+                        "$ref": "#/components/schemas/SplitType"
+                    },
+                    "splits": {
+                        "items": {
+                            "$ref": "#/components/schemas/InputSplit"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "CreateGroupRequest": {
+                "properties": {
+                    "description": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "requireAdminApproval": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "Currency": {
                 "properties": {
                     "code": {
                         "type": "string"
@@ -207,35 +245,58 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_appconfig_domain.DomainConfig": {
+            "DecideJoinRequestPayload": {
+                "properties": {
+                    "action": {
+                        "$ref": "#/components/schemas/JoinRequestAction"
+                    }
+                },
+                "type": "object"
+            },
+            "DetailsResponse": {
+                "properties": {
+                    "group": {
+                        "$ref": "#/components/schemas/Group"
+                    },
+                    "members": {
+                        "items": {
+                            "$ref": "#/components/schemas/Member"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "DomainConfig": {
                 "properties": {
                     "categories": {
                         "items": {
-                            "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_appconfig_domain.Category"
+                            "$ref": "#/components/schemas/Category"
                         },
                         "type": "array",
                         "uniqueItems": false
                     },
                     "currencies": {
                         "items": {
-                            "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_appconfig_domain.Currency"
+                            "$ref": "#/components/schemas/Currency"
                         },
                         "type": "array",
                         "uniqueItems": false
                     },
                     "limits": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_appconfig_domain.LimitsConfig"
+                        "$ref": "#/components/schemas/LimitsConfig"
                     },
                     "paymentIntegrations": {
                         "items": {
-                            "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_appconfig_domain.PaymentIntegration"
+                            "$ref": "#/components/schemas/PaymentIntegration"
                         },
                         "type": "array",
                         "uniqueItems": false
                     },
                     "splitTypes": {
                         "items": {
-                            "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_appconfig_domain.SplitTypeConfig"
+                            "$ref": "#/components/schemas/SplitTypeConfig"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -243,141 +304,54 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_appconfig_domain.LegalConfig": {
-                "properties": {
-                    "faqUrl": {
-                        "type": "string"
-                    },
-                    "privacyPolicyUrl": {
-                        "type": "string"
-                    },
-                    "supportEmail": {
-                        "type": "string"
-                    },
-                    "termsOfServiceUrl": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
+            "EntityType": {
+                "enum": [
+                    "EXPENSE",
+                    "SETTLEMENT",
+                    "MEMBER",
+                    "GROUP"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "EntityTypeExpense",
+                    "EntityTypeSettlement",
+                    "EntityTypeMember",
+                    "EntityTypeGroup"
+                ]
             },
-            "github_com_Saurrabhh_splittr_be_internal_appconfig_domain.LimitsConfig": {
-                "properties": {
-                    "allowedReceiptMimeTypes": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "maxExpenseAmount": {
-                        "type": "number"
-                    },
-                    "maxGroupMembers": {
-                        "type": "integer"
-                    },
-                    "maxReceiptSizeMb": {
-                        "type": "integer"
-                    },
-                    "maxSplitParticipants": {
-                        "type": "integer"
-                    }
-                },
-                "type": "object"
+            "ErrorCode": {
+                "enum": [
+                    "BAD_REQUEST",
+                    "UNAUTHORIZED",
+                    "FORBIDDEN",
+                    "NOT_FOUND",
+                    "INTERNAL_SERVER_ERROR",
+                    "INVALID_BODY",
+                    "USER_NOT_FOUND"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "ErrBadRequest",
+                    "ErrUnauthorized",
+                    "ErrForbidden",
+                    "ErrNotFound",
+                    "ErrInternalServerError",
+                    "ErrInvalidBody",
+                    "ErrUserNotFound"
+                ]
             },
-            "github_com_Saurrabhh_splittr_be_internal_appconfig_domain.MaintenanceConfig": {
+            "ErrorResponse": {
                 "properties": {
-                    "estimatedEndTime": {
-                        "type": "string"
-                    },
-                    "inMaintenance": {
-                        "type": "boolean"
+                    "code": {
+                        "$ref": "#/components/schemas/ErrorCode"
                     },
                     "message": {
                         "type": "string"
-                    },
-                    "readOnlyMode": {
-                        "type": "boolean"
                     }
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_appconfig_domain.PaymentIntegration": {
-                "properties": {
-                    "deepLinkScheme": {
-                        "type": "string"
-                    },
-                    "enabled": {
-                        "type": "boolean"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_Saurrabhh_splittr_be_internal_appconfig_domain.SplitTypeConfig": {
-                "properties": {
-                    "code": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "label": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_Saurrabhh_splittr_be_internal_appconfig_domain.SystemConfig": {
-                "properties": {
-                    "appVersion": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_appconfig_domain.AppVersion"
-                    },
-                    "maintenance": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_appconfig_domain.MaintenanceConfig"
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_Saurrabhh_splittr_be_internal_appconfig_domain.UserContext": {
-                "properties": {
-                    "isAuthenticated": {
-                        "type": "boolean"
-                    },
-                    "userFeatureFlags": {
-                        "additionalProperties": {},
-                        "type": "object"
-                    },
-                    "userPreferredCurrency": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_Saurrabhh_splittr_be_internal_expense_domain.BalanceResponse": {
-                "properties": {
-                    "balances": {
-                        "items": {
-                            "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_expense_domain.UserBalance"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "settlements": {
-                        "items": {
-                            "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_expense_domain.Settlement"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_Saurrabhh_splittr_be_internal_expense_domain.Expense": {
+            "Expense": {
                 "properties": {
                     "amount": {
                         "type": "number"
@@ -421,14 +395,14 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_expense_domain.ExpenseWithSplits": {
+            "ExpenseWithSplits": {
                 "properties": {
                     "expense": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_expense_domain.Expense"
+                        "$ref": "#/components/schemas/Expense"
                     },
                     "splits": {
                         "items": {
-                            "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_expense_domain.Split"
+                            "$ref": "#/components/schemas/Split"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -436,122 +410,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_expense_domain.InputSplit": {
-                "properties": {
-                    "amount": {
-                        "description": "Required if splitType is EXACT",
-                        "type": "number"
-                    },
-                    "percentage": {
-                        "description": "Required if splitType is PERCENTAGE",
-                        "type": "number"
-                    },
-                    "userId": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_Saurrabhh_splittr_be_internal_expense_domain.Settlement": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "fromUserId": {
-                        "type": "string"
-                    },
-                    "fromUserName": {
-                        "type": "string"
-                    },
-                    "toUserId": {
-                        "type": "string"
-                    },
-                    "toUserName": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_Saurrabhh_splittr_be_internal_expense_domain.Split": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "email": {
-                        "type": "string"
-                    },
-                    "expenseId": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "phone": {
-                        "type": "string"
-                    },
-                    "splitType": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_expense_domain.SplitType"
-                    },
-                    "splitValue": {
-                        "type": "number"
-                    },
-                    "userId": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_Saurrabhh_splittr_be_internal_expense_domain.SplitType": {
-                "enum": [
-                    "EQUAL",
-                    "EXACT",
-                    "PERCENTAGE"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "SplitTypeEqual",
-                    "SplitTypeExact",
-                    "SplitTypePercentage"
-                ]
-            },
-            "github_com_Saurrabhh_splittr_be_internal_expense_domain.UserBalance": {
-                "properties": {
-                    "netBalance": {
-                        "type": "number"
-                    },
-                    "userId": {
-                        "type": "string"
-                    },
-                    "userName": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_Saurrabhh_splittr_be_internal_group_domain.DecideJoinRequestPayload": {
-                "properties": {
-                    "action": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_group_domain.JoinRequestAction"
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_Saurrabhh_splittr_be_internal_group_domain.DetailsResponse": {
-                "properties": {
-                    "group": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_group_domain.Group"
-                    },
-                    "members": {
-                        "items": {
-                            "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_group_domain.Member"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_Saurrabhh_splittr_be_internal_group_domain.Group": {
+            "Group": {
                 "properties": {
                     "archivedAt": {
                         "type": "string"
@@ -586,7 +445,31 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_group_domain.JoinRequestAction": {
+            "InputSplit": {
+                "properties": {
+                    "amount": {
+                        "description": "Required if splitType is EXACT",
+                        "type": "number"
+                    },
+                    "percentage": {
+                        "description": "Required if splitType is PERCENTAGE",
+                        "type": "number"
+                    },
+                    "userId": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "JoinGroupRequest": {
+                "properties": {
+                    "inviteCode": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "JoinRequestAction": {
                 "enum": [
                     "APPROVE",
                     "REJECT"
@@ -597,21 +480,79 @@ const docTemplate = `{
                     "JoinRequestActionReject"
                 ]
             },
-            "github_com_Saurrabhh_splittr_be_internal_group_domain.JoinResponse": {
+            "JoinResponse": {
                 "properties": {
                     "group": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_group_domain.Group"
+                        "$ref": "#/components/schemas/Group"
                     },
                     "message": {
                         "type": "string"
                     },
                     "status": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_group_domain.MemberStatus"
+                        "$ref": "#/components/schemas/MemberStatus"
                     }
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_group_domain.Member": {
+            "LegalConfig": {
+                "properties": {
+                    "faqUrl": {
+                        "type": "string"
+                    },
+                    "privacyPolicyUrl": {
+                        "type": "string"
+                    },
+                    "supportEmail": {
+                        "type": "string"
+                    },
+                    "termsOfServiceUrl": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "LimitsConfig": {
+                "properties": {
+                    "allowedReceiptMimeTypes": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "maxExpenseAmount": {
+                        "type": "number"
+                    },
+                    "maxGroupMembers": {
+                        "type": "integer"
+                    },
+                    "maxReceiptSizeMb": {
+                        "type": "integer"
+                    },
+                    "maxSplitParticipants": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "MaintenanceConfig": {
+                "properties": {
+                    "estimatedEndTime": {
+                        "type": "string"
+                    },
+                    "inMaintenance": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "readOnlyMode": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "Member": {
                 "properties": {
                     "email": {
                         "type": "string"
@@ -629,10 +570,10 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "role": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_group_domain.MemberRole"
+                        "$ref": "#/components/schemas/MemberRole"
                     },
                     "status": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_group_domain.MemberStatus"
+                        "$ref": "#/components/schemas/MemberStatus"
                     },
                     "userId": {
                         "type": "string"
@@ -640,7 +581,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_group_domain.MemberRole": {
+            "MemberRole": {
                 "enum": [
                     "ADMIN",
                     "MEMBER"
@@ -651,7 +592,7 @@ const docTemplate = `{
                     "MemberRoleMember"
                 ]
             },
-            "github_com_Saurrabhh_splittr_be_internal_group_domain.MemberStatus": {
+            "MemberStatus": {
                 "enum": [
                     "ACTIVE",
                     "PENDING",
@@ -664,27 +605,26 @@ const docTemplate = `{
                     "MemberStatusRejected"
                 ]
             },
-            "github_com_Saurrabhh_splittr_be_internal_group_domain.Preview": {
+            "MessageResponse": {
                 "properties": {
-                    "creatorName": {
+                    "message": {
                         "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "memberCount": {
-                        "type": "integer"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "requireAdminApproval": {
-                        "type": "boolean"
                     }
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_notification_domain.Notification": {
+            "Meta": {
+                "properties": {
+                    "hasMore": {
+                        "type": "boolean"
+                    },
+                    "nextCursor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Notification": {
                 "properties": {
                     "activityId": {
                         "type": "string"
@@ -716,133 +656,253 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_pagination.Meta": {
+            "Page-Activity": {
                 "properties": {
-                    "hasMore": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/Activity"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/Meta"
+                    }
+                },
+                "type": "object"
+            },
+            "Page-DetailsResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/DetailsResponse"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/Meta"
+                    }
+                },
+                "type": "object"
+            },
+            "Page-ExpenseWithSplits": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/ExpenseWithSplits"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/Meta"
+                    }
+                },
+                "type": "object"
+            },
+            "Page-Notification": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/Notification"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/Meta"
+                    }
+                },
+                "type": "object"
+            },
+            "Page-User": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/User"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/Meta"
+                    }
+                },
+                "type": "object"
+            },
+            "PaymentIntegration": {
+                "properties": {
+                    "deepLinkScheme": {
+                        "type": "string"
+                    },
+                    "enabled": {
                         "type": "boolean"
                     },
-                    "nextCursor": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
                         "type": "string"
                     }
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_pagination.Response-github_com_Saurrabhh_splittr_be_internal_activity_Activity": {
+            "Preview": {
                 "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_activity.Activity"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
+                    "creatorName": {
+                        "type": "string"
                     },
-                    "pagination": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_pagination.Meta"
+                    "description": {
+                        "type": "string"
+                    },
+                    "memberCount": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "requireAdminApproval": {
+                        "type": "boolean"
                     }
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_pagination.Response-github_com_Saurrabhh_splittr_be_internal_activity_domain_Activity": {
+            "RegisterRequest": {
                 "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_activity_domain.Activity"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "pagination": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_pagination.Meta"
+                    "name": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_pagination.Response-github_com_Saurrabhh_splittr_be_internal_group_domain_DetailsResponse": {
+            "SettleExpenseRequest": {
                 "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_group_domain.DetailsResponse"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
+                    "amount": {
+                        "type": "number"
                     },
-                    "pagination": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_pagination.Meta"
+                    "currency": {
+                        "type": "string"
+                    },
+                    "groupId": {
+                        "type": "string"
+                    },
+                    "paidBy": {
+                        "type": "string"
+                    },
+                    "receivedBy": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_pagination.Response-github_com_Saurrabhh_splittr_be_internal_notification_domain_Notification": {
+            "Settlement": {
                 "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_notification_domain.Notification"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
+                    "amount": {
+                        "type": "number"
                     },
-                    "pagination": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_pagination.Meta"
+                    "fromUserId": {
+                        "type": "string"
+                    },
+                    "fromUserName": {
+                        "type": "string"
+                    },
+                    "toUserId": {
+                        "type": "string"
+                    },
+                    "toUserName": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_pagination.Response-github_com_Saurrabhh_splittr_be_internal_user_domain_User": {
+            "Split": {
                 "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_user_domain.User"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
+                    "amount": {
+                        "type": "number"
                     },
-                    "pagination": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_pagination.Meta"
+                    "email": {
+                        "type": "string"
+                    },
+                    "expenseId": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "splitType": {
+                        "$ref": "#/components/schemas/SplitType"
+                    },
+                    "splitValue": {
+                        "type": "number"
+                    },
+                    "userId": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_response.ErrorCode": {
+            "SplitType": {
                 "enum": [
-                    "BAD_REQUEST",
-                    "UNAUTHORIZED",
-                    "FORBIDDEN",
-                    "NOT_FOUND",
-                    "INTERNAL_SERVER_ERROR",
-                    "INVALID_BODY",
-                    "USER_NOT_FOUND"
+                    "EQUAL",
+                    "EXACT",
+                    "PERCENTAGE"
                 ],
                 "type": "string",
                 "x-enum-varnames": [
-                    "ErrBadRequest",
-                    "ErrUnauthorized",
-                    "ErrForbidden",
-                    "ErrNotFound",
-                    "ErrInternalServerError",
-                    "ErrInvalidBody",
-                    "ErrUserNotFound"
+                    "SplitTypeEqual",
+                    "SplitTypeExact",
+                    "SplitTypePercentage"
                 ]
             },
-            "github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse": {
+            "SplitTypeConfig": {
                 "properties": {
                     "code": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorCode"
+                        "type": "string"
                     },
-                    "message": {
+                    "description": {
+                        "type": "string"
+                    },
+                    "label": {
                         "type": "string"
                     }
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_response.MessageResponse": {
+            "SystemConfig": {
                 "properties": {
-                    "message": {
+                    "appVersion": {
+                        "$ref": "#/components/schemas/AppVersion"
+                    },
+                    "maintenance": {
+                        "$ref": "#/components/schemas/MaintenanceConfig"
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateProfileRequest": {
+                "properties": {
+                    "defaultCurrency": {
+                        "type": "string"
+                    },
+                    "name": {
                         "type": "string"
                     }
                 },
                 "type": "object"
             },
-            "github_com_Saurrabhh_splittr_be_internal_user_domain.User": {
+            "UpdateRoleRequest": {
+                "properties": {
+                    "role": {
+                        "$ref": "#/components/schemas/MemberRole"
+                    }
+                },
+                "type": "object"
+            },
+            "User": {
                 "properties": {
                     "createdAt": {
                         "type": "string"
@@ -868,137 +928,30 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "internal_expense_presentation_http.CreateExpenseRequest": {
+            "UserBalance": {
                 "properties": {
-                    "amount": {
+                    "netBalance": {
                         "type": "number"
                     },
-                    "category": {
-                        "type": "string"
-                    },
-                    "currency": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "groupId": {
-                        "type": "string"
-                    },
-                    "paidBy": {
-                        "type": "string"
-                    },
-                    "splitType": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_expense_domain.SplitType"
-                    },
-                    "splits": {
-                        "items": {
-                            "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_expense_domain.InputSplit"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
-            "internal_expense_presentation_http.ListExpensesResponse": {
-                "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_expense_domain.ExpenseWithSplits"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "pagination": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_pagination.Meta"
-                    }
-                },
-                "type": "object"
-            },
-            "internal_expense_presentation_http.SettleExpenseRequest": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "currency": {
-                        "type": "string"
-                    },
-                    "groupId": {
-                        "type": "string"
-                    },
-                    "paidBy": {
-                        "type": "string"
-                    },
-                    "receivedBy": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "internal_group_presentation_http.AddMemberRequest": {
-                "properties": {
                     "userId": {
                         "type": "string"
+                    },
+                    "userName": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
             },
-            "internal_group_presentation_http.CreateGroupRequest": {
+            "UserContext": {
                 "properties": {
-                    "description": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "requireAdminApproval": {
+                    "isAuthenticated": {
                         "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
-            "internal_group_presentation_http.JoinGroupRequest": {
-                "properties": {
-                    "inviteCode": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "internal_group_presentation_http.UpdateRoleRequest": {
-                "properties": {
-                    "role": {
-                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_group_domain.MemberRole"
-                    }
-                },
-                "type": "object"
-            },
-            "internal_user_presentation_http.AddFriendRequest": {
-                "properties": {
-                    "friendEmail": {
-                        "type": "string"
                     },
-                    "friendPhone": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "internal_user_presentation_http.RegisterRequest": {
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "internal_user_presentation_http.UpdateProfileRequest": {
-                "properties": {
-                    "defaultCurrency": {
-                        "type": "string"
+                    "userFeatureFlags": {
+                        "additionalProperties": {},
+                        "type": "object"
                     },
-                    "name": {
+                    "userPreferredCurrency": {
                         "type": "string"
                     }
                 },
@@ -1048,7 +1001,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_pagination.Response-github_com_Saurrabhh_splittr_be_internal_activity_domain_Activity"
+                                    "$ref": "#/components/schemas/Page-Activity"
                                 }
                             }
                         },
@@ -1058,7 +1011,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1068,7 +1021,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1113,7 +1066,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_appconfig_domain.AppConfigData"
+                                    "$ref": "#/components/schemas/AppConfigData"
                                 }
                             }
                         },
@@ -1126,7 +1079,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1165,7 +1118,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_expense_domain.BalanceResponse"
+                                    "$ref": "#/components/schemas/BalanceResponse"
                                 }
                             }
                         },
@@ -1175,7 +1128,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1185,7 +1138,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1195,7 +1148,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1263,7 +1216,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/internal_expense_presentation_http.ListExpensesResponse"
+                                    "$ref": "#/components/schemas/Page-ExpenseWithSplits"
                                 }
                             }
                         },
@@ -1273,7 +1226,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1283,7 +1236,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1293,7 +1246,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1321,7 +1274,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/internal_expense_presentation_http.CreateExpenseRequest",
+                                        "$ref": "#/components/schemas/CreateExpenseRequest",
                                         "summary": "request",
                                         "description": "Expense details and splits structure"
                                     }
@@ -1337,7 +1290,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_expense_domain.ExpenseWithSplits"
+                                    "$ref": "#/components/schemas/ExpenseWithSplits"
                                 }
                             }
                         },
@@ -1347,7 +1300,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1357,7 +1310,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1367,7 +1320,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1397,7 +1350,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/internal_expense_presentation_http.SettleExpenseRequest",
+                                        "$ref": "#/components/schemas/SettleExpenseRequest",
                                         "summary": "request",
                                         "description": "Settlement details"
                                     }
@@ -1413,7 +1366,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_expense_domain.ExpenseWithSplits"
+                                    "$ref": "#/components/schemas/ExpenseWithSplits"
                                 }
                             }
                         },
@@ -1423,7 +1376,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1433,7 +1386,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1443,7 +1396,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1483,7 +1436,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1493,7 +1446,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1503,7 +1456,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1538,7 +1491,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_expense_domain.ExpenseWithSplits"
+                                    "$ref": "#/components/schemas/ExpenseWithSplits"
                                 }
                             }
                         },
@@ -1548,7 +1501,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1558,7 +1511,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1568,7 +1521,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1612,7 +1565,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_pagination.Response-github_com_Saurrabhh_splittr_be_internal_user_domain_User"
+                                    "$ref": "#/components/schemas/Page-User"
                                 }
                             }
                         },
@@ -1622,7 +1575,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1632,7 +1585,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1660,7 +1613,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/internal_user_presentation_http.AddFriendRequest",
+                                        "$ref": "#/components/schemas/AddFriendRequest",
                                         "summary": "request",
                                         "description": "Friend email or phone"
                                     }
@@ -1676,7 +1629,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_user_domain.User"
+                                    "$ref": "#/components/schemas/User"
                                 }
                             }
                         },
@@ -1686,7 +1639,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1696,7 +1649,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1706,7 +1659,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1746,7 +1699,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1756,7 +1709,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1766,7 +1719,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1810,7 +1763,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_pagination.Response-github_com_Saurrabhh_splittr_be_internal_group_domain_DetailsResponse"
+                                    "$ref": "#/components/schemas/Page-DetailsResponse"
                                 }
                             }
                         },
@@ -1820,7 +1773,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1830,7 +1783,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1858,7 +1811,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/internal_group_presentation_http.CreateGroupRequest",
+                                        "$ref": "#/components/schemas/CreateGroupRequest",
                                         "summary": "request",
                                         "description": "Group creation data"
                                     }
@@ -1874,7 +1827,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_group_domain.Group"
+                                    "$ref": "#/components/schemas/Group"
                                 }
                             }
                         },
@@ -1884,7 +1837,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1894,7 +1847,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1904,7 +1857,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1934,7 +1887,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/internal_group_presentation_http.JoinGroupRequest",
+                                        "$ref": "#/components/schemas/JoinGroupRequest",
                                         "summary": "request",
                                         "description": "Group join data"
                                     }
@@ -1950,7 +1903,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_group_domain.JoinResponse"
+                                    "$ref": "#/components/schemas/JoinResponse"
                                 }
                             }
                         },
@@ -1960,7 +1913,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1970,7 +1923,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1980,7 +1933,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -1990,7 +1943,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2000,7 +1953,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2037,7 +1990,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_group_domain.Preview"
+                                    "$ref": "#/components/schemas/Preview"
                                 }
                             }
                         },
@@ -2047,7 +2000,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2057,7 +2010,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2067,7 +2020,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2107,7 +2060,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2117,7 +2070,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2127,7 +2080,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2162,7 +2115,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_group_domain.DetailsResponse"
+                                    "$ref": "#/components/schemas/DetailsResponse"
                                 }
                             }
                         },
@@ -2172,7 +2125,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2182,7 +2135,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2192,7 +2145,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2245,7 +2198,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_pagination.Response-github_com_Saurrabhh_splittr_be_internal_activity_Activity"
+                                    "$ref": "#/components/schemas/Page-Activity"
                                 }
                             }
                         },
@@ -2255,7 +2208,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2265,7 +2218,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2275,7 +2228,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2312,7 +2265,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_group_domain.Group"
+                                    "$ref": "#/components/schemas/Group"
                                 }
                             }
                         },
@@ -2322,7 +2275,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2332,7 +2285,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2342,7 +2295,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2388,7 +2341,7 @@ const docTemplate = `{
                             "application/json": {
                                 "schema": {
                                     "items": {
-                                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_group_domain.Member"
+                                        "$ref": "#/components/schemas/Member"
                                     },
                                     "type": "array"
                                 }
@@ -2400,7 +2353,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2410,7 +2363,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2420,7 +2373,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2459,7 +2412,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/internal_group_presentation_http.AddMemberRequest",
+                                        "$ref": "#/components/schemas/AddMemberRequest",
                                         "summary": "request",
                                         "description": "User ID of the member to add"
                                     }
@@ -2475,7 +2428,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.MessageResponse"
+                                    "$ref": "#/components/schemas/MessageResponse"
                                 }
                             }
                         },
@@ -2485,7 +2438,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2495,7 +2448,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2505,7 +2458,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2554,7 +2507,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2564,7 +2517,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2574,7 +2527,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2624,7 +2577,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_group_domain.DecideJoinRequestPayload",
+                                        "$ref": "#/components/schemas/DecideJoinRequestPayload",
                                         "summary": "request",
                                         "description": "Action (APPROVE or REJECT)"
                                     }
@@ -2640,7 +2593,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.MessageResponse"
+                                    "$ref": "#/components/schemas/MessageResponse"
                                 }
                             }
                         },
@@ -2650,7 +2603,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2660,7 +2613,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2670,7 +2623,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2680,7 +2633,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2730,7 +2683,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/internal_group_presentation_http.UpdateRoleRequest",
+                                        "$ref": "#/components/schemas/UpdateRoleRequest",
                                         "summary": "request",
                                         "description": "New role value"
                                     }
@@ -2746,7 +2699,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.MessageResponse"
+                                    "$ref": "#/components/schemas/MessageResponse"
                                 }
                             }
                         },
@@ -2756,7 +2709,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2766,7 +2719,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2776,7 +2729,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2820,7 +2773,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_pagination.Response-github_com_Saurrabhh_splittr_be_internal_notification_domain_Notification"
+                                    "$ref": "#/components/schemas/Page-Notification"
                                 }
                             }
                         },
@@ -2830,7 +2783,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2840,7 +2793,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2866,7 +2819,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.MessageResponse"
+                                    "$ref": "#/components/schemas/MessageResponse"
                                 }
                             }
                         },
@@ -2876,7 +2829,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2886,7 +2839,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2923,7 +2876,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.MessageResponse"
+                                    "$ref": "#/components/schemas/MessageResponse"
                                 }
                             }
                         },
@@ -2933,7 +2886,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2943,7 +2896,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2953,7 +2906,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2963,7 +2916,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -2993,7 +2946,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/internal_user_presentation_http.RegisterRequest",
+                                        "$ref": "#/components/schemas/RegisterRequest",
                                         "summary": "request",
                                         "description": "Registration data"
                                     }
@@ -3009,7 +2962,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_user_domain.User"
+                                    "$ref": "#/components/schemas/User"
                                 }
                             }
                         },
@@ -3019,7 +2972,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -3029,7 +2982,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -3039,7 +2992,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -3065,7 +3018,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_user_domain.User"
+                                    "$ref": "#/components/schemas/User"
                                 }
                             }
                         },
@@ -3075,7 +3028,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -3085,7 +3038,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -3113,7 +3066,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/internal_user_presentation_http.UpdateProfileRequest",
+                                        "$ref": "#/components/schemas/UpdateProfileRequest",
                                         "summary": "request",
                                         "description": "Profile details to update"
                                     }
@@ -3129,7 +3082,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_user_domain.User"
+                                    "$ref": "#/components/schemas/User"
                                 }
                             }
                         },
@@ -3139,7 +3092,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -3149,7 +3102,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },
@@ -3159,7 +3112,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         },

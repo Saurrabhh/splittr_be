@@ -39,7 +39,7 @@ type NotificationSender interface {
 type BalanceResponse struct {
 	Balances    []UserBalance `json:"balances"`
 	Settlements []Settlement  `json:"settlements"`
-}
+} // @name BalanceResponse
 
 // UseCase manages business logic for expenses, splits, and balances.
 type UseCase struct {

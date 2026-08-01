@@ -143,7 +143,7 @@ func (h *Handler) Settle(w http.ResponseWriter, r *http.Request) {
 // @Param        friendId  query  string  false  "Filter by Friend ID"
 // @Param        limit     query  int     false  "Items per page (max 100, default 20)"
 // @Param        cursor    query  string  false  "Opaque cursor token from a previous response"
-// @Success      200  {object}  ListExpensesResponse
+// @Success      200  {object}  pagination.Response[domain.ExpenseWithSplits]
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -182,10 +182,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, ListExpensesResponse{
-		Data:       result.Data,
-		Pagination: result.Pagination,
-	})
+	response.JSON(w, http.StatusOK, result)
 
 }
 

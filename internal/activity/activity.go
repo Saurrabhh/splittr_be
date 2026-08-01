@@ -8,7 +8,7 @@ import (
 )
 
 // Type aliases for domain entities and value objects
-type Activity = domain.Activity
+type Activity = domain.Activity // @name Activity
 type ActorInfo = domain.ActorInfo
 type EntityType = domain.EntityType
 type ActionType = domain.ActionType

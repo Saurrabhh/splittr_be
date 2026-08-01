@@ -13,4 +13,4 @@ type Notification struct {
 	Content    string    `json:"content"`
 	IsRead     bool      `json:"isRead"`
 	CreatedAt  time.Time `json:"createdAt"`
-}
+} // @name Notification

@@ -4,7 +4,7 @@ import "time"
 
 // SplitType represents the method used to split an expense.
 // @enums EQUAL EXACT PERCENTAGE
-type SplitType string
+type SplitType string // @name SplitType
 
 const (
 	SplitTypeEqual      SplitType = "EQUAL"
@@ -27,7 +27,7 @@ type Expense struct {
 	CreatedAt   time.Time  `json:"createdAt"`
 	UpdatedAt   time.Time  `json:"updatedAt"`
 	DeletedAt   *time.Time `json:"deletedAt,omitempty"`
-}
+} // @name Expense
 
 // Split represents an individual user's split share in an expense.
 type Split struct {
@@ -39,21 +39,21 @@ type Split struct {
 	Name       string    `json:"name"`
 	Email      *string   `json:"email,omitempty"`
 	Phone      *string   `json:"phone,omitempty"`
-}
+} // @name Split
 
 // InputSplit is used for parsing incoming splits in create/update requests.
 type InputSplit struct {
 	UserID     string   `json:"userId"`
 	Amount     *float64 `json:"amount,omitempty"`     // Required if splitType is EXACT
 	Percentage *float64 `json:"percentage,omitempty"` // Required if splitType is PERCENTAGE
-}
+} // @name InputSplit
 
 // UserBalance represents the net balance of a user in a group or direct relation.
 type UserBalance struct {
 	UserID     string  `json:"userId"`
 	UserName   string  `json:"userName"`
 	NetBalance float64 `json:"netBalance"`
-}
+} // @name UserBalance
 
 // Settlement represents a recommended transaction to resolve debts between two users.
 type Settlement struct {
@@ -62,7 +62,7 @@ type Settlement struct {
 	ToUserID     string  `json:"toUserId"`
 	ToUserName   string  `json:"toUserName"`
 	Amount       float64 `json:"amount"`
-}
+} // @name Settlement
 
 // PairwiseDebt represents a direct debt between two users inside a group before netting off.
 type PairwiseDebt struct {
@@ -71,10 +71,10 @@ type PairwiseDebt struct {
 	DebtorID     string  `json:"debtorId"`
 	DebtorName   string  `json:"debtorName"`
 	Amount       float64 `json:"amount"`
-}
+} // @name PairwiseDebt
 
 // ExpenseWithSplits is the unified response shape for create, get-by-ID, and list operations.
 type ExpenseWithSplits struct {
 	Expense Expense `json:"expense"`
 	Splits  []Split `json:"splits"`
-}
+} // @name ExpenseWithSplits
