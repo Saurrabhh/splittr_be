@@ -19,7 +19,7 @@ type ExpensePayload struct {
 }
 
 func (ExpensePayload) PayloadType() EntityType { return EntityTypeExpense }
-func (ExpensePayload) isActivityPayload()     {}
+func (ExpensePayload) isActivityPayload()      {}
 
 // SettlementPayload represents metadata snapshot for SETTLEMENT entity activities.
 type SettlementPayload struct {
@@ -29,7 +29,7 @@ type SettlementPayload struct {
 }
 
 func (SettlementPayload) PayloadType() EntityType { return EntityTypeSettlement }
-func (SettlementPayload) isActivityPayload()     {}
+func (SettlementPayload) isActivityPayload()      {}
 
 // MemberPayload represents metadata snapshot for MEMBER entity activities.
 type MemberPayload struct {
@@ -38,7 +38,7 @@ type MemberPayload struct {
 }
 
 func (MemberPayload) PayloadType() EntityType { return EntityTypeMember }
-func (MemberPayload) isActivityPayload()     {}
+func (MemberPayload) isActivityPayload()      {}
 
 // GroupPayload represents metadata snapshot for GROUP entity activities.
 type GroupPayload struct {
@@ -48,7 +48,7 @@ type GroupPayload struct {
 }
 
 func (GroupPayload) PayloadType() EntityType { return EntityTypeGroup }
-func (GroupPayload) isActivityPayload()     {}
+func (GroupPayload) isActivityPayload()      {}
 
 // UnmarshalPayload deserializes raw JSON into the correct concrete ActivityPayload based on EntityType.
 func UnmarshalPayload(entityType EntityType, data []byte) (ActivityPayload, error) {

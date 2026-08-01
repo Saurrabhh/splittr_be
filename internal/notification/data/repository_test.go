@@ -1,6 +1,6 @@
 //go:build integration
 
-package notification_test
+package data_test
 
 import (
 	"context"
@@ -9,20 +9,21 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/activity"
 	"github.com/Saurrabhh/splittr_be/internal/db"
 	"github.com/Saurrabhh/splittr_be/internal/db_test"
-	"github.com/Saurrabhh/splittr_be/internal/notification"
+	"github.com/Saurrabhh/splittr_be/internal/notification/data"
+	"github.com/Saurrabhh/splittr_be/internal/notification/domain"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestNotificationRepo(t *testing.T) (*notification.DBRepository, *user.DBRepository, *activity.DBRepository, func()) {
+func setupTestNotificationRepo(t *testing.T) (*data.DBRepository, *user.DBRepository, *activity.DBRepository, func()) {
 	ctx := context.Background()
 	testDB, cleanup, err := db_test.SetupTestDB(ctx)
 	require.NoError(t, err)
 
 	tm := db.NewTransactionManager(testDB)
-	notifRepo := notification.NewRepository(testDB, tm)
+	notifRepo := data.NewRepository(testDB, tm)
 	userRepo := user.NewRepository(testDB, tm)
 	actRepo := activity.NewRepository(testDB, tm)
 
@@ -67,7 +68,7 @@ func TestRepository_CreateNotification_And_InvalidUUIDs(t *testing.T) {
 	act := createTestActivity(t, actRepo, actor.ID, "Created expense")
 
 	notifID := uuid.New().String()
-	n := &notification.Notification{
+	n := &domain.Notification{
 		ID:         notifID,
 		UserID:     u1.ID,
 		ActorID:    &actor.ID,
@@ -82,7 +83,7 @@ func TestRepository_CreateNotification_And_InvalidUUIDs(t *testing.T) {
 	assert.False(t, n.IsRead)
 
 	// Test Invalid Notification ID
-	invalidNotif := &notification.Notification{
+	invalidNotif := &domain.Notification{
 		ID:      "invalid-uuid",
 		UserID:  u1.ID,
 		Title:   "Test",
@@ -93,7 +94,7 @@ func TestRepository_CreateNotification_And_InvalidUUIDs(t *testing.T) {
 	assert.Contains(t, err.Error(), "invalid notification uuid")
 
 	// Test Invalid Recipient User ID
-	invalidUserNotif := &notification.Notification{
+	invalidUserNotif := &domain.Notification{
 		ID:      uuid.New().String(),
 		UserID:  "invalid-uuid",
 		Title:   "Test",
@@ -105,7 +106,7 @@ func TestRepository_CreateNotification_And_InvalidUUIDs(t *testing.T) {
 
 	// Test Invalid Actor ID
 	invalidActor := "invalid-uuid"
-	invalidActorNotif := &notification.Notification{
+	invalidActorNotif := &domain.Notification{
 		ID:      uuid.New().String(),
 		UserID:  u1.ID,
 		ActorID: &invalidActor,
@@ -118,7 +119,7 @@ func TestRepository_CreateNotification_And_InvalidUUIDs(t *testing.T) {
 
 	// Test Invalid Activity ID
 	invalidActivity := "invalid-uuid"
-	invalidActivityNotif := &notification.Notification{
+	invalidActivityNotif := &domain.Notification{
 		ID:         uuid.New().String(),
 		UserID:     u1.ID,
 		ActivityID: &invalidActivity,
@@ -138,10 +139,10 @@ func TestRepository_ListUserNotifications_And_Pagination(t *testing.T) {
 	u1 := createTestUser(t, userRepo, "User One")
 	u2 := createTestUser(t, userRepo, "User Two")
 
-	n1 := &notification.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "N1", Content: "C1"}
-	n2 := &notification.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "N2", Content: "C2"}
-	n3 := &notification.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "N3", Content: "C3"}
-	nUser2 := &notification.Notification{ID: uuid.New().String(), UserID: u2.ID, Title: "N_Other", Content: "C_Other"}
+	n1 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "N1", Content: "C1"}
+	n2 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "N2", Content: "C2"}
+	n3 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "N3", Content: "C3"}
+	nUser2 := &domain.Notification{ID: uuid.New().String(), UserID: u2.ID, Title: "N_Other", Content: "C_Other"}
 
 	require.NoError(t, notifRepo.CreateNotification(ctx, n1))
 	require.NoError(t, notifRepo.CreateNotification(ctx, n2))
@@ -178,7 +179,7 @@ func TestRepository_MarkNotificationAsRead(t *testing.T) {
 	u1 := createTestUser(t, userRepo, "User One")
 	u2 := createTestUser(t, userRepo, "User Two")
 
-	n1 := &notification.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "Alert", Content: "Details"}
+	n1 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "Alert", Content: "Details"}
 	require.NoError(t, notifRepo.CreateNotification(ctx, n1))
 
 	// User Two attempts to mark User One's notification as read (User ownership check)
@@ -219,9 +220,9 @@ func TestRepository_MarkAllNotificationsAsRead(t *testing.T) {
 	u1 := createTestUser(t, userRepo, "User One")
 	u2 := createTestUser(t, userRepo, "User Two")
 
-	n1 := &notification.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "Alert 1", Content: "A1"}
-	n2 := &notification.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "Alert 2", Content: "A2"}
-	nOther := &notification.Notification{ID: uuid.New().String(), UserID: u2.ID, Title: "Alert Other", Content: "AO"}
+	n1 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "Alert 1", Content: "A1"}
+	n2 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "Alert 2", Content: "A2"}
+	nOther := &domain.Notification{ID: uuid.New().String(), UserID: u2.ID, Title: "Alert Other", Content: "AO"}
 
 	require.NoError(t, notifRepo.CreateNotification(ctx, n1))
 	require.NoError(t, notifRepo.CreateNotification(ctx, n2))

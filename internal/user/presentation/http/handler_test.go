@@ -1,24 +1,83 @@
-package user_test
+package http_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/Saurrabhh/splittr_be/internal/auth"
-	"github.com/Saurrabhh/splittr_be/internal/user"
 	"github.com/Saurrabhh/splittr_be/internal/user/domain"
+	userhttp "github.com/Saurrabhh/splittr_be/internal/user/presentation/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
-func setupHandlerTestRouter(uc *user.UseCase, identity *auth.Identity) chi.Router {
+type mockUserRepository struct {
+	mock.Mock
+}
+
+func (m *mockUserRepository) GetByID(ctx context.Context, id string) (*domain.User, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.User), args.Error(1)
+}
+
+func (m *mockUserRepository) GetByFirebaseUID(ctx context.Context, firebaseUID string) (*domain.User, error) {
+	args := m.Called(ctx, firebaseUID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.User), args.Error(1)
+}
+
+func (m *mockUserRepository) Create(ctx context.Context, u *domain.User) error {
+	return m.Called(ctx, u).Error(0)
+}
+
+func (m *mockUserRepository) UpdateUser(ctx context.Context, u *domain.User) error {
+	return m.Called(ctx, u).Error(0)
+}
+
+func (m *mockUserRepository) GetByEmailOrPhone(ctx context.Context, email, phone string) (*domain.User, error) {
+	args := m.Called(ctx, email, phone)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.User), args.Error(1)
+}
+
+func (m *mockUserRepository) CreateFriendship(ctx context.Context, userID, friendID string) error {
+	return m.Called(ctx, userID, friendID).Error(0)
+}
+
+func (m *mockUserRepository) DeleteFriendship(ctx context.Context, userID, friendID string) error {
+	return m.Called(ctx, userID, friendID).Error(0)
+}
+
+func (m *mockUserRepository) GetFriendship(ctx context.Context, userID, friendID string) (bool, error) {
+	args := m.Called(ctx, userID, friendID)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *mockUserRepository) ListFriends(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]domain.User, error) {
+	args := m.Called(ctx, userID, limit, lastTime, lastID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.User), args.Error(1)
+}
+
+func setupHandlerTestRouter(uc *domain.UseCase, identity *auth.Identity) chi.Router {
 	r := chi.NewRouter()
-	h := user.NewHandler(uc)
+	h := userhttp.NewHandler(uc)
 
 	authMiddleware := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +100,7 @@ func TestHandler_Register_Success(t *testing.T) {
 	identity := &auth.Identity{UserID: "fb-123", Email: "alice@example.com"}
 
 	email := "alice@example.com"
-	expectedUser := &user.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice", Email: &email}
+	expectedUser := &domain.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice", Email: &email}
 
 	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-123").Return(nil, nil)
 	mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.User")).Run(func(args mock.Arguments) {
@@ -49,7 +108,7 @@ func TestHandler_Register_Success(t *testing.T) {
 		u.ID = "usr-1"
 	}).Return(nil)
 
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, identity)
 
 	body, _ := json.Marshal(map[string]string{"name": "Alice"})
@@ -60,7 +119,7 @@ func TestHandler_Register_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusCreated, rr.Code)
-	var respUser user.User
+	var respUser domain.User
 	err := json.Unmarshal(rr.Body.Bytes(), &respUser)
 	require.NoError(t, err)
 	assert.Equal(t, expectedUser.ID, respUser.ID)
@@ -69,7 +128,7 @@ func TestHandler_Register_Success(t *testing.T) {
 
 func TestHandler_Register_Unauthorized(t *testing.T) {
 	mockRepo := new(mockUserRepository)
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, nil) // nil identity
 
 	body, _ := json.Marshal(map[string]string{"name": "Alice"})
@@ -85,7 +144,7 @@ func TestHandler_Register_Unauthorized(t *testing.T) {
 func TestHandler_Register_BadRequest(t *testing.T) {
 	mockRepo := new(mockUserRepository)
 	identity := &auth.Identity{UserID: "fb-123", Email: "alice@example.com"}
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, identity)
 
 	// Missing name field
@@ -104,11 +163,11 @@ func TestHandler_Register_BadRequest(t *testing.T) {
 func TestHandler_GetMe_Success(t *testing.T) {
 	mockRepo := new(mockUserRepository)
 	identity := &auth.Identity{UserID: "fb-123"}
-	currentUser := &user.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice"}
+	currentUser := &domain.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice"}
 
 	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-123").Return(currentUser, nil)
 
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, identity)
 
 	req := httptest.NewRequest(http.MethodGet, "/users/me", nil)
@@ -117,7 +176,7 @@ func TestHandler_GetMe_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var respUser user.User
+	var respUser domain.User
 	err := json.Unmarshal(rr.Body.Bytes(), &respUser)
 	require.NoError(t, err)
 	assert.Equal(t, "usr-1", respUser.ID)
@@ -126,7 +185,7 @@ func TestHandler_GetMe_Success(t *testing.T) {
 
 func TestHandler_GetMe_Unauthorized(t *testing.T) {
 	mockRepo := new(mockUserRepository)
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, nil) // no identity
 
 	req := httptest.NewRequest(http.MethodGet, "/users/me", nil)
@@ -143,7 +202,7 @@ func TestHandler_GetMe_UserNotFound(t *testing.T) {
 
 	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-unknown").Return(nil, nil)
 
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, identity)
 
 	req := httptest.NewRequest(http.MethodGet, "/users/me", nil)
@@ -159,13 +218,13 @@ func TestHandler_GetMe_UserNotFound(t *testing.T) {
 func TestHandler_UpdateMe_Success(t *testing.T) {
 	mockRepo := new(mockUserRepository)
 	identity := &auth.Identity{UserID: "fb-123"}
-	currentUser := &user.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice", DefaultCurrency: "INR"}
+	currentUser := &domain.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice", DefaultCurrency: "INR"}
 
 	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-123").Return(currentUser, nil)
 	mockRepo.On("GetByID", mock.Anything, "usr-1").Return(currentUser, nil)
 	mockRepo.On("UpdateUser", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
 
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, identity)
 
 	body, _ := json.Marshal(map[string]string{"name": "Alice Updated", "defaultCurrency": "USD"})
@@ -176,7 +235,7 @@ func TestHandler_UpdateMe_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var respUser user.User
+	var respUser domain.User
 	err := json.Unmarshal(rr.Body.Bytes(), &respUser)
 	require.NoError(t, err)
 	assert.Equal(t, "Alice Updated", respUser.Name)
@@ -186,12 +245,12 @@ func TestHandler_UpdateMe_Success(t *testing.T) {
 func TestHandler_UpdateMe_BadRequest_InvalidCurrency(t *testing.T) {
 	mockRepo := new(mockUserRepository)
 	identity := &auth.Identity{UserID: "fb-123"}
-	currentUser := &user.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice", DefaultCurrency: "INR"}
+	currentUser := &domain.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice", DefaultCurrency: "INR"}
 
 	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-123").Return(currentUser, nil)
 	mockRepo.On("GetByID", mock.Anything, "usr-1").Return(currentUser, nil)
 
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, identity)
 
 	body, _ := json.Marshal(map[string]string{"defaultCurrency": "INVALID"})
@@ -207,12 +266,12 @@ func TestHandler_UpdateMe_BadRequest_InvalidCurrency(t *testing.T) {
 func TestHandler_UpdateMe_NotFound(t *testing.T) {
 	mockRepo := new(mockUserRepository)
 	identity := &auth.Identity{UserID: "fb-123"}
-	currentUser := &user.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice"}
+	currentUser := &domain.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice"}
 
 	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-123").Return(currentUser, nil)
 	mockRepo.On("GetByID", mock.Anything, "usr-1").Return(nil, nil) // not found in usecase GetByID
 
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, identity)
 
 	body, _ := json.Marshal(map[string]string{"name": "Alice Updated"})
@@ -227,7 +286,7 @@ func TestHandler_UpdateMe_NotFound(t *testing.T) {
 
 func TestHandler_UpdateMe_Unauthorized(t *testing.T) {
 	mockRepo := new(mockUserRepository)
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, nil)
 
 	body, _ := json.Marshal(map[string]string{"name": "Alice Updated"})
@@ -245,15 +304,15 @@ func TestHandler_UpdateMe_Unauthorized(t *testing.T) {
 func TestHandler_AddFriend_Success(t *testing.T) {
 	mockRepo := new(mockUserRepository)
 	identity := &auth.Identity{UserID: "fb-123"}
-	currentUser := &user.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice"}
-	friendUser := &user.User{ID: "usr-2", Name: "Bob"}
+	currentUser := &domain.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice"}
+	friendUser := &domain.User{ID: "usr-2", Name: "Bob"}
 
 	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-123").Return(currentUser, nil)
 	mockRepo.On("GetByEmailOrPhone", mock.Anything, "bob@example.com", "").Return(friendUser, nil)
 	mockRepo.On("GetFriendship", mock.Anything, "usr-1", "usr-2").Return(false, nil)
 	mockRepo.On("CreateFriendship", mock.Anything, "usr-1", "usr-2").Return(nil)
 
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, identity)
 
 	body, _ := json.Marshal(map[string]string{"friendEmail": "bob@example.com"})
@@ -264,7 +323,7 @@ func TestHandler_AddFriend_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var respUser user.User
+	var respUser domain.User
 	err := json.Unmarshal(rr.Body.Bytes(), &respUser)
 	require.NoError(t, err)
 	assert.Equal(t, "usr-2", respUser.ID)
@@ -273,11 +332,11 @@ func TestHandler_AddFriend_Success(t *testing.T) {
 func TestHandler_AddFriend_BadRequest_MissingFields(t *testing.T) {
 	mockRepo := new(mockUserRepository)
 	identity := &auth.Identity{UserID: "fb-123"}
-	currentUser := &user.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice"}
+	currentUser := &domain.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice"}
 
 	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-123").Return(currentUser, nil)
 
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, identity)
 
 	body, _ := json.Marshal(map[string]string{"friendEmail": "", "friendPhone": ""})
@@ -293,12 +352,12 @@ func TestHandler_AddFriend_BadRequest_MissingFields(t *testing.T) {
 func TestHandler_AddFriend_NotFound(t *testing.T) {
 	mockRepo := new(mockUserRepository)
 	identity := &auth.Identity{UserID: "fb-123"}
-	currentUser := &user.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice"}
+	currentUser := &domain.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice"}
 
 	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-123").Return(currentUser, nil)
 	mockRepo.On("GetByEmailOrPhone", mock.Anything, "unknown@example.com", "").Return(nil, nil)
 
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, identity)
 
 	body, _ := json.Marshal(map[string]string{"friendEmail": "unknown@example.com"})
@@ -313,7 +372,7 @@ func TestHandler_AddFriend_NotFound(t *testing.T) {
 
 func TestHandler_AddFriend_Unauthorized(t *testing.T) {
 	mockRepo := new(mockUserRepository)
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, nil)
 
 	body, _ := json.Marshal(map[string]string{"friendEmail": "bob@example.com"})
@@ -331,13 +390,13 @@ func TestHandler_AddFriend_Unauthorized(t *testing.T) {
 func TestHandler_RemoveFriend_Success(t *testing.T) {
 	mockRepo := new(mockUserRepository)
 	identity := &auth.Identity{UserID: "fb-123"}
-	currentUser := &user.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice"}
+	currentUser := &domain.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice"}
 
 	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-123").Return(currentUser, nil)
 	mockRepo.On("GetFriendship", mock.Anything, "usr-1", "usr-2").Return(true, nil)
 	mockRepo.On("DeleteFriendship", mock.Anything, "usr-1", "usr-2").Return(nil)
 
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, identity)
 
 	req := httptest.NewRequest(http.MethodDelete, "/friends/usr-2", nil)
@@ -351,12 +410,12 @@ func TestHandler_RemoveFriend_Success(t *testing.T) {
 func TestHandler_RemoveFriend_BadRequest_NotFriends(t *testing.T) {
 	mockRepo := new(mockUserRepository)
 	identity := &auth.Identity{UserID: "fb-123"}
-	currentUser := &user.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice"}
+	currentUser := &domain.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice"}
 
 	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-123").Return(currentUser, nil)
 	mockRepo.On("GetFriendship", mock.Anything, "usr-1", "usr-2").Return(false, nil)
 
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, identity)
 
 	req := httptest.NewRequest(http.MethodDelete, "/friends/usr-2", nil)
@@ -369,7 +428,7 @@ func TestHandler_RemoveFriend_BadRequest_NotFriends(t *testing.T) {
 
 func TestHandler_RemoveFriend_Unauthorized(t *testing.T) {
 	mockRepo := new(mockUserRepository)
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, nil)
 
 	req := httptest.NewRequest(http.MethodDelete, "/friends/usr-2", nil)
@@ -385,13 +444,13 @@ func TestHandler_RemoveFriend_Unauthorized(t *testing.T) {
 func TestHandler_GetFriends_Success(t *testing.T) {
 	mockRepo := new(mockUserRepository)
 	identity := &auth.Identity{UserID: "fb-123"}
-	currentUser := &user.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice"}
-	friendsList := []user.User{{ID: "usr-2", Name: "Bob"}}
+	currentUser := &domain.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice"}
+	friendsList := []domain.User{{ID: "usr-2", Name: "Bob"}}
 
 	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-123").Return(currentUser, nil)
 	mockRepo.On("ListFriends", mock.Anything, "usr-1", int32(21), mock.Anything, mock.Anything).Return(friendsList, nil)
 
-	uc := user.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, identity)
 
 	req := httptest.NewRequest(http.MethodGet, "/friends", nil)
@@ -400,7 +459,7 @@ func TestHandler_GetFriends_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var resp user.ListFriendsResponse
+	var resp userhttp.ListFriendsResponse
 	err := json.Unmarshal(rr.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	assert.Len(t, resp.Data, 1)

@@ -1,6 +1,6 @@
 //go:build integration
 
-package group_test
+package data_test
 
 import (
 	"context"
@@ -8,20 +8,21 @@ import (
 
 	"github.com/Saurrabhh/splittr_be/internal/db"
 	"github.com/Saurrabhh/splittr_be/internal/db_test"
-	"github.com/Saurrabhh/splittr_be/internal/group"
+	"github.com/Saurrabhh/splittr_be/internal/group/data"
+	"github.com/Saurrabhh/splittr_be/internal/group/domain"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestRepo(t *testing.T) (*group.DBRepository, *user.DBRepository, func()) {
+func setupTestRepo(t *testing.T) (*data.DBRepository, *user.DBRepository, func()) {
 	ctx := context.Background()
 	testDB, cleanup, err := db_test.SetupTestDB(ctx)
 	require.NoError(t, err)
 
 	tm := db.NewTransactionManager(testDB)
-	groupRepo := group.NewRepository(testDB, tm)
+	groupRepo := data.NewRepository(testDB, tm)
 	userRepo := user.NewRepository(testDB, tm)
 	return groupRepo, userRepo, cleanup
 }
@@ -50,7 +51,7 @@ func TestRepository_CreateGroupAndGetByID(t *testing.T) {
 	desc := "Test group description"
 	inviteCode := "inv-test-1"
 
-	g := &group.Group{
+	g := &domain.Group{
 		ID:          groupID,
 		Name:        "Test Group",
 		Description: &desc,
@@ -95,7 +96,7 @@ func TestRepository_GetByInviteCode_And_Preview(t *testing.T) {
 	desc := "Vacation group"
 	inviteCode := "inv-code-999"
 
-	g := &group.Group{
+	g := &domain.Group{
 		ID:          groupID,
 		Name:        "Vacation",
 		Description: &desc,
@@ -103,7 +104,7 @@ func TestRepository_GetByInviteCode_And_Preview(t *testing.T) {
 		CreatedBy:   &creator.ID,
 	}
 	require.NoError(t, groupRepo.CreateGroup(ctx, g))
-	require.NoError(t, groupRepo.AddGroupMember(ctx, groupID, creator.ID, group.MemberRoleAdmin, group.MemberStatusActive))
+	require.NoError(t, groupRepo.AddGroupMember(ctx, groupID, creator.ID, domain.MemberRoleAdmin, domain.MemberStatusActive))
 
 	// GetByInviteCode Success
 	fetched, err := groupRepo.GetByInviteCode(ctx, inviteCode)
@@ -147,7 +148,7 @@ func TestRepository_UpdateGroup(t *testing.T) {
 
 	creator := createTestUser(t, userRepo, "Creator Charlie")
 	groupID := uuid.New().String()
-	g := &group.Group{
+	g := &domain.Group{
 		ID:        groupID,
 		Name:      "Original Name",
 		CreatedBy: &creator.ID,
@@ -167,7 +168,7 @@ func TestRepository_UpdateGroup(t *testing.T) {
 	assert.Equal(t, &newDesc, fetched.Description)
 
 	// Update Invalid UUID
-	invalidG := &group.Group{ID: "invalid-uuid", Name: "Bad"}
+	invalidG := &domain.Group{ID: "invalid-uuid", Name: "Bad"}
 	err = groupRepo.Update(ctx, invalidG)
 	require.Error(t, err)
 }
@@ -179,7 +180,7 @@ func TestRepository_ArchiveGroup(t *testing.T) {
 
 	creator := createTestUser(t, userRepo, "Creator Dave")
 	groupID := uuid.New().String()
-	g := &group.Group{
+	g := &domain.Group{
 		ID:        groupID,
 		Name:      "Group to Archive",
 		CreatedBy: &creator.ID,
@@ -207,7 +208,7 @@ func TestRepository_GroupMembers_CRUD(t *testing.T) {
 	u1 := createTestUser(t, userRepo, "Alice")
 	u2 := createTestUser(t, userRepo, "Bob")
 	groupID := uuid.New().String()
-	g := &group.Group{
+	g := &domain.Group{
 		ID:        groupID,
 		Name:      "Members Test Group",
 		CreatedBy: &u1.ID,
@@ -215,21 +216,21 @@ func TestRepository_GroupMembers_CRUD(t *testing.T) {
 	require.NoError(t, groupRepo.CreateGroup(ctx, g))
 
 	// Add Members
-	require.NoError(t, groupRepo.AddGroupMember(ctx, groupID, u1.ID, group.MemberRoleAdmin, group.MemberStatusActive))
-	require.NoError(t, groupRepo.AddGroupMember(ctx, groupID, u2.ID, group.MemberRoleMember, group.MemberStatusActive))
+	require.NoError(t, groupRepo.AddGroupMember(ctx, groupID, u1.ID, domain.MemberRoleAdmin, domain.MemberStatusActive))
+	require.NoError(t, groupRepo.AddGroupMember(ctx, groupID, u2.ID, domain.MemberRoleMember, domain.MemberStatusActive))
 
 	// GetGroupMember Success
 	m1, err := groupRepo.GetGroupMember(ctx, groupID, u1.ID)
 	require.NoError(t, err)
 	require.NotNil(t, m1)
-	assert.Equal(t, group.MemberRoleAdmin, m1.Role)
+	assert.Equal(t, domain.MemberRoleAdmin, m1.Role)
 	assert.Equal(t, groupID, m1.GroupID)
 	assert.Equal(t, u1.ID, m1.UserID)
 
 	m2, err := groupRepo.GetGroupMember(ctx, groupID, u2.ID)
 	require.NoError(t, err)
 	require.NotNil(t, m2)
-	assert.Equal(t, group.MemberRoleMember, m2.Role)
+	assert.Equal(t, domain.MemberRoleMember, m2.Role)
 
 	// GetGroupMember Not Found
 	nonMember, err := groupRepo.GetGroupMember(ctx, groupID, uuid.New().String())
@@ -246,15 +247,15 @@ func TestRepository_GroupMembers_CRUD(t *testing.T) {
 	assert.Len(t, members, 2)
 
 	// UpdateGroupMemberRole Success
-	err = groupRepo.UpdateGroupMemberRole(ctx, groupID, u2.ID, group.MemberRoleAdmin)
+	err = groupRepo.UpdateGroupMemberRole(ctx, groupID, u2.ID, domain.MemberRoleAdmin)
 	require.NoError(t, err)
 
 	updatedM2, err := groupRepo.GetGroupMember(ctx, groupID, u2.ID)
 	require.NoError(t, err)
-	assert.Equal(t, group.MemberRoleAdmin, updatedM2.Role)
+	assert.Equal(t, domain.MemberRoleAdmin, updatedM2.Role)
 
 	// UpdateGroupMemberRole Invalid UUID
-	err = groupRepo.UpdateGroupMemberRole(ctx, "invalid-uuid", u2.ID, group.MemberRoleMember)
+	err = groupRepo.UpdateGroupMemberRole(ctx, "invalid-uuid", u2.ID, domain.MemberRoleMember)
 	require.Error(t, err)
 
 	// RemoveGroupMember Success
@@ -280,15 +281,15 @@ func TestRepository_ListUserGroupsWithMembers(t *testing.T) {
 
 	g1ID := uuid.New().String()
 	g2ID := uuid.New().String()
-	g1 := &group.Group{ID: g1ID, Name: "Group 1", CreatedBy: &u1.ID}
-	g2 := &group.Group{ID: g2ID, Name: "Group 2", CreatedBy: &u1.ID}
+	g1 := &domain.Group{ID: g1ID, Name: "Group 1", CreatedBy: &u1.ID}
+	g2 := &domain.Group{ID: g2ID, Name: "Group 2", CreatedBy: &u1.ID}
 
 	require.NoError(t, groupRepo.CreateGroup(ctx, g1))
 	require.NoError(t, groupRepo.CreateGroup(ctx, g2))
 
-	require.NoError(t, groupRepo.AddGroupMember(ctx, g1ID, u1.ID, group.MemberRoleAdmin, group.MemberStatusActive))
-	require.NoError(t, groupRepo.AddGroupMember(ctx, g1ID, u2.ID, group.MemberRoleMember, group.MemberStatusActive))
-	require.NoError(t, groupRepo.AddGroupMember(ctx, g2ID, u1.ID, group.MemberRoleAdmin, group.MemberStatusActive))
+	require.NoError(t, groupRepo.AddGroupMember(ctx, g1ID, u1.ID, domain.MemberRoleAdmin, domain.MemberStatusActive))
+	require.NoError(t, groupRepo.AddGroupMember(ctx, g1ID, u2.ID, domain.MemberRoleMember, domain.MemberStatusActive))
+	require.NoError(t, groupRepo.AddGroupMember(ctx, g2ID, u1.ID, domain.MemberRoleAdmin, domain.MemberStatusActive))
 
 	// List groups for u1
 	groupsList, err := groupRepo.ListUserGroupsWithMembers(ctx, u1.ID, 10, nil, nil)
@@ -321,22 +322,22 @@ func TestRepository_ForeignKeys_And_ConstraintEdgeCases(t *testing.T) {
 
 	u1 := createTestUser(t, userRepo, "FK User")
 	g1ID := uuid.New().String()
-	g1 := &group.Group{ID: g1ID, Name: "FK Group", CreatedBy: &u1.ID}
+	g1 := &domain.Group{ID: g1ID, Name: "FK Group", CreatedBy: &u1.ID}
 	require.NoError(t, groupRepo.CreateGroup(ctx, g1))
 
 	// 1. Non-existent User ID in AddGroupMember (Foreign Key Constraint)
 	nonExistentUserID := uuid.New().String()
-	err := groupRepo.AddGroupMember(ctx, g1ID, nonExistentUserID, group.MemberRoleMember, group.MemberStatusActive)
+	err := groupRepo.AddGroupMember(ctx, g1ID, nonExistentUserID, domain.MemberRoleMember, domain.MemberStatusActive)
 	require.Error(t, err, "expected foreign key violation for non-existent user")
 
 	// 2. Non-existent Group ID in AddGroupMember (Foreign Key Constraint)
 	nonExistentGroupID := uuid.New().String()
-	err = groupRepo.AddGroupMember(ctx, nonExistentGroupID, u1.ID, group.MemberRoleMember, group.MemberStatusActive)
+	err = groupRepo.AddGroupMember(ctx, nonExistentGroupID, u1.ID, domain.MemberRoleMember, domain.MemberStatusActive)
 	require.Error(t, err, "expected foreign key violation for non-existent group")
 
 	// 3. Duplicate Group Member Insertion is handled via ON CONFLICT DO NOTHING
-	require.NoError(t, groupRepo.AddGroupMember(ctx, g1ID, u1.ID, group.MemberRoleAdmin, group.MemberStatusActive))
-	err = groupRepo.AddGroupMember(ctx, g1ID, u1.ID, group.MemberRoleMember, group.MemberStatusActive)
+	require.NoError(t, groupRepo.AddGroupMember(ctx, g1ID, u1.ID, domain.MemberRoleAdmin, domain.MemberStatusActive))
+	err = groupRepo.AddGroupMember(ctx, g1ID, u1.ID, domain.MemberRoleMember, domain.MemberStatusActive)
 	require.NoError(t, err, "ON CONFLICT DO NOTHING handles duplicate insertion silently")
 
 	members, err := groupRepo.ListGroupMembers(ctx, g1ID, "")

@@ -1,6 +1,6 @@
 //go:build integration
 
-package user_test
+package data_test
 
 import (
 	"context"
@@ -8,19 +8,20 @@ import (
 
 	"github.com/Saurrabhh/splittr_be/internal/db"
 	"github.com/Saurrabhh/splittr_be/internal/db_test"
-	"github.com/Saurrabhh/splittr_be/internal/user"
+	"github.com/Saurrabhh/splittr_be/internal/user/data"
+	"github.com/Saurrabhh/splittr_be/internal/user/domain"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestRepo(t *testing.T) (*user.DBRepository, func()) {
+func setupTestRepo(t *testing.T) (*data.DBRepository, func()) {
 	ctx := context.Background()
 	testDB, cleanup, err := db_test.SetupTestDB(ctx)
 	require.NoError(t, err)
 
 	tm := db.NewTransactionManager(testDB)
-	repo := user.NewRepository(testDB, tm)
+	repo := data.NewRepository(testDB, tm)
 	return repo, cleanup
 }
 
@@ -31,7 +32,7 @@ func TestRepository_CreateAndGetByID(t *testing.T) {
 
 	id := uuid.New().String()
 	email := "user1@example.com"
-	u := &user.User{
+	u := &domain.User{
 		ID:              id,
 		FirebaseUID:     "fb-1",
 		Email:           &email,
@@ -76,7 +77,7 @@ func TestRepository_GetByFirebaseUID(t *testing.T) {
 
 	id := uuid.New().String()
 	email := "user2@example.com"
-	u := &user.User{
+	u := &domain.User{
 		ID:          id,
 		FirebaseUID: "fb-2",
 		Email:       &email,
@@ -101,7 +102,7 @@ func TestRepository_GetByEmailOrPhone(t *testing.T) {
 
 	email := "user3@example.com"
 	phone := "+123456789"
-	u := &user.User{
+	u := &domain.User{
 		ID:          uuid.New().String(),
 		FirebaseUID: "fb-3",
 		Email:       &email,
@@ -134,7 +135,7 @@ func TestRepository_UpdateUser(t *testing.T) {
 	ctx := context.Background()
 
 	email := "user4@example.com"
-	u := &user.User{
+	u := &domain.User{
 		ID:              uuid.New().String(),
 		FirebaseUID:     "fb-4",
 		Email:           &email,
@@ -161,8 +162,8 @@ func TestRepository_Friendships(t *testing.T) {
 
 	email1 := "user5@example.com"
 	email2 := "user6@example.com"
-	u1 := &user.User{ID: uuid.New().String(), FirebaseUID: "fb-5", Email: &email1, Name: "User Five"}
-	u2 := &user.User{ID: uuid.New().String(), FirebaseUID: "fb-6", Email: &email2, Name: "User Six"}
+	u1 := &domain.User{ID: uuid.New().String(), FirebaseUID: "fb-5", Email: &email1, Name: "User Five"}
+	u2 := &domain.User{ID: uuid.New().String(), FirebaseUID: "fb-6", Email: &email2, Name: "User Six"}
 	require.NoError(t, repo.Create(ctx, u1))
 	require.NoError(t, repo.Create(ctx, u2))
 
@@ -198,7 +199,7 @@ func TestRepository_ConstraintEdgeCases(t *testing.T) {
 	ctx := context.Background()
 
 	email1 := "unique1@example.com"
-	u1 := &user.User{
+	u1 := &domain.User{
 		ID:          uuid.New().String(),
 		FirebaseUID: "fb-dup",
 		Email:       &email1,
@@ -208,7 +209,7 @@ func TestRepository_ConstraintEdgeCases(t *testing.T) {
 
 	// Test 1: Duplicate firebase_uid constraint
 	email2 := "unique2@example.com"
-	u2 := &user.User{
+	u2 := &domain.User{
 		ID:          uuid.New().String(),
 		FirebaseUID: "fb-dup", // Duplicate!
 		Email:       &email2,
@@ -218,7 +219,7 @@ func TestRepository_ConstraintEdgeCases(t *testing.T) {
 	require.Error(t, err, "expected error on duplicate firebase_uid")
 
 	// Test 2: Missing both email and phone constraint (email_or_phone_required)
-	uNoContact := &user.User{
+	uNoContact := &domain.User{
 		ID:          uuid.New().String(),
 		FirebaseUID: "fb-no-contact",
 		Email:       nil,

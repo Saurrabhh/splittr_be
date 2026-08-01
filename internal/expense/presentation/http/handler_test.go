@@ -1,14 +1,18 @@
-package expense_test
+package http_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/Saurrabhh/splittr_be/internal/activity"
-	"github.com/Saurrabhh/splittr_be/internal/expense"
+	"github.com/Saurrabhh/splittr_be/internal/expense/domain"
+	expensehttp "github.com/Saurrabhh/splittr_be/internal/expense/presentation/http"
 	"github.com/Saurrabhh/splittr_be/internal/group"
 	"github.com/Saurrabhh/splittr_be/internal/notification"
 	"github.com/Saurrabhh/splittr_be/internal/response"
@@ -19,9 +23,154 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupHandlerTestRouter(uc *expense.UseCase, currentUser *user.User) chi.Router {
+type mockExpenseRepository struct {
+	mock.Mock
+}
+
+func (m *mockExpenseRepository) CreateExpense(ctx context.Context, e *domain.Expense) error {
+	return m.Called(ctx, e).Error(0)
+}
+
+func (m *mockExpenseRepository) CreateExpenseSplit(ctx context.Context, s *domain.Split) error {
+	return m.Called(ctx, s).Error(0)
+}
+
+func (m *mockExpenseRepository) GetExpenseByID(ctx context.Context, id string) (*domain.Expense, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Expense), args.Error(1)
+}
+
+func (m *mockExpenseRepository) ListExpenseSplits(ctx context.Context, expenseID string) ([]domain.Split, error) {
+	args := m.Called(ctx, expenseID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Split), args.Error(1)
+}
+
+func (m *mockExpenseRepository) ListExpensesByGroup(ctx context.Context, groupID string, limit int32, lastTime *time.Time, lastID *string) ([]domain.Expense, error) {
+	args := m.Called(ctx, groupID, limit, lastTime, lastID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Expense), args.Error(1)
+}
+
+func (m *mockExpenseRepository) ListUserPersonalExpenses(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]domain.Expense, error) {
+	args := m.Called(ctx, userID, limit, lastTime, lastID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Expense), args.Error(1)
+}
+
+func (m *mockExpenseRepository) ListUserFriendExpenses(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]domain.Expense, error) {
+	args := m.Called(ctx, userID, limit, lastTime, lastID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Expense), args.Error(1)
+}
+
+func (m *mockExpenseRepository) DeleteExpense(ctx context.Context, id string) error {
+	return m.Called(ctx, id).Error(0)
+}
+
+func (m *mockExpenseRepository) GetGroupBalances(ctx context.Context, groupID string) ([]domain.UserBalance, error) {
+	args := m.Called(ctx, groupID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.UserBalance), args.Error(1)
+}
+
+func (m *mockExpenseRepository) GetFriendBalances(ctx context.Context, userID string) ([]domain.UserBalance, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.UserBalance), args.Error(1)
+}
+
+func (m *mockExpenseRepository) GetGroupPairwiseDebts(ctx context.Context, groupID string) ([]domain.PairwiseDebt, error) {
+	args := m.Called(ctx, groupID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.PairwiseDebt), args.Error(1)
+}
+
+func (m *mockExpenseRepository) ListExpenseSplitsByIDs(ctx context.Context, expenseIDs []string) ([]domain.Split, error) {
+	args := m.Called(ctx, expenseIDs)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Split), args.Error(1)
+}
+
+type mockGroupService struct {
+	mock.Mock
+}
+
+func (m *mockGroupService) GetGroupDetails(ctx context.Context, groupID, userID string) (*group.Group, []group.Member, error) {
+	args := m.Called(ctx, groupID, userID)
+	if args.Get(0) == nil {
+		return nil, nil, args.Error(2)
+	}
+	var members []group.Member
+	if args.Get(1) != nil {
+		members = args.Get(1).([]group.Member)
+	}
+	return args.Get(0).(*group.Group), members, args.Error(2)
+}
+
+type mockActivityLogger struct {
+	mock.Mock
+}
+
+func (m *mockActivityLogger) LogEvent(
+	ctx context.Context,
+	actorID string,
+	groupID *string,
+	visibleToUserIDs []string,
+	event activity.Event,
+) (*activity.Activity, error) {
+	args := m.Called(ctx, actorID, groupID, visibleToUserIDs, event)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*activity.Activity), args.Error(1)
+}
+
+type mockNotificationSender struct {
+	mock.Mock
+}
+
+func (m *mockNotificationSender) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) (*notification.Notification, error) {
+	args := m.Called(ctx, userID, actorID, activityID, title, content)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*notification.Notification), args.Error(1)
+}
+
+type mockTransactor struct {
+	fail bool
+}
+
+func (m *mockTransactor) RunInTx(ctx context.Context, fn func(ctx context.Context) error) error {
+	if m.fail {
+		return errors.New("transaction error")
+	}
+	return fn(ctx)
+}
+
+func setupHandlerTestRouter(uc *domain.UseCase, currentUser *user.User) chi.Router {
 	r := chi.NewRouter()
-	h := expense.NewHandler(uc)
+	h := expensehttp.NewHandler(uc)
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +201,7 @@ func TestHandler_CreateExpense_Success(t *testing.T) {
 
 	mockRepo.On("CreateExpense", mock.Anything, mock.AnythingOfType("*domain.Expense")).Return(nil)
 	mockRepo.On("CreateExpenseSplit", mock.Anything, mock.AnythingOfType("*domain.Split")).Return(nil)
-	mockRepo.On("ListExpenseSplits", mock.Anything, mock.AnythingOfType("string")).Return([]expense.Split{
+	mockRepo.On("ListExpenseSplits", mock.Anything, mock.AnythingOfType("string")).Return([]domain.Split{
 		{ExpenseID: "exp-1", UserID: currentUser.ID, Amount: 100.0},
 	}, nil)
 
@@ -60,7 +209,7 @@ func TestHandler_CreateExpense_Success(t *testing.T) {
 		mock.Anything, currentUser.ID, (*string)(nil), mock.Anything, mock.Anything,
 	).Return(&activity.Activity{ID: "act-1"}, nil)
 
-	uc := expense.NewUseCase(mockRepo, mockTx, mockGroupSvc, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockGroupSvc, mockAct, mockNotif)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	body, _ := json.Marshal(map[string]interface{}{
@@ -80,7 +229,7 @@ func TestHandler_CreateExpense_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusCreated, rr.Code)
-	var resp expense.ExpenseWithSplits
+	var resp domain.ExpenseWithSplits
 	err := json.Unmarshal(rr.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	assert.Equal(t, "Groceries", resp.Expense.Description)
@@ -88,7 +237,7 @@ func TestHandler_CreateExpense_Success(t *testing.T) {
 
 func TestHandler_CreateExpense_BadRequest(t *testing.T) {
 	mockRepo := new(mockExpenseRepository)
-	uc := expense.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
 	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
 	router := setupHandlerTestRouter(uc, currentUser)
 
@@ -113,7 +262,7 @@ func TestHandler_CreateExpense_BadRequest(t *testing.T) {
 
 func TestHandler_CreateExpense_Unauthorized(t *testing.T) {
 	mockRepo := new(mockExpenseRepository)
-	uc := expense.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
 	router := setupHandlerTestRouter(uc, nil) // no user context
 
 	body, _ := json.Marshal(map[string]interface{}{
@@ -142,7 +291,7 @@ func TestHandler_SettleUp_Success(t *testing.T) {
 
 	mockRepo.On("CreateExpense", mock.Anything, mock.AnythingOfType("*domain.Expense")).Return(nil)
 	mockRepo.On("CreateExpenseSplit", mock.Anything, mock.AnythingOfType("*domain.Split")).Return(nil)
-	mockRepo.On("ListExpenseSplits", mock.Anything, mock.AnythingOfType("string")).Return([]expense.Split{
+	mockRepo.On("ListExpenseSplits", mock.Anything, mock.AnythingOfType("string")).Return([]domain.Split{
 		{ExpenseID: "exp-1", UserID: "usr-2", Amount: 50.0},
 	}, nil)
 
@@ -152,7 +301,7 @@ func TestHandler_SettleUp_Success(t *testing.T) {
 
 	mockNotif.On("CreateAlert", mock.Anything, "usr-2", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&notification.Notification{ID: "notif-1"}, nil)
 
-	uc := expense.NewUseCase(mockRepo, mockTx, nil, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, nil, mockAct, mockNotif)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	body, _ := json.Marshal(map[string]interface{}{
@@ -173,7 +322,7 @@ func TestHandler_SettleUp_Success(t *testing.T) {
 
 func TestHandler_SettleUp_BadRequest(t *testing.T) {
 	mockRepo := new(mockExpenseRepository)
-	uc := expense.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
 	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
 	router := setupHandlerTestRouter(uc, currentUser)
 
@@ -201,12 +350,12 @@ func TestHandler_ListExpenses_GroupSuccess(t *testing.T) {
 	groupID := "grp-1"
 
 	mockGroupSvc.On("GetGroupDetails", mock.Anything, groupID, currentUser.ID).Return(&group.Group{ID: groupID}, []group.Member{}, nil)
-	mockRepo.On("ListExpensesByGroup", mock.Anything, groupID, mock.Anything, mock.Anything, mock.Anything).Return([]expense.Expense{
+	mockRepo.On("ListExpensesByGroup", mock.Anything, groupID, mock.Anything, mock.Anything, mock.Anything).Return([]domain.Expense{
 		{ID: "exp-1", Description: "Dinner"},
 	}, nil)
-	mockRepo.On("ListExpenseSplitsByIDs", mock.Anything, mock.Anything).Return([]expense.Split{}, nil)
+	mockRepo.On("ListExpenseSplitsByIDs", mock.Anything, mock.Anything).Return([]domain.Split{}, nil)
 
-	uc := expense.NewUseCase(mockRepo, &mockTransactor{}, mockGroupSvc, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, mockGroupSvc, nil, nil)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	req := httptest.NewRequest(http.MethodGet, "/expenses?groupId="+groupID, nil)
@@ -221,12 +370,12 @@ func TestHandler_ListExpenses_PersonalSuccess(t *testing.T) {
 	mockRepo := new(mockExpenseRepository)
 	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
 
-	mockRepo.On("ListUserPersonalExpenses", mock.Anything, currentUser.ID, mock.Anything, mock.Anything, mock.Anything).Return([]expense.Expense{
+	mockRepo.On("ListUserPersonalExpenses", mock.Anything, currentUser.ID, mock.Anything, mock.Anything, mock.Anything).Return([]domain.Expense{
 		{ID: "exp-1", Description: "Coffee"},
 	}, nil)
-	mockRepo.On("ListExpenseSplitsByIDs", mock.Anything, mock.Anything).Return([]expense.Split{}, nil)
+	mockRepo.On("ListExpenseSplitsByIDs", mock.Anything, mock.Anything).Return([]domain.Split{}, nil)
 
-	uc := expense.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	req := httptest.NewRequest(http.MethodGet, "/expenses?personal=true", nil)
@@ -242,12 +391,12 @@ func TestHandler_ListExpenses_FriendSuccess(t *testing.T) {
 	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
 	friendID := "usr-2"
 
-	mockRepo.On("ListUserFriendExpenses", mock.Anything, currentUser.ID, mock.Anything, mock.Anything, mock.Anything).Return([]expense.Expense{
+	mockRepo.On("ListUserFriendExpenses", mock.Anything, currentUser.ID, mock.Anything, mock.Anything, mock.Anything).Return([]domain.Expense{
 		{ID: "exp-1", Description: "Taxi"},
 	}, nil)
-	mockRepo.On("ListExpenseSplitsByIDs", mock.Anything, mock.Anything).Return([]expense.Split{}, nil)
+	mockRepo.On("ListExpenseSplitsByIDs", mock.Anything, mock.Anything).Return([]domain.Split{}, nil)
 
-	uc := expense.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	req := httptest.NewRequest(http.MethodGet, "/expenses?friendId="+friendID, nil)
@@ -259,7 +408,7 @@ func TestHandler_ListExpenses_FriendSuccess(t *testing.T) {
 }
 
 func TestHandler_ListExpenses_MissingFilter(t *testing.T) {
-	uc := expense.NewUseCase(new(mockExpenseRepository), &mockTransactor{}, nil, nil, nil)
+	uc := domain.NewUseCase(new(mockExpenseRepository), &mockTransactor{}, nil, nil, nil)
 	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
 	router := setupHandlerTestRouter(uc, currentUser)
 
@@ -278,13 +427,13 @@ func TestHandler_GetDetails_Success(t *testing.T) {
 	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
 	expID := "exp-1"
 
-	exp := &expense.Expense{ID: expID, Description: "Lunch", PaidBy: currentUser.ID, CreatedBy: currentUser.ID}
-	splits := []expense.Split{{ExpenseID: expID, UserID: currentUser.ID, Amount: 50.0}}
+	exp := &domain.Expense{ID: expID, Description: "Lunch", PaidBy: currentUser.ID, CreatedBy: currentUser.ID}
+	splits := []domain.Split{{ExpenseID: expID, UserID: currentUser.ID, Amount: 50.0}}
 
 	mockRepo.On("GetExpenseByID", mock.Anything, expID).Return(exp, nil)
 	mockRepo.On("ListExpenseSplits", mock.Anything, expID).Return(splits, nil)
 
-	uc := expense.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	req := httptest.NewRequest(http.MethodGet, "/expenses/"+expID, nil)
@@ -300,9 +449,9 @@ func TestHandler_GetDetails_NotFound(t *testing.T) {
 	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
 	expID := "non-existent"
 
-	mockRepo.On("GetExpenseByID", mock.Anything, expID).Return((*expense.Expense)(nil), nil)
+	mockRepo.On("GetExpenseByID", mock.Anything, expID).Return((*domain.Expense)(nil), nil)
 
-	uc := expense.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	req := httptest.NewRequest(http.MethodGet, "/expenses/"+expID, nil)
@@ -318,13 +467,13 @@ func TestHandler_GetDetails_Forbidden(t *testing.T) {
 	currentUser := &user.User{ID: "usr-unrelated", Name: "Stranger"}
 	expID := "exp-1"
 
-	exp := &expense.Expense{ID: expID, Description: "Lunch", PaidBy: "usr-creator", CreatedBy: "usr-creator"}
-	splits := []expense.Split{{ExpenseID: expID, UserID: "usr-other", Amount: 50.0}}
+	exp := &domain.Expense{ID: expID, Description: "Lunch", PaidBy: "usr-creator", CreatedBy: "usr-creator"}
+	splits := []domain.Split{{ExpenseID: expID, UserID: "usr-other", Amount: 50.0}}
 
 	mockRepo.On("GetExpenseByID", mock.Anything, expID).Return(exp, nil)
 	mockRepo.On("ListExpenseSplits", mock.Anything, expID).Return(splits, nil)
 
-	uc := expense.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	req := httptest.NewRequest(http.MethodGet, "/expenses/"+expID, nil)
@@ -342,12 +491,12 @@ func TestHandler_Delete_Success(t *testing.T) {
 	currentUser := &user.User{ID: "usr-creator", Name: "Creator"}
 	expID := "exp-1"
 
-	exp := &expense.Expense{ID: expID, CreatedBy: currentUser.ID}
+	exp := &domain.Expense{ID: expID, CreatedBy: currentUser.ID}
 
 	mockRepo.On("GetExpenseByID", mock.Anything, expID).Return(exp, nil)
 	mockRepo.On("DeleteExpense", mock.Anything, expID).Return(nil)
 
-	uc := expense.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	req := httptest.NewRequest(http.MethodDelete, "/expenses/"+expID, nil)
@@ -363,11 +512,11 @@ func TestHandler_Delete_Forbidden(t *testing.T) {
 	currentUser := &user.User{ID: "usr-member", Name: "Member"}
 	expID := "exp-1"
 
-	exp := &expense.Expense{ID: expID, CreatedBy: "usr-creator"}
+	exp := &domain.Expense{ID: expID, CreatedBy: "usr-creator"}
 
 	mockRepo.On("GetExpenseByID", mock.Anything, expID).Return(exp, nil)
 
-	uc := expense.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	req := httptest.NewRequest(http.MethodDelete, "/expenses/"+expID, nil)
@@ -383,9 +532,9 @@ func TestHandler_Delete_NotFound(t *testing.T) {
 	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
 	expID := "non-existent"
 
-	mockRepo.On("GetExpenseByID", mock.Anything, expID).Return((*expense.Expense)(nil), nil)
+	mockRepo.On("GetExpenseByID", mock.Anything, expID).Return((*domain.Expense)(nil), nil)
 
-	uc := expense.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	req := httptest.NewRequest(http.MethodDelete, "/expenses/"+expID, nil)
@@ -405,11 +554,11 @@ func TestHandler_GetBalances_Success(t *testing.T) {
 	groupID := "grp-1"
 
 	mockGroupSvc.On("GetGroupDetails", mock.Anything, groupID, currentUser.ID).Return(&group.Group{ID: groupID}, []group.Member{}, nil)
-	mockRepo.On("GetGroupBalances", mock.Anything, groupID).Return([]expense.UserBalance{
+	mockRepo.On("GetGroupBalances", mock.Anything, groupID).Return([]domain.UserBalance{
 		{UserID: "usr-1", UserName: "Alice", NetBalance: 50.0},
 	}, nil)
 
-	uc := expense.NewUseCase(mockRepo, &mockTransactor{}, mockGroupSvc, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, mockGroupSvc, nil, nil)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	req := httptest.NewRequest(http.MethodGet, "/balances?groupId="+groupID+"&simplified=true", nil)

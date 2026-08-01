@@ -36,9 +36,9 @@ func TestParseCursor_MalformedInput(t *testing.T) {
 		"_uuid",
 		"2026-07-18T18:00:00Z",
 		"_",
-		"2026-07-18T18:00:00Zuuid",  // missing underscore
+		"2026-07-18T18:00:00Zuuid", // missing underscore
 		"2026-99-99T99:99:99Z_123", // bad RFC3339 date
-		"2026-07-18T18:00:00Z_",     // missing ID after underscore
+		"2026-07-18T18:00:00Z_",    // missing ID after underscore
 		"invalidcursor",
 	}
 

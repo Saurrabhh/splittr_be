@@ -1,4 +1,4 @@
-package notification_test
+package domain_test
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Saurrabhh/splittr_be/internal/notification"
+	"github.com/Saurrabhh/splittr_be/internal/notification/domain"
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/stretchr/testify/assert"
@@ -18,16 +18,16 @@ type mockNotificationRepository struct {
 	mock.Mock
 }
 
-func (m *mockNotificationRepository) CreateNotification(ctx context.Context, notif *notification.Notification) error {
+func (m *mockNotificationRepository) CreateNotification(ctx context.Context, notif *domain.Notification) error {
 	return m.Called(ctx, notif).Error(0)
 }
 
-func (m *mockNotificationRepository) ListUserNotifications(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]notification.Notification, error) {
+func (m *mockNotificationRepository) ListUserNotifications(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]domain.Notification, error) {
 	args := m.Called(ctx, userID, limit, lastTime, lastID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]notification.Notification), args.Error(1)
+	return args.Get(0).([]domain.Notification), args.Error(1)
 }
 
 func (m *mockNotificationRepository) MarkNotificationAsRead(ctx context.Context, id, userID string) error {
@@ -52,7 +52,7 @@ func TestCreateAlert_Success(t *testing.T) {
 
 	mockRepo.On("CreateNotification", ctx, mock.AnythingOfType("*domain.Notification")).Return(nil)
 
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	notif, err := uc.CreateAlert(ctx, userID, &actorID, &activityID, title, content)
 	require.NoError(t, err)
 	require.NotNil(t, notif)
@@ -72,7 +72,7 @@ func TestCreateAlert_RepoError(t *testing.T) {
 
 	mockRepo.On("CreateNotification", ctx, mock.AnythingOfType("*domain.Notification")).Return(errors.New("db insert failure"))
 
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	_, err := uc.CreateAlert(ctx, "user-1", nil, nil, "Title", "Content")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "create notification: db insert failure")
@@ -86,14 +86,14 @@ func TestListNotifications_Success(t *testing.T) {
 	ctx := context.Background()
 
 	now := time.Now()
-	expectedNotifs := []notification.Notification{
+	expectedNotifs := []domain.Notification{
 		{ID: "notif-1", UserID: "user-1", Title: "Alert 1", Content: "Content 1", CreatedAt: now},
 		{ID: "notif-2", UserID: "user-1", Title: "Alert 2", Content: "Content 2", CreatedAt: now.Add(-time.Minute)},
 	}
 
 	mockRepo.On("ListUserNotifications", ctx, "user-1", int32(11), (*time.Time)(nil), (*string)(nil)).Return(expectedNotifs, nil)
 
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	resp, err := uc.ListNotifications(ctx, "user-1", pagination.Params{Limit: 10})
 	require.NoError(t, err)
 	assert.Len(t, resp.Data, 2)
@@ -108,7 +108,7 @@ func TestListNotifications_RepoError(t *testing.T) {
 
 	mockRepo.On("ListUserNotifications", ctx, "user-1", int32(11), (*time.Time)(nil), (*string)(nil)).Return(nil, errors.New("db read failure"))
 
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	_, err := uc.ListNotifications(ctx, "user-1", pagination.Params{Limit: 10})
 	require.Error(t, err)
 
@@ -131,7 +131,7 @@ func TestMarkAsRead_Success(t *testing.T) {
 	// Verifies user ownership check passed to repository
 	mockRepo.On("MarkNotificationAsRead", ctx, notifID, userID).Return(nil)
 
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	err := uc.MarkAsRead(ctx, notifID, userID)
 	require.NoError(t, err)
 	mockRepo.AssertExpectations(t)
@@ -141,7 +141,7 @@ func TestMarkAsRead_EmptyID(t *testing.T) {
 	mockRepo := new(mockNotificationRepository)
 	ctx := context.Background()
 
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	err := uc.MarkAsRead(ctx, "", "user-1")
 	require.Error(t, err)
 
@@ -157,7 +157,7 @@ func TestMarkAsRead_RepoError(t *testing.T) {
 
 	mockRepo.On("MarkNotificationAsRead", ctx, "notif-1", "user-1").Return(errors.New("db error"))
 
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	err := uc.MarkAsRead(ctx, "notif-1", "user-1")
 	require.Error(t, err)
 
@@ -177,7 +177,7 @@ func TestMarkAllAsRead_Success(t *testing.T) {
 	userID := "user-1"
 	mockRepo.On("MarkAllNotificationsAsRead", ctx, userID).Return(nil)
 
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	err := uc.MarkAllAsRead(ctx, userID)
 	require.NoError(t, err)
 	mockRepo.AssertExpectations(t)
@@ -189,7 +189,7 @@ func TestMarkAllAsRead_RepoError(t *testing.T) {
 
 	mockRepo.On("MarkAllNotificationsAsRead", ctx, "user-1").Return(errors.New("db update failure"))
 
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	err := uc.MarkAllAsRead(ctx, "user-1")
 	require.Error(t, err)
 

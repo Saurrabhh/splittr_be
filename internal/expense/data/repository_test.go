@@ -1,6 +1,6 @@
 //go:build integration
 
-package expense_test
+package data_test
 
 import (
 	"context"
@@ -8,7 +8,8 @@ import (
 
 	"github.com/Saurrabhh/splittr_be/internal/db"
 	"github.com/Saurrabhh/splittr_be/internal/db_test"
-	"github.com/Saurrabhh/splittr_be/internal/expense"
+	"github.com/Saurrabhh/splittr_be/internal/expense/data"
+	"github.com/Saurrabhh/splittr_be/internal/expense/domain"
 	"github.com/Saurrabhh/splittr_be/internal/group"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 	"github.com/google/uuid"
@@ -16,13 +17,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestRepo(t *testing.T) (*expense.DBRepository, *user.DBRepository, *group.DBRepository, func()) {
+func setupTestRepo(t *testing.T) (*data.DBRepository, *user.DBRepository, *group.DBRepository, func()) {
 	ctx := context.Background()
 	testDB, cleanup, err := db_test.SetupTestDB(ctx)
 	require.NoError(t, err)
 
 	tm := db.NewTransactionManager(testDB)
-	expenseRepo := expense.NewRepository(testDB, tm)
+	expenseRepo := data.NewRepository(testDB, tm)
 	userRepo := user.NewRepository(testDB, tm)
 	groupRepo := group.NewRepository(testDB, tm)
 	return expenseRepo, userRepo, groupRepo, cleanup
@@ -63,7 +64,7 @@ func TestRepository_CreateExpense_And_GetByID(t *testing.T) {
 	creator := createTestUser(t, userRepo, "Creator Bob")
 	expID := uuid.New().String()
 
-	e := &expense.Expense{
+	e := &domain.Expense{
 		ID:          expID,
 		Description: "Dinner at Restaurant",
 		Amount:      120.50,
@@ -112,7 +113,7 @@ func TestRepository_CreateExpenseSplit_And_ListSplits(t *testing.T) {
 	u2 := createTestUser(t, userRepo, "User 2")
 	expID := uuid.New().String()
 
-	e := &expense.Expense{
+	e := &domain.Expense{
 		ID:          expID,
 		Description: "Movie Tickets",
 		Amount:      50.00,
@@ -125,18 +126,18 @@ func TestRepository_CreateExpenseSplit_And_ListSplits(t *testing.T) {
 	require.NoError(t, err)
 
 	splitVal := 50.0
-	s1 := &expense.Split{
+	s1 := &domain.Split{
 		ExpenseID:  expID,
 		UserID:     u1.ID,
 		Amount:     25.00,
-		SplitType:  expense.SplitTypeEqual,
+		SplitType:  domain.SplitTypeEqual,
 		SplitValue: &splitVal,
 	}
-	s2 := &expense.Split{
+	s2 := &domain.Split{
 		ExpenseID:  expID,
 		UserID:     u2.ID,
 		Amount:     25.00,
-		SplitType:  expense.SplitTypeEqual,
+		SplitType:  domain.SplitTypeEqual,
 		SplitValue: &splitVal,
 	}
 
@@ -166,7 +167,7 @@ func TestRepository_ListExpensesByGroup(t *testing.T) {
 	u := createTestUser(t, userRepo, "Group Admin")
 	g := createTestGroup(t, groupRepo, u.ID, "Vacation Group")
 
-	exp1 := &expense.Expense{
+	exp1 := &domain.Expense{
 		ID:          uuid.New().String(),
 		Description: "Flight",
 		Amount:      500.00,
@@ -176,7 +177,7 @@ func TestRepository_ListExpensesByGroup(t *testing.T) {
 		PaidBy:      u.ID,
 		CreatedBy:   u.ID,
 	}
-	exp2 := &expense.Expense{
+	exp2 := &domain.Expense{
 		ID:          uuid.New().String(),
 		Description: "Hotel",
 		Amount:      300.00,
@@ -203,7 +204,7 @@ func TestRepository_ListUserPersonalExpenses(t *testing.T) {
 	u := createTestUser(t, userRepo, "Solo Spender")
 	expID := uuid.New().String()
 
-	e := &expense.Expense{
+	e := &domain.Expense{
 		ID:          expID,
 		Description: "Coffee",
 		Amount:      5.00,
@@ -215,11 +216,11 @@ func TestRepository_ListUserPersonalExpenses(t *testing.T) {
 	}
 	require.NoError(t, expenseRepo.CreateExpense(ctx, e))
 
-	s := &expense.Split{
+	s := &domain.Split{
 		ExpenseID: expID,
 		UserID:    u.ID,
 		Amount:    5.00,
-		SplitType: expense.SplitTypeExact,
+		SplitType: domain.SplitTypeExact,
 	}
 	require.NoError(t, expenseRepo.CreateExpenseSplit(ctx, s))
 
@@ -238,7 +239,7 @@ func TestRepository_ListUserFriendExpenses(t *testing.T) {
 	u2 := createTestUser(t, userRepo, "Friend 2")
 	expID := uuid.New().String()
 
-	e := &expense.Expense{
+	e := &domain.Expense{
 		ID:          expID,
 		Description: "Shared Cab",
 		Amount:      40.00,
@@ -250,8 +251,8 @@ func TestRepository_ListUserFriendExpenses(t *testing.T) {
 	}
 	require.NoError(t, expenseRepo.CreateExpense(ctx, e))
 
-	s1 := &expense.Split{ExpenseID: expID, UserID: u1.ID, Amount: 20.00, SplitType: expense.SplitTypeEqual}
-	s2 := &expense.Split{ExpenseID: expID, UserID: u2.ID, Amount: 20.00, SplitType: expense.SplitTypeEqual}
+	s1 := &domain.Split{ExpenseID: expID, UserID: u1.ID, Amount: 20.00, SplitType: domain.SplitTypeEqual}
+	s2 := &domain.Split{ExpenseID: expID, UserID: u2.ID, Amount: 20.00, SplitType: domain.SplitTypeEqual}
 	require.NoError(t, expenseRepo.CreateExpenseSplit(ctx, s1))
 	require.NoError(t, expenseRepo.CreateExpenseSplit(ctx, s2))
 
@@ -269,7 +270,7 @@ func TestRepository_DeleteExpense(t *testing.T) {
 	u := createTestUser(t, userRepo, "User Deleter")
 	expID := uuid.New().String()
 
-	e := &expense.Expense{
+	e := &domain.Expense{
 		ID:          expID,
 		Description: "To be deleted",
 		Amount:      15.00,
@@ -303,7 +304,7 @@ func TestRepository_GetGroupBalances_And_Pairwise(t *testing.T) {
 	require.NoError(t, groupRepo.AddGroupMember(ctx, g.ID, u2.ID, group.MemberRoleMember, group.MemberStatusActive))
 
 	expID := uuid.New().String()
-	e := &expense.Expense{
+	e := &domain.Expense{
 		ID:          expID,
 		Description: "Group Lunch",
 		Amount:      100.00,
@@ -315,8 +316,8 @@ func TestRepository_GetGroupBalances_And_Pairwise(t *testing.T) {
 	}
 	require.NoError(t, expenseRepo.CreateExpense(ctx, e))
 
-	s1 := &expense.Split{ExpenseID: expID, UserID: u1.ID, Amount: 50.00, SplitType: expense.SplitTypeEqual}
-	s2 := &expense.Split{ExpenseID: expID, UserID: u2.ID, Amount: 50.00, SplitType: expense.SplitTypeEqual}
+	s1 := &domain.Split{ExpenseID: expID, UserID: u1.ID, Amount: 50.00, SplitType: domain.SplitTypeEqual}
+	s2 := &domain.Split{ExpenseID: expID, UserID: u2.ID, Amount: 50.00, SplitType: domain.SplitTypeEqual}
 	require.NoError(t, expenseRepo.CreateExpenseSplit(ctx, s1))
 	require.NoError(t, expenseRepo.CreateExpenseSplit(ctx, s2))
 
@@ -338,7 +339,7 @@ func TestRepository_GetFriendBalances(t *testing.T) {
 	u2 := createTestUser(t, userRepo, "Friend Bob")
 
 	expID := uuid.New().String()
-	e := &expense.Expense{
+	e := &domain.Expense{
 		ID:          expID,
 		Description: "Dinner",
 		Amount:      100.00,
@@ -350,8 +351,8 @@ func TestRepository_GetFriendBalances(t *testing.T) {
 	}
 	require.NoError(t, expenseRepo.CreateExpense(ctx, e))
 
-	s1 := &expense.Split{ExpenseID: expID, UserID: u1.ID, Amount: 50.00, SplitType: expense.SplitTypeEqual}
-	s2 := &expense.Split{ExpenseID: expID, UserID: u2.ID, Amount: 50.00, SplitType: expense.SplitTypeEqual}
+	s1 := &domain.Split{ExpenseID: expID, UserID: u1.ID, Amount: 50.00, SplitType: domain.SplitTypeEqual}
+	s2 := &domain.Split{ExpenseID: expID, UserID: u2.ID, Amount: 50.00, SplitType: domain.SplitTypeEqual}
 	require.NoError(t, expenseRepo.CreateExpenseSplit(ctx, s1))
 	require.NoError(t, expenseRepo.CreateExpenseSplit(ctx, s2))
 

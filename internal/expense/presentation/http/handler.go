@@ -187,7 +187,6 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		Pagination: result.Pagination,
 	})
 
-
 }
 
 // GetDetails retrieves a specific expense and its details.

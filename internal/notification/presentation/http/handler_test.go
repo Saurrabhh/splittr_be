@@ -1,4 +1,4 @@
-package notification_test
+package http_test
 
 import (
 	"context"
@@ -9,7 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Saurrabhh/splittr_be/internal/notification"
+	"github.com/Saurrabhh/splittr_be/internal/notification/domain"
+	notifhttp "github.com/Saurrabhh/splittr_be/internal/notification/presentation/http"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 	"github.com/go-chi/chi/v5"
@@ -18,9 +19,33 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupHandlerTestRouter(uc *notification.UseCase, currentUser *user.User) chi.Router {
+type mockNotificationRepository struct {
+	mock.Mock
+}
+
+func (m *mockNotificationRepository) CreateNotification(ctx context.Context, notif *domain.Notification) error {
+	return m.Called(ctx, notif).Error(0)
+}
+
+func (m *mockNotificationRepository) ListUserNotifications(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]domain.Notification, error) {
+	args := m.Called(ctx, userID, limit, lastTime, lastID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Notification), args.Error(1)
+}
+
+func (m *mockNotificationRepository) MarkNotificationAsRead(ctx context.Context, id, userID string) error {
+	return m.Called(ctx, id, userID).Error(0)
+}
+
+func (m *mockNotificationRepository) MarkAllNotificationsAsRead(ctx context.Context, userID string) error {
+	return m.Called(ctx, userID).Error(0)
+}
+
+func setupHandlerTestRouter(uc *domain.UseCase, currentUser *user.User) chi.Router {
 	r := chi.NewRouter()
-	h := notification.NewHandler(uc)
+	h := notifhttp.NewHandler(uc)
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -44,13 +69,13 @@ func TestHandler_List_Success(t *testing.T) {
 	mockRepo := new(mockNotificationRepository)
 	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
 
-	expectedNotifs := []notification.Notification{
+	expectedNotifs := []domain.Notification{
 		{ID: "notif-1", UserID: currentUser.ID, Title: "Title 1", Content: "Content 1", CreatedAt: time.Now()},
 	}
 
 	mockRepo.On("ListUserNotifications", mock.Anything, currentUser.ID, int32(21), (*time.Time)(nil), (*string)(nil)).Return(expectedNotifs, nil)
 
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	req := httptest.NewRequest(http.MethodGet, "/notifications", nil)
@@ -59,7 +84,7 @@ func TestHandler_List_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var resp notification.ListNotificationsResponse
+	var resp notifhttp.ListNotificationsResponse
 	err := json.Unmarshal(rr.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	assert.Len(t, resp.Data, 1)
@@ -68,7 +93,7 @@ func TestHandler_List_Success(t *testing.T) {
 
 func TestHandler_List_Unauthorized(t *testing.T) {
 	mockRepo := new(mockNotificationRepository)
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, nil) // Unauthenticated
 
 	req := httptest.NewRequest(http.MethodGet, "/notifications", nil)
@@ -85,7 +110,7 @@ func TestHandler_List_InternalServerError(t *testing.T) {
 
 	mockRepo.On("ListUserNotifications", mock.Anything, currentUser.ID, int32(21), (*time.Time)(nil), (*string)(nil)).Return(nil, errors.New("db error"))
 
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	req := httptest.NewRequest(http.MethodGet, "/notifications", nil)
@@ -105,7 +130,7 @@ func TestHandler_MarkAsRead_Success(t *testing.T) {
 
 	mockRepo.On("MarkNotificationAsRead", mock.Anything, notifID, currentUser.ID).Return(nil)
 
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	req := httptest.NewRequest(http.MethodPost, "/notifications/"+notifID+"/read", nil)
@@ -126,9 +151,9 @@ func TestHandler_MarkAsRead_BadRequest(t *testing.T) {
 
 	// When router matches route, if ID is somehow invalid / validation error returns Bad Request
 	// Note: uc.MarkAsRead(ctx, "", userID) returns validation error
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := chi.NewRouter()
-	h := notification.NewHandler(uc)
+	h := notifhttp.NewHandler(uc)
 	router.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := user.WithUser(r.Context(), currentUser)
@@ -161,7 +186,7 @@ func TestHandler_MarkAsRead_BadRequest(t *testing.T) {
 
 func TestHandler_MarkAsRead_Unauthorized(t *testing.T) {
 	mockRepo := new(mockNotificationRepository)
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, nil) // Unauthenticated
 
 	req := httptest.NewRequest(http.MethodPost, "/notifications/notif-123/read", nil)
@@ -179,7 +204,7 @@ func TestHandler_MarkAsRead_InternalServerError(t *testing.T) {
 
 	mockRepo.On("MarkNotificationAsRead", mock.Anything, notifID, currentUser.ID).Return(errors.New("db error"))
 
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	req := httptest.NewRequest(http.MethodPost, "/notifications/"+notifID+"/read", nil)
@@ -198,7 +223,7 @@ func TestHandler_MarkAllAsRead_Success(t *testing.T) {
 
 	mockRepo.On("MarkAllNotificationsAsRead", mock.Anything, currentUser.ID).Return(nil)
 
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	req := httptest.NewRequest(http.MethodPost, "/notifications/read-all", nil)
@@ -215,7 +240,7 @@ func TestHandler_MarkAllAsRead_Success(t *testing.T) {
 
 func TestHandler_MarkAllAsRead_Unauthorized(t *testing.T) {
 	mockRepo := new(mockNotificationRepository)
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, nil) // Unauthenticated
 
 	req := httptest.NewRequest(http.MethodPost, "/notifications/read-all", nil)
@@ -232,7 +257,7 @@ func TestHandler_MarkAllAsRead_InternalServerError(t *testing.T) {
 
 	mockRepo.On("MarkAllNotificationsAsRead", mock.Anything, currentUser.ID).Return(errors.New("db error"))
 
-	uc := notification.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	req := httptest.NewRequest(http.MethodPost, "/notifications/read-all", nil)

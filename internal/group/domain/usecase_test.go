@@ -1,4 +1,4 @@
-package group_test
+package domain_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Saurrabhh/splittr_be/internal/activity"
-	"github.com/Saurrabhh/splittr_be/internal/group"
+	"github.com/Saurrabhh/splittr_be/internal/group/domain"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -18,79 +18,79 @@ type mockGroupRepository struct {
 	mock.Mock
 }
 
-func (m *mockGroupRepository) GetByID(ctx context.Context, id string) (*group.Group, error) {
+func (m *mockGroupRepository) GetByID(ctx context.Context, id string) (*domain.Group, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*group.Group), args.Error(1)
+	return args.Get(0).(*domain.Group), args.Error(1)
 }
 
-func (m *mockGroupRepository) GetByInviteCode(ctx context.Context, inviteCode string) (*group.Group, error) {
+func (m *mockGroupRepository) GetByInviteCode(ctx context.Context, inviteCode string) (*domain.Group, error) {
 	args := m.Called(ctx, inviteCode)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*group.Group), args.Error(1)
+	return args.Get(0).(*domain.Group), args.Error(1)
 }
 
-func (m *mockGroupRepository) GetPreviewByInviteCode(ctx context.Context, inviteCode string) (*group.Preview, error) {
+func (m *mockGroupRepository) GetPreviewByInviteCode(ctx context.Context, inviteCode string) (*domain.Preview, error) {
 	args := m.Called(ctx, inviteCode)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*group.Preview), args.Error(1)
+	return args.Get(0).(*domain.Preview), args.Error(1)
 }
 
-func (m *mockGroupRepository) GetGroupMember(ctx context.Context, groupID, userID string) (*group.Member, error) {
+func (m *mockGroupRepository) GetGroupMember(ctx context.Context, groupID, userID string) (*domain.Member, error) {
 	args := m.Called(ctx, groupID, userID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*group.Member), args.Error(1)
+	return args.Get(0).(*domain.Member), args.Error(1)
 }
 
-func (m *mockGroupRepository) ListGroupMembers(ctx context.Context, groupID string, status string) ([]group.Member, error) {
+func (m *mockGroupRepository) ListGroupMembers(ctx context.Context, groupID string, status string) ([]domain.Member, error) {
 	args := m.Called(ctx, groupID, status)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]group.Member), args.Error(1)
+	return args.Get(0).([]domain.Member), args.Error(1)
 }
 
-func (m *mockGroupRepository) ListUserGroupsWithMembers(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]group.GroupWithMembers, error) {
+func (m *mockGroupRepository) ListUserGroupsWithMembers(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]domain.GroupWithMembers, error) {
 	args := m.Called(ctx, userID, limit, lastTime, lastID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]group.GroupWithMembers), args.Error(1)
+	return args.Get(0).([]domain.GroupWithMembers), args.Error(1)
 }
 
-func (m *mockGroupRepository) CreateGroup(ctx context.Context, g *group.Group) error {
+func (m *mockGroupRepository) CreateGroup(ctx context.Context, g *domain.Group) error {
 	return m.Called(ctx, g).Error(0)
 }
 
-func (m *mockGroupRepository) Update(ctx context.Context, g *group.Group) error {
+func (m *mockGroupRepository) Update(ctx context.Context, g *domain.Group) error {
 	return m.Called(ctx, g).Error(0)
 }
 
-func (m *mockGroupRepository) ResetInviteCode(ctx context.Context, groupID, newInviteCode string, expiresAt time.Time) (*group.Group, error) {
+func (m *mockGroupRepository) ResetInviteCode(ctx context.Context, groupID, newInviteCode string, expiresAt time.Time) (*domain.Group, error) {
 	args := m.Called(ctx, groupID, newInviteCode, expiresAt)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*group.Group), args.Error(1)
+	return args.Get(0).(*domain.Group), args.Error(1)
 }
 
 func (m *mockGroupRepository) Archive(ctx context.Context, id string) error {
 	return m.Called(ctx, id).Error(0)
 }
 
-func (m *mockGroupRepository) AddGroupMember(ctx context.Context, groupID, userID string, role group.MemberRole, status group.MemberStatus) error {
+func (m *mockGroupRepository) AddGroupMember(ctx context.Context, groupID, userID string, role domain.MemberRole, status domain.MemberStatus) error {
 	return m.Called(ctx, groupID, userID, role, status).Error(0)
 }
 
-func (m *mockGroupRepository) UpdateMemberStatus(ctx context.Context, groupID, userID string, status group.MemberStatus) error {
+func (m *mockGroupRepository) UpdateMemberStatus(ctx context.Context, groupID, userID string, status domain.MemberStatus) error {
 	return m.Called(ctx, groupID, userID, status).Error(0)
 }
 
@@ -98,7 +98,7 @@ func (m *mockGroupRepository) RemoveGroupMember(ctx context.Context, groupID, us
 	return m.Called(ctx, groupID, userID).Error(0)
 }
 
-func (m *mockGroupRepository) UpdateGroupMemberRole(ctx context.Context, groupID, userID string, role group.MemberRole) error {
+func (m *mockGroupRepository) UpdateGroupMemberRole(ctx context.Context, groupID, userID string, role domain.MemberRole) error {
 	return m.Called(ctx, groupID, userID, role).Error(0)
 }
 
@@ -151,16 +151,16 @@ func TestCreateGroup_Success(t *testing.T) {
 	groupDesc := "Fun vacation"
 
 	mockRepo.On("CreateGroup", ctx, mock.AnythingOfType("*domain.Group")).Return(nil)
-	mockRepo.On("AddGroupMember", ctx, mock.AnythingOfType("string"), creatorID, group.MemberRoleAdmin, group.MemberStatusActive).Return(nil)
-	mockRepo.On("ListGroupMembers", ctx, mock.AnythingOfType("string"), string(group.MemberStatusActive)).Return([]group.Member{
-		{GroupID: "grp-1", UserID: creatorID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive},
+	mockRepo.On("AddGroupMember", ctx, mock.AnythingOfType("string"), creatorID, domain.MemberRoleAdmin, domain.MemberStatusActive).Return(nil)
+	mockRepo.On("ListGroupMembers", ctx, mock.AnythingOfType("string"), string(domain.MemberStatusActive)).Return([]domain.Member{
+		{GroupID: "grp-1", UserID: creatorID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive},
 	}, nil)
 
 	mockAct.On("LogEvent",
 		ctx, creatorID, mock.Anything, ([]string)(nil), mock.Anything,
 	).Return(nil)
 
-	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	g, err := uc.CreateGroup(ctx, groupName, groupDesc, false, creatorID)
 
 	require.NoError(t, err)
@@ -179,7 +179,7 @@ func TestCreateGroup_EmptyName(t *testing.T) {
 	mockTx := &mockTransactor{}
 	ctx := context.Background()
 
-	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	_, err := uc.CreateGroup(ctx, "", "desc", false, "usr-1")
 
 	require.Error(t, err)
@@ -200,15 +200,15 @@ func TestGetGroupDetails_Success(t *testing.T) {
 	groupID := "grp-1"
 	userID := "usr-1"
 
-	activeMember := &group.Member{GroupID: groupID, UserID: userID, Role: group.MemberRoleMember, Status: group.MemberStatusActive}
-	expectedGroup := &group.Group{ID: groupID, Name: "Flatmates"}
-	expectedMembers := []group.Member{*activeMember}
+	activeMember := &domain.Member{GroupID: groupID, UserID: userID, Role: domain.MemberRoleMember, Status: domain.MemberStatusActive}
+	expectedGroup := &domain.Group{ID: groupID, Name: "Flatmates"}
+	expectedMembers := []domain.Member{*activeMember}
 
 	mockRepo.On("GetGroupMember", ctx, groupID, userID).Return(activeMember, nil)
 	mockRepo.On("GetByID", ctx, groupID).Return(expectedGroup, nil)
-	mockRepo.On("ListGroupMembers", ctx, groupID, string(group.MemberStatusActive)).Return(expectedMembers, nil)
+	mockRepo.On("ListGroupMembers", ctx, groupID, string(domain.MemberStatusActive)).Return(expectedMembers, nil)
 
-	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	g, members, err := uc.GetGroupDetails(ctx, groupID, userID)
 
 	require.NoError(t, err)
@@ -228,10 +228,10 @@ func TestGetGroupDetails_NotActiveMember_Forbidden(t *testing.T) {
 	groupID := "grp-1"
 	userID := "usr-1"
 
-	pendingMember := &group.Member{GroupID: groupID, UserID: userID, Role: group.MemberRoleMember, Status: group.MemberStatusPending}
+	pendingMember := &domain.Member{GroupID: groupID, UserID: userID, Role: domain.MemberRoleMember, Status: domain.MemberStatusPending}
 	mockRepo.On("GetGroupMember", ctx, groupID, userID).Return(pendingMember, nil)
 
-	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	_, _, err := uc.GetGroupDetails(ctx, groupID, userID)
 
 	require.Error(t, err)
@@ -254,23 +254,23 @@ func TestJoinGroup_NewMember_Success(t *testing.T) {
 	groupID := "grp-1"
 	futureExpires := time.Now().Add(1 * time.Hour)
 
-	g := &group.Group{ID: groupID, Name: "Trip", InviteCode: &inviteCode, InviteCodeExpiresAt: &futureExpires, RequireAdminApproval: false}
-	newMember := group.Member{GroupID: groupID, UserID: userID, Role: group.MemberRoleMember, Status: group.MemberStatusActive}
+	g := &domain.Group{ID: groupID, Name: "Trip", InviteCode: &inviteCode, InviteCodeExpiresAt: &futureExpires, RequireAdminApproval: false}
+	newMember := domain.Member{GroupID: groupID, UserID: userID, Role: domain.MemberRoleMember, Status: domain.MemberStatusActive}
 
 	mockRepo.On("GetByInviteCode", ctx, inviteCode).Return(g, nil)
 	mockRepo.On("GetGroupMember", ctx, groupID, userID).Return(nil, nil)
-	mockRepo.On("AddGroupMember", ctx, groupID, userID, group.MemberRoleMember, group.MemberStatusActive).Return(nil)
-	mockRepo.On("ListGroupMembers", ctx, groupID, string(group.MemberStatusActive)).Return([]group.Member{newMember}, nil)
+	mockRepo.On("AddGroupMember", ctx, groupID, userID, domain.MemberRoleMember, domain.MemberStatusActive).Return(nil)
+	mockRepo.On("ListGroupMembers", ctx, groupID, string(domain.MemberStatusActive)).Return([]domain.Member{newMember}, nil)
 
 	mockAct.On("LogEvent",
 		ctx, userID, &groupID, ([]string)(nil), mock.Anything,
 	).Return(nil)
 
-	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	resp, err := uc.JoinGroup(ctx, inviteCode, userID)
 
 	require.NoError(t, err)
-	assert.Equal(t, group.MemberStatusActive, resp.Status)
+	assert.Equal(t, domain.MemberStatusActive, resp.Status)
 	assert.Equal(t, g, resp.Group)
 
 	mockRepo.AssertExpectations(t)
@@ -286,11 +286,11 @@ func TestJoinGroup_ExpiredInviteCode(t *testing.T) {
 
 	inviteCode := "inv-expired"
 	pastExpires := time.Now().Add(-1 * time.Hour)
-	g := &group.Group{ID: "grp-1", Name: "Trip", InviteCode: &inviteCode, InviteCodeExpiresAt: &pastExpires}
+	g := &domain.Group{ID: "grp-1", Name: "Trip", InviteCode: &inviteCode, InviteCodeExpiresAt: &pastExpires}
 
 	mockRepo.On("GetByInviteCode", ctx, inviteCode).Return(g, nil)
 
-	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	_, err := uc.JoinGroup(ctx, inviteCode, "usr-1")
 
 	require.Error(t, err)
@@ -313,22 +313,22 @@ func TestJoinGroup_RequireAdminApproval_Pending(t *testing.T) {
 	futureExpires := time.Now().Add(1 * time.Hour)
 	adminID := "usr-admin"
 
-	g := &group.Group{ID: groupID, Name: "Strict Group", InviteCode: &inviteCode, InviteCodeExpiresAt: &futureExpires, RequireAdminApproval: true}
+	g := &domain.Group{ID: groupID, Name: "Strict Group", InviteCode: &inviteCode, InviteCodeExpiresAt: &futureExpires, RequireAdminApproval: true}
 
 	mockRepo.On("GetByInviteCode", ctx, inviteCode).Return(g, nil)
 	mockRepo.On("GetGroupMember", ctx, groupID, userID).Return(nil, nil)
-	mockRepo.On("AddGroupMember", ctx, groupID, userID, group.MemberRoleMember, group.MemberStatusPending).Return(nil)
-	mockRepo.On("ListGroupMembers", ctx, groupID, string(group.MemberStatusActive)).Return([]group.Member{
-		{GroupID: groupID, UserID: adminID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive},
+	mockRepo.On("AddGroupMember", ctx, groupID, userID, domain.MemberRoleMember, domain.MemberStatusPending).Return(nil)
+	mockRepo.On("ListGroupMembers", ctx, groupID, string(domain.MemberStatusActive)).Return([]domain.Member{
+		{GroupID: groupID, UserID: adminID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive},
 	}, nil)
 
 	mockNotif.On("CreateAlert", ctx, adminID, &userID, (*string)(nil), "Join Request Pending", mock.AnythingOfType("string")).Return(nil)
 
-	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	resp, err := uc.JoinGroup(ctx, inviteCode, userID)
 
 	require.NoError(t, err)
-	assert.Equal(t, group.MemberStatusPending, resp.Status)
+	assert.Equal(t, domain.MemberStatusPending, resp.Status)
 	assert.Contains(t, resp.Message, "admin approval")
 }
 
@@ -345,12 +345,12 @@ func TestDecideJoinRequest_Approve(t *testing.T) {
 	targetUserID := "usr-pending"
 	adminUserID := "usr-admin"
 
-	adminMember := &group.Member{GroupID: groupID, UserID: adminUserID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive}
-	approvedMember := &group.Member{GroupID: groupID, UserID: targetUserID, Role: group.MemberRoleMember, Status: group.MemberStatusActive}
+	adminMember := &domain.Member{GroupID: groupID, UserID: adminUserID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive}
+	approvedMember := &domain.Member{GroupID: groupID, UserID: targetUserID, Role: domain.MemberRoleMember, Status: domain.MemberStatusActive}
 
-	mockRepo.On("GetByID", ctx, groupID).Return(&group.Group{ID: groupID}, nil)
+	mockRepo.On("GetByID", ctx, groupID).Return(&domain.Group{ID: groupID}, nil)
 	mockRepo.On("GetGroupMember", ctx, groupID, adminUserID).Return(adminMember, nil)
-	mockRepo.On("UpdateMemberStatus", ctx, groupID, targetUserID, group.MemberStatusActive).Return(nil)
+	mockRepo.On("UpdateMemberStatus", ctx, groupID, targetUserID, domain.MemberStatusActive).Return(nil)
 	mockRepo.On("GetGroupMember", ctx, groupID, targetUserID).Return(approvedMember, nil)
 
 	mockAct.On("LogEvent",
@@ -359,7 +359,7 @@ func TestDecideJoinRequest_Approve(t *testing.T) {
 
 	mockNotif.On("CreateAlert", ctx, targetUserID, &adminUserID, (*string)(nil), "Join Request Approved", mock.AnythingOfType("string")).Return(nil)
 
-	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	err := uc.DecideJoinRequest(ctx, groupID, targetUserID, "APPROVE", adminUserID)
 
 	require.NoError(t, err)
@@ -378,14 +378,14 @@ func TestResetInviteCode_Success(t *testing.T) {
 	groupID := "grp-1"
 	adminUserID := "usr-admin"
 
-	adminMember := &group.Member{GroupID: groupID, UserID: adminUserID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive}
-	updatedGroup := &group.Group{ID: groupID, Name: "Trip"}
+	adminMember := &domain.Member{GroupID: groupID, UserID: adminUserID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive}
+	updatedGroup := &domain.Group{ID: groupID, Name: "Trip"}
 
 	mockRepo.On("GetByID", ctx, groupID).Return(updatedGroup, nil)
 	mockRepo.On("GetGroupMember", ctx, groupID, adminUserID).Return(adminMember, nil)
 	mockRepo.On("ResetInviteCode", ctx, groupID, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(updatedGroup, nil)
 
-	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	res, err := uc.ResetInviteCode(ctx, groupID, adminUserID)
 
 	require.NoError(t, err)

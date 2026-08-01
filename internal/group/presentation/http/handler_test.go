@@ -1,16 +1,18 @@
-package group_test
+package http_test
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/Saurrabhh/splittr_be/internal/activity"
-	"github.com/Saurrabhh/splittr_be/internal/group"
+	"github.com/Saurrabhh/splittr_be/internal/group/domain"
+	grouphttp "github.com/Saurrabhh/splittr_be/internal/group/presentation/http"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 	"github.com/go-chi/chi/v5"
@@ -18,6 +20,129 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
+
+type mockGroupRepository struct {
+	mock.Mock
+}
+
+func (m *mockGroupRepository) GetByID(ctx context.Context, id string) (*domain.Group, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Group), args.Error(1)
+}
+
+func (m *mockGroupRepository) GetByInviteCode(ctx context.Context, inviteCode string) (*domain.Group, error) {
+	args := m.Called(ctx, inviteCode)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Group), args.Error(1)
+}
+
+func (m *mockGroupRepository) GetPreviewByInviteCode(ctx context.Context, inviteCode string) (*domain.Preview, error) {
+	args := m.Called(ctx, inviteCode)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Preview), args.Error(1)
+}
+
+func (m *mockGroupRepository) GetGroupMember(ctx context.Context, groupID, userID string) (*domain.Member, error) {
+	args := m.Called(ctx, groupID, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Member), args.Error(1)
+}
+
+func (m *mockGroupRepository) ListGroupMembers(ctx context.Context, groupID string, status string) ([]domain.Member, error) {
+	args := m.Called(ctx, groupID, status)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Member), args.Error(1)
+}
+
+func (m *mockGroupRepository) ListUserGroupsWithMembers(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]domain.GroupWithMembers, error) {
+	args := m.Called(ctx, userID, limit, lastTime, lastID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.GroupWithMembers), args.Error(1)
+}
+
+func (m *mockGroupRepository) CreateGroup(ctx context.Context, g *domain.Group) error {
+	return m.Called(ctx, g).Error(0)
+}
+
+func (m *mockGroupRepository) Update(ctx context.Context, g *domain.Group) error {
+	return m.Called(ctx, g).Error(0)
+}
+
+func (m *mockGroupRepository) ResetInviteCode(ctx context.Context, groupID, newInviteCode string, expiresAt time.Time) (*domain.Group, error) {
+	args := m.Called(ctx, groupID, newInviteCode, expiresAt)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Group), args.Error(1)
+}
+
+func (m *mockGroupRepository) Archive(ctx context.Context, id string) error {
+	return m.Called(ctx, id).Error(0)
+}
+
+func (m *mockGroupRepository) AddGroupMember(ctx context.Context, groupID, userID string, role domain.MemberRole, status domain.MemberStatus) error {
+	return m.Called(ctx, groupID, userID, role, status).Error(0)
+}
+
+func (m *mockGroupRepository) UpdateMemberStatus(ctx context.Context, groupID, userID string, status domain.MemberStatus) error {
+	return m.Called(ctx, groupID, userID, status).Error(0)
+}
+
+func (m *mockGroupRepository) RemoveGroupMember(ctx context.Context, groupID, userID string) error {
+	return m.Called(ctx, groupID, userID).Error(0)
+}
+
+func (m *mockGroupRepository) UpdateGroupMemberRole(ctx context.Context, groupID, userID string, role domain.MemberRole) error {
+	return m.Called(ctx, groupID, userID, role).Error(0)
+}
+
+type mockActivityLogger struct {
+	mock.Mock
+}
+
+func (m *mockActivityLogger) LogEvent(
+	ctx context.Context,
+	actorID string,
+	groupID *string,
+	visibleToUserIDs []string,
+	event activity.Event,
+) error {
+	args := m.Called(ctx, actorID, groupID, visibleToUserIDs, event)
+	return args.Error(0)
+}
+
+type mockNotificationSender struct {
+	mock.Mock
+}
+
+func (m *mockNotificationSender) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) error {
+	args := m.Called(ctx, userID, actorID, activityID, title, content)
+	return args.Error(0)
+}
+
+type mockTransactor struct {
+	fail bool
+}
+
+func (m *mockTransactor) RunInTx(ctx context.Context, fn func(ctx context.Context) error) error {
+	if m.fail {
+		return errors.New("transaction error")
+	}
+	return fn(ctx)
+}
 
 type mockActivityRepo struct {
 	mock.Mock
@@ -47,9 +172,9 @@ func (m *mockActivityRepo) ListGroupFeed(ctx context.Context, groupID, userID st
 	return args.Get(0).([]activity.Activity), args.Error(1)
 }
 
-func setupHandlerTestRouter(uc *group.UseCase, activityUC *activity.UseCase, currentUser *user.User) chi.Router {
+func setupHandlerTestRouter(uc *domain.UseCase, activityUC *activity.UseCase, currentUser *user.User) chi.Router {
 	r := chi.NewRouter()
-	h := group.NewHandler(uc, activityUC)
+	h := grouphttp.NewHandler(uc, activityUC)
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -76,19 +201,19 @@ func TestHandler_CreateGroup_Success(t *testing.T) {
 	mockTx := &mockTransactor{}
 
 	currentUser := &user.User{ID: "usr-creator", Name: "Creator"}
-	createdGroup := &group.Group{ID: "grp-1", Name: "New Group", CreatedBy: &currentUser.ID}
+	createdGroup := &domain.Group{ID: "grp-1", Name: "New Group", CreatedBy: &currentUser.ID}
 
 	mockRepo.On("CreateGroup", mock.Anything, mock.AnythingOfType("*domain.Group")).Return(nil)
-	mockRepo.On("AddGroupMember", mock.Anything, mock.Anything, currentUser.ID, group.MemberRoleAdmin, group.MemberStatusActive).Return(nil)
-	mockRepo.On("ListGroupMembers", mock.Anything, mock.Anything, mock.Anything).Return([]group.Member{
-		{GroupID: "grp-1", UserID: currentUser.ID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive},
+	mockRepo.On("AddGroupMember", mock.Anything, mock.Anything, currentUser.ID, domain.MemberRoleAdmin, domain.MemberStatusActive).Return(nil)
+	mockRepo.On("ListGroupMembers", mock.Anything, mock.Anything, mock.Anything).Return([]domain.Member{
+		{GroupID: "grp-1", UserID: currentUser.ID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive},
 	}, nil)
 
 	mockAct.On("LogEvent",
 		mock.Anything, currentUser.ID, mock.Anything, mock.Anything, mock.Anything,
 	).Return(nil)
 
-	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	body, _ := json.Marshal(map[string]string{"name": "New Group", "description": "Desc"})
@@ -99,7 +224,7 @@ func TestHandler_CreateGroup_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusCreated, rr.Code)
-	var respGroup group.Group
+	var respGroup domain.Group
 	err := json.Unmarshal(rr.Body.Bytes(), &respGroup)
 	require.NoError(t, err)
 	assert.Equal(t, createdGroup.Name, respGroup.Name)
@@ -107,7 +232,7 @@ func TestHandler_CreateGroup_Success(t *testing.T) {
 
 func TestHandler_CreateGroup_BadRequest(t *testing.T) {
 	mockRepo := new(mockGroupRepository)
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	currentUser := &user.User{ID: "usr-creator", Name: "Creator"}
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
@@ -124,7 +249,7 @@ func TestHandler_CreateGroup_BadRequest(t *testing.T) {
 
 func TestHandler_CreateGroup_Unauthorized(t *testing.T) {
 	mockRepo := new(mockGroupRepository)
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, nil) // no user context
 
 	body, _ := json.Marshal(map[string]string{"name": "New Group"})
@@ -144,14 +269,14 @@ func TestHandler_GetDetails_Success(t *testing.T) {
 	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
 	groupID := "grp-1"
 
-	member := &group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleMember, Status: group.MemberStatusActive}
-	g := &group.Group{ID: groupID, Name: "Trip"}
+	member := &domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleMember, Status: domain.MemberStatusActive}
+	g := &domain.Group{ID: groupID, Name: "Trip"}
 
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(member, nil)
 	mockRepo.On("GetByID", mock.Anything, groupID).Return(g, nil)
-	mockRepo.On("ListGroupMembers", mock.Anything, groupID, mock.Anything).Return([]group.Member{*member}, nil)
+	mockRepo.On("ListGroupMembers", mock.Anything, groupID, mock.Anything).Return([]domain.Member{*member}, nil)
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	req := httptest.NewRequest(http.MethodGet, "/groups/"+groupID, nil)
@@ -160,7 +285,7 @@ func TestHandler_GetDetails_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var resp group.DetailsResponse
+	var resp domain.DetailsResponse
 	err := json.Unmarshal(rr.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	assert.Equal(t, groupID, resp.Group.ID)
@@ -175,7 +300,7 @@ func TestHandler_GetDetails_Forbidden(t *testing.T) {
 
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(nil, nil)
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	req := httptest.NewRequest(http.MethodGet, "/groups/"+groupID, nil)
@@ -191,11 +316,11 @@ func TestHandler_GetDetails_NotFound(t *testing.T) {
 	currentUser := &user.User{ID: "usr-1"}
 	groupID := "grp-nonexistent"
 
-	member := &group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleMember, Status: group.MemberStatusActive}
+	member := &domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleMember, Status: domain.MemberStatusActive}
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(member, nil)
 	mockRepo.On("GetByID", mock.Anything, groupID).Return(nil, nil)
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	req := httptest.NewRequest(http.MethodGet, "/groups/"+groupID, nil)
@@ -208,7 +333,7 @@ func TestHandler_GetDetails_NotFound(t *testing.T) {
 
 func TestHandler_GetDetails_Unauthorized(t *testing.T) {
 	mockRepo := new(mockGroupRepository)
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/groups/grp-1", nil)
@@ -231,20 +356,20 @@ func TestHandler_AddMember_Success(t *testing.T) {
 	groupID := "grp-1"
 	targetUserID := "usr-target"
 
-	adminMember := &group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive}
-	g := &group.Group{ID: groupID, Name: "Trip"}
+	adminMember := &domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive}
+	g := &domain.Group{ID: groupID, Name: "Trip"}
 
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(adminMember, nil)
 	mockRepo.On("GetByID", mock.Anything, groupID).Return(g, nil)
-	mockRepo.On("AddGroupMember", mock.Anything, groupID, targetUserID, group.MemberRoleMember, mock.Anything).Return(nil)
-	mockRepo.On("ListGroupMembers", mock.Anything, groupID, mock.Anything).Return([]group.Member{
-		{GroupID: groupID, UserID: targetUserID, Role: group.MemberRoleMember, Status: group.MemberStatusActive},
+	mockRepo.On("AddGroupMember", mock.Anything, groupID, targetUserID, domain.MemberRoleMember, mock.Anything).Return(nil)
+	mockRepo.On("ListGroupMembers", mock.Anything, groupID, mock.Anything).Return([]domain.Member{
+		{GroupID: groupID, UserID: targetUserID, Role: domain.MemberRoleMember, Status: domain.MemberStatusActive},
 	}, nil)
 
 	mockAct.On("LogEvent", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockNotif.On("CreateAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	body, _ := json.Marshal(map[string]string{"userId": targetUserID})
@@ -266,7 +391,7 @@ func TestHandler_AddMember_BadRequest_MissingUserID(t *testing.T) {
 	currentUser := &user.User{ID: "usr-admin"}
 	groupID := "grp-1"
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	body, _ := json.Marshal(map[string]string{"userId": ""})
@@ -284,11 +409,11 @@ func TestHandler_AddMember_Forbidden(t *testing.T) {
 	currentUser := &user.User{ID: "usr-member"}
 	groupID := "grp-1"
 
-	regularMember := &group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleMember, Status: group.MemberStatusActive}
-	mockRepo.On("GetByID", mock.Anything, groupID).Return(&group.Group{ID: groupID}, nil)
+	regularMember := &domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleMember, Status: domain.MemberStatusActive}
+	mockRepo.On("GetByID", mock.Anything, groupID).Return(&domain.Group{ID: groupID}, nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(regularMember, nil)
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	body, _ := json.Marshal(map[string]string{"userId": "usr-new"})
@@ -306,11 +431,11 @@ func TestHandler_AddMember_NotFound(t *testing.T) {
 	currentUser := &user.User{ID: "usr-admin"}
 	groupID := "grp-nonexistent"
 
-	adminMember := &group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive}
+	adminMember := &domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive}
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(adminMember, nil)
 	mockRepo.On("GetByID", mock.Anything, groupID).Return(nil, nil)
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	body, _ := json.Marshal(map[string]string{"userId": "usr-new"})
@@ -325,7 +450,7 @@ func TestHandler_AddMember_NotFound(t *testing.T) {
 
 func TestHandler_AddMember_Unauthorized(t *testing.T) {
 	mockRepo := new(mockGroupRepository)
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, nil)
 
 	body, _ := json.Marshal(map[string]string{"userId": "usr-new"})
@@ -350,10 +475,10 @@ func TestHandler_RemoveMember_Success(t *testing.T) {
 	groupID := "grp-1"
 	targetUserID := "usr-target"
 
-	g := &group.Group{ID: groupID, Name: "Trip"}
-	adminMember := &group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive}
-	targetMember := group.Member{GroupID: groupID, UserID: targetUserID, Role: group.MemberRoleMember, Status: group.MemberStatusActive}
-	members := []group.Member{*adminMember, targetMember}
+	g := &domain.Group{ID: groupID, Name: "Trip"}
+	adminMember := &domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive}
+	targetMember := domain.Member{GroupID: groupID, UserID: targetUserID, Role: domain.MemberRoleMember, Status: domain.MemberStatusActive}
+	members := []domain.Member{*adminMember, targetMember}
 
 	mockRepo.On("GetByID", mock.Anything, groupID).Return(g, nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(adminMember, nil)
@@ -364,7 +489,7 @@ func TestHandler_RemoveMember_Success(t *testing.T) {
 	mockAct.On("LogEvent", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockNotif.On("CreateAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	req := httptest.NewRequest(http.MethodDelete, "/groups/"+groupID+"/members/"+targetUserID, nil)
@@ -380,15 +505,15 @@ func TestHandler_RemoveMember_BadRequest_SoleAdmin(t *testing.T) {
 	currentUser := &user.User{ID: "usr-sole-admin"}
 	groupID := "grp-1"
 
-	g := &group.Group{ID: groupID, Name: "Trip"}
-	adminMember := group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive}
-	otherMember := group.Member{GroupID: groupID, UserID: "usr-other", Role: group.MemberRoleMember, Status: group.MemberStatusActive}
+	g := &domain.Group{ID: groupID, Name: "Trip"}
+	adminMember := domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive}
+	otherMember := domain.Member{GroupID: groupID, UserID: "usr-other", Role: domain.MemberRoleMember, Status: domain.MemberStatusActive}
 
 	mockRepo.On("GetByID", mock.Anything, groupID).Return(g, nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(&adminMember, nil)
-	mockRepo.On("ListGroupMembers", mock.Anything, groupID, mock.Anything).Return([]group.Member{adminMember, otherMember}, nil)
+	mockRepo.On("ListGroupMembers", mock.Anything, groupID, mock.Anything).Return([]domain.Member{adminMember, otherMember}, nil)
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	req := httptest.NewRequest(http.MethodDelete, "/groups/"+groupID+"/members/"+currentUser.ID, nil)
@@ -405,13 +530,13 @@ func TestHandler_RemoveMember_Forbidden(t *testing.T) {
 	groupID := "grp-1"
 	targetUserID := "usr-other"
 
-	g := &group.Group{ID: groupID, Name: "Trip"}
-	regularMember := &group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleMember, Status: group.MemberStatusActive}
+	g := &domain.Group{ID: groupID, Name: "Trip"}
+	regularMember := &domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleMember, Status: domain.MemberStatusActive}
 
 	mockRepo.On("GetByID", mock.Anything, groupID).Return(g, nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(regularMember, nil)
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	req := httptest.NewRequest(http.MethodDelete, "/groups/"+groupID+"/members/"+targetUserID, nil)
@@ -427,12 +552,12 @@ func TestHandler_RemoveMember_NotFound(t *testing.T) {
 	currentUser := &user.User{ID: "usr-admin"}
 	groupID := "grp-nonexistent"
 
-	adminMember := &group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive}
+	adminMember := &domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive}
 	mockRepo.On("GetByID", mock.Anything, groupID).Return(nil, nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(adminMember, nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, "usr-target").Return(nil, nil)
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	req := httptest.NewRequest(http.MethodDelete, "/groups/"+groupID+"/members/usr-target", nil)
@@ -445,7 +570,7 @@ func TestHandler_RemoveMember_NotFound(t *testing.T) {
 
 func TestHandler_RemoveMember_Unauthorized(t *testing.T) {
 	mockRepo := new(mockGroupRepository)
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, nil)
 
 	req := httptest.NewRequest(http.MethodDelete, "/groups/grp-1/members/usr-2", nil)
@@ -468,21 +593,21 @@ func TestHandler_UpdateMemberRole_Success(t *testing.T) {
 	groupID := "grp-1"
 	targetUserID := "usr-target"
 
-	g := &group.Group{ID: groupID, Name: "Trip"}
-	adminMember := &group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive}
-	targetMember := group.Member{GroupID: groupID, UserID: targetUserID, Role: group.MemberRoleMember, Status: group.MemberStatusActive}
-	members := []group.Member{*adminMember, targetMember}
+	g := &domain.Group{ID: groupID, Name: "Trip"}
+	adminMember := &domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive}
+	targetMember := domain.Member{GroupID: groupID, UserID: targetUserID, Role: domain.MemberRoleMember, Status: domain.MemberStatusActive}
+	members := []domain.Member{*adminMember, targetMember}
 
 	mockRepo.On("GetByID", mock.Anything, groupID).Return(g, nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(adminMember, nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, targetUserID).Return(&targetMember, nil)
 	mockRepo.On("ListGroupMembers", mock.Anything, groupID, mock.Anything).Return(members, nil)
-	mockRepo.On("UpdateGroupMemberRole", mock.Anything, groupID, targetUserID, group.MemberRoleAdmin).Return(nil)
+	mockRepo.On("UpdateGroupMemberRole", mock.Anything, groupID, targetUserID, domain.MemberRoleAdmin).Return(nil)
 
 	mockAct.On("LogEvent", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockNotif.On("CreateAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	body, _ := json.Marshal(map[string]string{"role": "ADMIN"})
@@ -504,7 +629,7 @@ func TestHandler_UpdateMemberRole_BadRequest_InvalidRole(t *testing.T) {
 	currentUser := &user.User{ID: "usr-admin"}
 	groupID := "grp-1"
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	body, _ := json.Marshal(map[string]string{"role": "superadmin"})
@@ -522,13 +647,13 @@ func TestHandler_UpdateMemberRole_Forbidden(t *testing.T) {
 	currentUser := &user.User{ID: "usr-regular"}
 	groupID := "grp-1"
 
-	g := &group.Group{ID: groupID, Name: "Trip"}
-	regularMember := &group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleMember, Status: group.MemberStatusActive}
+	g := &domain.Group{ID: groupID, Name: "Trip"}
+	regularMember := &domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleMember, Status: domain.MemberStatusActive}
 
 	mockRepo.On("GetByID", mock.Anything, groupID).Return(g, nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(regularMember, nil)
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	body, _ := json.Marshal(map[string]string{"role": "ADMIN"})
@@ -546,12 +671,12 @@ func TestHandler_UpdateMemberRole_NotFound(t *testing.T) {
 	currentUser := &user.User{ID: "usr-admin"}
 	groupID := "grp-nonexistent"
 
-	adminMember := &group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive}
+	adminMember := &domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive}
 	mockRepo.On("GetByID", mock.Anything, groupID).Return(nil, nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(adminMember, nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, "usr-target").Return(nil, nil)
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	body, _ := json.Marshal(map[string]string{"role": "ADMIN"})
@@ -566,7 +691,7 @@ func TestHandler_UpdateMemberRole_NotFound(t *testing.T) {
 
 func TestHandler_UpdateMemberRole_Unauthorized(t *testing.T) {
 	mockRepo := new(mockGroupRepository)
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, nil)
 
 	body, _ := json.Marshal(map[string]string{"role": "ADMIN"})
@@ -589,17 +714,17 @@ func TestHandler_Archive_Success(t *testing.T) {
 	currentUser := &user.User{ID: "usr-admin"}
 	groupID := "grp-1"
 
-	g := &group.Group{ID: groupID, Name: "Trip"}
-	adminMember := &group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive}
+	g := &domain.Group{ID: groupID, Name: "Trip"}
+	adminMember := &domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive}
 
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(adminMember, nil)
 	mockRepo.On("GetByID", mock.Anything, groupID).Return(g, nil)
-	mockRepo.On("ListGroupMembers", mock.Anything, groupID, mock.Anything).Return([]group.Member{*adminMember}, nil)
+	mockRepo.On("ListGroupMembers", mock.Anything, groupID, mock.Anything).Return([]domain.Member{*adminMember}, nil)
 	mockRepo.On("Archive", mock.Anything, groupID).Return(nil)
 
 	mockAct.On("LogEvent", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	uc := group.NewUseCase(mockRepo, mockTx, mockAct, nil)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	req := httptest.NewRequest(http.MethodDelete, "/groups/"+groupID, nil)
@@ -615,11 +740,11 @@ func TestHandler_Archive_Forbidden(t *testing.T) {
 	currentUser := &user.User{ID: "usr-regular"}
 	groupID := "grp-1"
 
-	regularMember := &group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleMember, Status: group.MemberStatusActive}
-	mockRepo.On("GetByID", mock.Anything, groupID).Return(&group.Group{ID: groupID}, nil)
+	regularMember := &domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleMember, Status: domain.MemberStatusActive}
+	mockRepo.On("GetByID", mock.Anything, groupID).Return(&domain.Group{ID: groupID}, nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(regularMember, nil)
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	req := httptest.NewRequest(http.MethodDelete, "/groups/"+groupID, nil)
@@ -635,11 +760,11 @@ func TestHandler_Archive_NotFound(t *testing.T) {
 	currentUser := &user.User{ID: "usr-admin"}
 	groupID := "grp-nonexistent"
 
-	adminMember := &group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive}
+	adminMember := &domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive}
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(adminMember, nil)
 	mockRepo.On("GetByID", mock.Anything, groupID).Return(nil, nil)
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	req := httptest.NewRequest(http.MethodDelete, "/groups/"+groupID, nil)
@@ -652,7 +777,7 @@ func TestHandler_Archive_NotFound(t *testing.T) {
 
 func TestHandler_Archive_Unauthorized(t *testing.T) {
 	mockRepo := new(mockGroupRepository)
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, nil)
 
 	req := httptest.NewRequest(http.MethodDelete, "/groups/grp-1", nil)
@@ -675,17 +800,17 @@ func TestHandler_JoinGroup_Success(t *testing.T) {
 	groupID := "grp-1"
 	futureExpires := time.Now().Add(1 * time.Hour)
 
-	g := &group.Group{ID: groupID, Name: "Trip", InviteCode: &inviteCode, InviteCodeExpiresAt: &futureExpires}
-	newMember := group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleMember, Status: group.MemberStatusActive}
+	g := &domain.Group{ID: groupID, Name: "Trip", InviteCode: &inviteCode, InviteCodeExpiresAt: &futureExpires}
+	newMember := domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleMember, Status: domain.MemberStatusActive}
 
 	mockRepo.On("GetByInviteCode", mock.Anything, inviteCode).Return(g, nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(nil, nil)
-	mockRepo.On("AddGroupMember", mock.Anything, groupID, currentUser.ID, group.MemberRoleMember, mock.Anything).Return(nil)
-	mockRepo.On("ListGroupMembers", mock.Anything, groupID, mock.Anything).Return([]group.Member{newMember}, nil)
+	mockRepo.On("AddGroupMember", mock.Anything, groupID, currentUser.ID, domain.MemberRoleMember, mock.Anything).Return(nil)
+	mockRepo.On("ListGroupMembers", mock.Anything, groupID, mock.Anything).Return([]domain.Member{newMember}, nil)
 
 	mockAct.On("LogEvent", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	uc := group.NewUseCase(mockRepo, mockTx, mockAct, nil)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	body, _ := json.Marshal(map[string]string{"inviteCode": inviteCode})
@@ -696,10 +821,10 @@ func TestHandler_JoinGroup_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var resp group.JoinResponse
+	var resp domain.JoinResponse
 	err := json.Unmarshal(rr.Body.Bytes(), &resp)
 	require.NoError(t, err)
-	assert.Equal(t, group.MemberStatusActive, resp.Status)
+	assert.Equal(t, domain.MemberStatusActive, resp.Status)
 	assert.Equal(t, g.ID, resp.Group.ID)
 }
 
@@ -707,7 +832,7 @@ func TestHandler_JoinGroup_BadRequest(t *testing.T) {
 	mockRepo := new(mockGroupRepository)
 	currentUser := &user.User{ID: "usr-new"}
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	body, _ := json.Marshal(map[string]string{"inviteCode": ""})
@@ -726,7 +851,7 @@ func TestHandler_JoinGroup_NotFound(t *testing.T) {
 
 	mockRepo.On("GetByInviteCode", mock.Anything, "invalid-code").Return(nil, nil)
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	body, _ := json.Marshal(map[string]string{"inviteCode": "invalid-code"})
@@ -741,7 +866,7 @@ func TestHandler_JoinGroup_NotFound(t *testing.T) {
 
 func TestHandler_JoinGroup_Unauthorized(t *testing.T) {
 	mockRepo := new(mockGroupRepository)
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, nil)
 
 	body, _ := json.Marshal(map[string]string{"inviteCode": "inv-123"})
@@ -761,7 +886,7 @@ func TestHandler_Preview_Success(t *testing.T) {
 	currentUser := &user.User{ID: "usr-1"}
 	inviteCode := "inv-123"
 
-	preview := &group.Preview{
+	preview := &domain.Preview{
 		Name:        "Trip",
 		MemberCount: 3,
 		CreatorName: "Bob",
@@ -769,7 +894,7 @@ func TestHandler_Preview_Success(t *testing.T) {
 
 	mockRepo.On("GetPreviewByInviteCode", mock.Anything, inviteCode).Return(preview, nil)
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	req := httptest.NewRequest(http.MethodGet, "/groups/preview?inviteCode="+inviteCode, nil)
@@ -784,7 +909,7 @@ func TestHandler_Preview_BadRequest(t *testing.T) {
 	mockRepo := new(mockGroupRepository)
 	currentUser := &user.User{ID: "usr-1"}
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	req := httptest.NewRequest(http.MethodGet, "/groups/preview", nil) // missing query param
@@ -802,7 +927,7 @@ func TestHandler_Preview_NotFound(t *testing.T) {
 
 	mockRepo.On("GetPreviewByInviteCode", mock.Anything, inviteCode).Return(nil, nil)
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	req := httptest.NewRequest(http.MethodGet, "/groups/preview?inviteCode="+inviteCode, nil)
@@ -819,12 +944,12 @@ func TestHandler_List_Success(t *testing.T) {
 	mockRepo := new(mockGroupRepository)
 	currentUser := &user.User{ID: "usr-1"}
 
-	groupsList := []group.GroupWithMembers{
-		{Group: group.Group{ID: "grp-1", Name: "Group 1"}},
+	groupsList := []domain.GroupWithMembers{
+		{Group: domain.Group{ID: "grp-1", Name: "Group 1"}},
 	}
 	mockRepo.On("ListUserGroupsWithMembers", mock.Anything, currentUser.ID, int32(21), mock.Anything, mock.Anything).Return(groupsList, nil)
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	req := httptest.NewRequest(http.MethodGet, "/groups", nil)
@@ -833,7 +958,7 @@ func TestHandler_List_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var resp group.ListGroupsResponse
+	var resp grouphttp.ListGroupsResponse
 	err := json.Unmarshal(rr.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	assert.Len(t, resp.Data, 1)
@@ -842,7 +967,7 @@ func TestHandler_List_Success(t *testing.T) {
 
 func TestHandler_List_Unauthorized(t *testing.T) {
 	mockRepo := new(mockGroupRepository)
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/groups", nil)
@@ -864,7 +989,7 @@ func TestHandler_GetFeed_Success(t *testing.T) {
 
 	mockActRepo.On("ListGroupFeed", mock.Anything, groupID, currentUser.ID, int32(21), mock.Anything, mock.Anything).Return([]activity.Activity{}, nil)
 
-	uc := group.NewUseCase(mockGroupRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockGroupRepo, &mockTransactor{}, nil, nil)
 	activityUC := activity.NewUseCase(mockActRepo)
 	router := setupHandlerTestRouter(uc, activityUC, currentUser)
 
@@ -888,17 +1013,17 @@ func TestHandler_DecideJoinRequest_Success(t *testing.T) {
 	groupID := "grp-1"
 	targetUserID := "usr-pending"
 
-	adminMember := &group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive}
-	approvedMember := &group.Member{GroupID: groupID, UserID: targetUserID, Role: group.MemberRoleMember, Status: group.MemberStatusActive}
+	adminMember := &domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive}
+	approvedMember := &domain.Member{GroupID: groupID, UserID: targetUserID, Role: domain.MemberRoleMember, Status: domain.MemberStatusActive}
 
-	mockRepo.On("GetByID", mock.Anything, groupID).Return(&group.Group{ID: groupID}, nil)
+	mockRepo.On("GetByID", mock.Anything, groupID).Return(&domain.Group{ID: groupID}, nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(adminMember, nil)
-	mockRepo.On("UpdateMemberStatus", mock.Anything, groupID, targetUserID, group.MemberStatusActive).Return(nil)
+	mockRepo.On("UpdateMemberStatus", mock.Anything, groupID, targetUserID, domain.MemberStatusActive).Return(nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, targetUserID).Return(approvedMember, nil)
 	mockAct.On("LogEvent", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockNotif.On("CreateAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	body, _ := json.Marshal(map[string]string{"action": "APPROVE"})
@@ -916,14 +1041,14 @@ func TestHandler_ResetInviteCode_Success(t *testing.T) {
 	currentUser := &user.User{ID: "usr-admin"}
 	groupID := "grp-1"
 
-	adminMember := &group.Member{GroupID: groupID, UserID: currentUser.ID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive}
-	updatedGroup := &group.Group{ID: groupID, Name: "Trip"}
+	adminMember := &domain.Member{GroupID: groupID, UserID: currentUser.ID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive}
+	updatedGroup := &domain.Group{ID: groupID, Name: "Trip"}
 
 	mockRepo.On("GetByID", mock.Anything, groupID).Return(updatedGroup, nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(adminMember, nil)
 	mockRepo.On("ResetInviteCode", mock.Anything, groupID, mock.Anything, mock.Anything).Return(updatedGroup, nil)
 
-	uc := group.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
 
 	req := httptest.NewRequest(http.MethodPost, "/groups/"+groupID+"/invite-code/reset", nil)
