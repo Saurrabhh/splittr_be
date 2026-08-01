@@ -44,7 +44,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 // @Accept       json
 // @Produce      json
 // @Param        request body CreateExpenseRequest true "Expense details and splits structure"
-// @Success      201  {object}  CreateExpenseResponse
+// @Success      201  {object}  domain.ExpenseWithSplits
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -53,7 +53,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
-	request.Run(w, r, http.StatusCreated, func(ctx context.Context, req CreateExpenseRequest) (CreateExpenseResponse, error) {
+	request.Run(w, r, http.StatusCreated, func(ctx context.Context, req CreateExpenseRequest) (ExpenseResponse, error) {
 		paidBy := req.PaidBy
 		if paidBy == "" {
 			paidBy = currUser.ID
@@ -77,11 +77,11 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 			currUser.ID,
 		)
 		if err != nil {
-			return CreateExpenseResponse{}, err
+			return ExpenseResponse{}, err
 		}
 
-		return CreateExpenseResponse{
-			Expense: exp,
+		return ExpenseResponse{
+			Expense: *exp,
 			Splits:  splits,
 		}, nil
 	})
@@ -94,7 +94,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Param        request body SettleExpenseRequest true "Settlement details"
-// @Success      201  {object}  SettleExpenseResponse
+// @Success      201  {object}  domain.ExpenseWithSplits
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -103,7 +103,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Settle(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
-	request.Run(w, r, http.StatusCreated, func(ctx context.Context, req SettleExpenseRequest) (SettleExpenseResponse, error) {
+	request.Run(w, r, http.StatusCreated, func(ctx context.Context, req SettleExpenseRequest) (ExpenseResponse, error) {
 		paidBy := req.PaidBy
 		if paidBy == "" {
 			paidBy = currUser.ID
@@ -119,19 +119,23 @@ func (h *Handler) Settle(w http.ResponseWriter, r *http.Request) {
 			currUser.ID,
 		)
 		if err != nil {
-			return SettleExpenseResponse{}, err
+			return ExpenseResponse{}, err
 		}
 
-		return SettleExpenseResponse{
-			Expense: exp,
-			Split:   split,
+		var splits []domain.Split
+		if split != nil {
+			splits = []domain.Split{*split}
+		}
+		return ExpenseResponse{
+			Expense: *exp,
+			Splits:  splits,
 		}, nil
 	})
 }
 
 // List lists expenses based on filters (group, personal, or friend).
 // @Summary      List expenses
-// @Description  Retrieve a cursor-paginated list of expenses filtered by group, personal=true, or friendId.
+// @Description  Retrieve a cursor-paginated list of expenses with splits, filtered by group, personal=true, or friendId.
 // @Tags         expenses
 // @Produce      json
 // @Param        groupId   query  string  false  "Filter by Group ID"
@@ -178,7 +182,12 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, result)
+	response.JSON(w, http.StatusOK, ListExpensesResponse{
+		Data:       result.Data,
+		Pagination: result.Pagination,
+	})
+
+
 }
 
 // GetDetails retrieves a specific expense and its details.
@@ -187,7 +196,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 // @Tags         expenses
 // @Produce      json
 // @Param        id path string true "Expense ID"
-// @Success      200  {object}  GetExpenseDetailsResponse
+// @Success      200  {object}  domain.ExpenseWithSplits
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -211,8 +220,8 @@ func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, GetExpenseDetailsResponse{
-		Expense: exp,
+	response.JSON(w, http.StatusOK, ExpenseResponse{
+		Expense: *exp,
 		Splits:  splits,
 	})
 }

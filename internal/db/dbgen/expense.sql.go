@@ -318,6 +318,54 @@ func (q *Queries) ListExpenseSplits(ctx context.Context, expenseID uuid.UUID) ([
 	return items, nil
 }
 
+const listExpenseSplitsByIDs = `-- name: ListExpenseSplitsByIDs :many
+SELECT es.expense_id, es.user_id, es.amount, es.split_type, es.split_value,
+       u.name, u.email, u.phone
+FROM expense_splits es
+JOIN users u ON es.user_id = u.id
+WHERE es.expense_id = ANY($1::uuid[])
+`
+
+type ListExpenseSplitsByIDsRow struct {
+	ExpenseID  uuid.UUID
+	UserID     uuid.UUID
+	Amount     pgtype.Numeric
+	SplitType  string
+	SplitValue pgtype.Numeric
+	Name       string
+	Email      pgtype.Text
+	Phone      pgtype.Text
+}
+
+func (q *Queries) ListExpenseSplitsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]ListExpenseSplitsByIDsRow, error) {
+	rows, err := q.db.Query(ctx, listExpenseSplitsByIDs, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListExpenseSplitsByIDsRow
+	for rows.Next() {
+		var i ListExpenseSplitsByIDsRow
+		if err := rows.Scan(
+			&i.ExpenseID,
+			&i.UserID,
+			&i.Amount,
+			&i.SplitType,
+			&i.SplitValue,
+			&i.Name,
+			&i.Email,
+			&i.Phone,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listExpensesByGroup = `-- name: ListExpensesByGroup :many
 SELECT id, description, amount, currency, category, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at
 FROM expenses
@@ -512,20 +560,19 @@ func (q *Queries) ListUserFriendExpenses(ctx context.Context, paidBy uuid.UUID) 
 }
 
 const listUserFriendExpensesPaginated = `-- name: ListUserFriendExpensesPaginated :many
-SELECT DISTINCT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
+SELECT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
 FROM expenses e
 JOIN expense_splits es ON e.id = es.expense_id
 WHERE e.group_id IS NULL
   AND e.deleted_at IS NULL
   AND (e.paid_by = $1 OR es.user_id = $1)
   AND (
-    SELECT COUNT(*) FROM expense_splits es2 WHERE es2.expense_id = e.id
-  ) > 1
-  AND (
     $3::TIMESTAMP WITH TIME ZONE IS NULL
     OR e.created_at < $3::TIMESTAMP WITH TIME ZONE
     OR (e.created_at = $3::TIMESTAMP WITH TIME ZONE AND e.id < $4::UUID)
   )
+GROUP BY e.id
+HAVING COUNT(es.expense_id) > 1
 ORDER BY e.created_at DESC, e.id DESC
 LIMIT $2
 `
@@ -656,17 +703,17 @@ func (q *Queries) ListUserPersonalExpenses(ctx context.Context, paidBy uuid.UUID
 const listUserPersonalExpensesPaginated = `-- name: ListUserPersonalExpensesPaginated :many
 SELECT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
 FROM expenses e
+LEFT JOIN expense_splits es ON es.expense_id = e.id
 WHERE e.paid_by = $1
   AND e.group_id IS NULL
   AND e.deleted_at IS NULL
-  AND (
-    SELECT COUNT(*) FROM expense_splits es WHERE es.expense_id = e.id
-  ) = 1
   AND (
     $3::TIMESTAMP WITH TIME ZONE IS NULL
     OR e.created_at < $3::TIMESTAMP WITH TIME ZONE
     OR (e.created_at = $3::TIMESTAMP WITH TIME ZONE AND e.id < $4::UUID)
   )
+GROUP BY e.id
+HAVING COUNT(es.expense_id) = 1
 ORDER BY e.created_at DESC, e.id DESC
 LIMIT $2
 `

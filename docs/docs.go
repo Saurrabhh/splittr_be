@@ -298,6 +298,21 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "domain.ExpenseWithSplits": {
+                "properties": {
+                    "expense": {
+                        "$ref": "#/components/schemas/domain.Expense"
+                    },
+                    "splits": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.Split"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
             "domain.Group": {
                 "properties": {
                     "archivedAt": {
@@ -713,21 +728,6 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "http.CreateExpenseResponse": {
-                "properties": {
-                    "expense": {
-                        "$ref": "#/components/schemas/domain.Expense"
-                    },
-                    "splits": {
-                        "items": {
-                            "$ref": "#/components/schemas/domain.Split"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
             "http.CreateGroupRequest": {
                 "properties": {
                     "description": {
@@ -750,21 +750,6 @@ const docTemplate = `{
                     "members": {
                         "items": {
                             "$ref": "#/components/schemas/domain.Member"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
-            "http.GetExpenseDetailsResponse": {
-                "properties": {
-                    "expense": {
-                        "$ref": "#/components/schemas/domain.Expense"
-                    },
-                    "splits": {
-                        "items": {
-                            "$ref": "#/components/schemas/domain.Split"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -799,7 +784,7 @@ const docTemplate = `{
                 "properties": {
                     "data": {
                         "items": {
-                            "$ref": "#/components/schemas/domain.Expense"
+                            "$ref": "#/components/schemas/domain.ExpenseWithSplits"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -879,17 +864,6 @@ const docTemplate = `{
                     },
                     "receivedBy": {
                         "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "http.SettleExpenseResponse": {
-                "properties": {
-                    "expense": {
-                        "$ref": "#/components/schemas/domain.Expense"
-                    },
-                    "split": {
-                        "$ref": "#/components/schemas/domain.Split"
                     }
                 },
                 "type": "object"
@@ -1154,7 +1128,7 @@ const docTemplate = `{
         },
         "/expenses": {
             "get": {
-                "description": "Retrieve a cursor-paginated list of expenses filtered by group, personal=true, or friendId.",
+                "description": "Retrieve a cursor-paginated list of expenses with splits, filtered by group, personal=true, or friendId.",
                 "parameters": [
                     {
                         "description": "Filter by Group ID",
@@ -1276,7 +1250,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/http.CreateExpenseResponse"
+                                    "$ref": "#/components/schemas/domain.ExpenseWithSplits"
                                 }
                             }
                         },
@@ -1352,7 +1326,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/http.SettleExpenseResponse"
+                                    "$ref": "#/components/schemas/domain.ExpenseWithSplits"
                                 }
                             }
                         },
@@ -1477,7 +1451,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/http.GetExpenseDetailsResponse"
+                                    "$ref": "#/components/schemas/domain.ExpenseWithSplits"
                                 }
                             }
                         },

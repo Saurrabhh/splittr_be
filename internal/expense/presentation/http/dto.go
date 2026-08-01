@@ -5,24 +5,11 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
 )
 
-// CreateExpenseResponse represents the response returned after creating an expense.
-type CreateExpenseResponse struct {
-	Expense *domain.Expense `json:"expense"`
-	Splits  []domain.Split  `json:"splits"`
-}
+// ExpenseResponse is the unified shape for create, get-by-ID, and list items.
+// All three endpoints return { expense: {...}, splits: [...] }.
+type ExpenseResponse = domain.ExpenseWithSplits
 
-// SettleExpenseResponse represents the response returned after settling a balance.
-type SettleExpenseResponse struct {
-	Expense *domain.Expense `json:"expense"`
-	Split   *domain.Split   `json:"split"`
-}
-
-// GetExpenseDetailsResponse represents the response containing an expense and its splits details.
-type GetExpenseDetailsResponse struct {
-	Expense *domain.Expense `json:"expense"`
-	Splits  []domain.Split  `json:"splits"`
-}
-
+// CreateExpenseRequest is the payload for POST /expenses.
 type CreateExpenseRequest struct {
 	Description string              `json:"description"`
 	Amount      float64             `json:"amount"`
@@ -34,6 +21,7 @@ type CreateExpenseRequest struct {
 	Splits      []domain.InputSplit `json:"splits"`
 }
 
+// SettleExpenseRequest is the payload for POST /expenses/settle.
 type SettleExpenseRequest struct {
 	Amount     float64 `json:"amount"`
 	Currency   string  `json:"currency"`
@@ -42,8 +30,8 @@ type SettleExpenseRequest struct {
 	ReceivedBy string  `json:"receivedBy"`
 }
 
-// ListExpensesResponse represents the paginated expenses list response.
+// ListExpensesResponse is the paginated list response — each item includes its splits.
 type ListExpensesResponse struct {
-	Data       []domain.Expense `json:"data"`
-	Pagination pagination.Meta  `json:"pagination"`
+	Data       []domain.ExpenseWithSplits `json:"data"`
+	Pagination pagination.Meta            `json:"pagination"`
 }

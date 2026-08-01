@@ -97,6 +97,14 @@ func (m *mockExpenseRepository) GetGroupPairwiseDebts(ctx context.Context, group
 	return args.Get(0).([]expense.PairwiseDebt), args.Error(1)
 }
 
+func (m *mockExpenseRepository) ListExpenseSplitsByIDs(ctx context.Context, expenseIDs []string) ([]expense.Split, error) {
+	args := m.Called(ctx, expenseIDs)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]expense.Split), args.Error(1)
+}
+
 type mockGroupService struct {
 	mock.Mock
 }
@@ -517,13 +525,14 @@ func TestListExpenses_Group(t *testing.T) {
 	mockRepo.On("ListExpensesByGroup", ctx, groupID, int32(11), (*time.Time)(nil), (*string)(nil)).Return([]expense.Expense{
 		{ID: "exp-1", Description: "Trip dinner"},
 	}, nil)
+	mockRepo.On("ListExpenseSplitsByIDs", ctx, []string{"exp-1"}).Return([]expense.Split{}, nil)
 
 	uc := expense.NewUseCase(mockRepo, &mockTransactor{}, mockGroupSvc, nil, nil)
 	resp, err := uc.ListExpenses(ctx, "group", groupID, userID, p)
 
 	require.NoError(t, err)
 	assert.Len(t, resp.Data, 1)
-	assert.Equal(t, "exp-1", resp.Data[0].ID)
+	assert.Equal(t, "exp-1", resp.Data[0].Expense.ID)
 }
 
 func TestListExpenses_InvalidFilterType(t *testing.T) {

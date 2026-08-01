@@ -169,6 +169,50 @@ func (r *DBRepository) ListExpenseSplits(ctx context.Context, expenseID string) 
 	return splits, nil
 }
 
+// ListExpenseSplitsByIDs fetches all splits for a batch of expense IDs in a single query.
+// This is the optimised alternative to calling ListExpenseSplits N times.
+func (r *DBRepository) ListExpenseSplitsByIDs(ctx context.Context, expenseIDs []string) ([]domain.Split, error) {
+	if len(expenseIDs) == 0 {
+		return nil, nil
+	}
+
+	uuids := make([]uuid.UUID, 0, len(expenseIDs))
+	for _, id := range expenseIDs {
+		parsed, err := uuid.Parse(id)
+		if err != nil {
+			return nil, fmt.Errorf("invalid expense uuid %q: %w", id, err)
+		}
+		uuids = append(uuids, parsed)
+	}
+
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+
+	rows, err := q.ListExpenseSplitsByIDs(ctx, uuids)
+	if err != nil {
+		return nil, fmt.Errorf("query splits by ids: %w", err)
+	}
+
+	splits := make([]domain.Split, 0, len(rows))
+	for _, row := range rows {
+		var splitVal *float64
+		if row.SplitValue.Valid {
+			splitVal = new(numericToFloat(row.SplitValue))
+		}
+		splits = append(splits, domain.Split{
+			ExpenseID:  row.ExpenseID.String(),
+			UserID:     row.UserID.String(),
+			Amount:     numericToFloat(row.Amount),
+			SplitType:  domain.SplitType(row.SplitType),
+			SplitValue: splitVal,
+			Name:       row.Name,
+			Email:      textToPtr(row.Email),
+			Phone:      textToPtr(row.Phone),
+		})
+	}
+	return splits, nil
+}
+
 // parseCursorArgs converts optional cursor fields to pg types for paginated queries.
 func parseCursorArgs(lastTime *time.Time, lastID *string) (pgtype.Timestamptz, uuid.UUID) {
 	var pgLastTime pgtype.Timestamptz

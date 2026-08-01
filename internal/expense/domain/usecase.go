@@ -385,39 +385,62 @@ func (u *UseCase) GetExpenseDetails(ctx context.Context, expenseID, userID strin
 }
 
 // ListExpenses returns a cursor-paginated list of expenses filtered by group, personal, or friend type.
-func (u *UseCase) ListExpenses(ctx context.Context, filterType, filterID, userID string, p pagination.Params) (pagination.Response[Expense], error) {
+func (u *UseCase) ListExpenses(ctx context.Context, filterType, filterID, userID string, p pagination.Params) (pagination.Response[ExpenseWithSplits], error) {
 	cursor := pagination.ParseCursor(p.Cursor)
-	encodeFn := func(e Expense) string { return pagination.EncodeCursor(e.CreatedAt, e.ID) }
+	encodeFn := func(e ExpenseWithSplits) string { return pagination.EncodeCursor(e.Expense.CreatedAt, e.Expense.ID) }
+
+	var expenses []Expense
+	var err error
 
 	switch filterType {
 	case "group":
-		_, _, err := u.groupSvc.GetGroupDetails(ctx, filterID, userID)
+		_, _, err = u.groupSvc.GetGroupDetails(ctx, filterID, userID)
 		if err != nil {
-			return pagination.Response[Expense]{}, err
+			return pagination.Response[ExpenseWithSplits]{}, err
 		}
-		rows, err := u.repo.ListExpensesByGroup(ctx, filterID, p.Limit+1, cursor.LastTime, cursor.LastID)
+		expenses, err = u.repo.ListExpensesByGroup(ctx, filterID, p.Limit+1, cursor.LastTime, cursor.LastID)
 		if err != nil {
-			return pagination.Response[Expense]{}, &response.AppError{Type: response.TypeInternal, Message: "failed to list group expenses", Err: err}
+			return pagination.Response[ExpenseWithSplits]{}, &response.AppError{Type: response.TypeInternal, Message: "failed to list group expenses", Err: err}
 		}
-		return pagination.BuildResponse(rows, p.Limit, encodeFn), nil
-
 	case "personal":
-		rows, err := u.repo.ListUserPersonalExpenses(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
+		expenses, err = u.repo.ListUserPersonalExpenses(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
 		if err != nil {
-			return pagination.Response[Expense]{}, &response.AppError{Type: response.TypeInternal, Message: "failed to list personal expenses", Err: err}
+			return pagination.Response[ExpenseWithSplits]{}, &response.AppError{Type: response.TypeInternal, Message: "failed to list personal expenses", Err: err}
 		}
-		return pagination.BuildResponse(rows, p.Limit, encodeFn), nil
-
 	case "friend":
-		rows, err := u.repo.ListUserFriendExpenses(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
+		expenses, err = u.repo.ListUserFriendExpenses(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
 		if err != nil {
-			return pagination.Response[Expense]{}, &response.AppError{Type: response.TypeInternal, Message: "failed to list friend expenses", Err: err}
+			return pagination.Response[ExpenseWithSplits]{}, &response.AppError{Type: response.TypeInternal, Message: "failed to list friend expenses", Err: err}
 		}
-		return pagination.BuildResponse(rows, p.Limit, encodeFn), nil
-
 	default:
-		return pagination.Response[Expense]{}, &response.AppError{Type: response.TypeValidation, Message: "invalid filter type: must be group, personal, or friend"}
+		return pagination.Response[ExpenseWithSplits]{}, &response.AppError{Type: response.TypeValidation, Message: "invalid filter type: must be group, personal, or friend"}
 	}
+
+	// Bulk-fetch all splits in a single query — always 2 DB round-trips total, never N+1.
+	ids := make([]string, len(expenses))
+	for i, e := range expenses {
+		ids[i] = e.ID
+	}
+	allSplits, err := u.repo.ListExpenseSplitsByIDs(ctx, ids)
+	if err != nil {
+		return pagination.Response[ExpenseWithSplits]{}, &response.AppError{Type: response.TypeInternal, Message: "failed to load expense splits", Err: err}
+	}
+
+	// Group splits by expense ID.
+	splitsByExpense := make(map[string][]Split, len(expenses))
+	for _, s := range allSplits {
+		splitsByExpense[s.ExpenseID] = append(splitsByExpense[s.ExpenseID], s)
+	}
+
+	rows := make([]ExpenseWithSplits, len(expenses))
+	for i, e := range expenses {
+		rows[i] = ExpenseWithSplits{
+			Expense: e,
+			Splits:  splitsByExpense[e.ID],
+		}
+	}
+
+	return pagination.BuildResponse(rows, p.Limit, encodeFn), nil
 }
 
 // GetBalances returns direct or group balances and recommended settlements.

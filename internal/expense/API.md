@@ -23,7 +23,7 @@ The Expense module manages shared group and individual expenses, splitting logic
     ]
   }
   ```
-- **Response** (`201 Created`): `CreateExpenseResponse` containing the created `Expense` and array of `Split` objects.
+- **Response** (`201 Created`): `ExpenseWithSplits` — unified response shape `{ "expense": {...}, "splits": [...] }`.
 
 ### 2. Settle Up
 - **POST** `/expenses/settle`
@@ -38,17 +38,17 @@ The Expense module manages shared group and individual expenses, splitting logic
     "receivedBy": "usr_abc"
   }
   ```
-- **Response** (`201 Created`): `SettleExpenseResponse` containing the settlement `Expense` and `Split`.
+- **Response** (`201 Created`): `ExpenseWithSplits` — same unified shape `{ "expense": {...}, "splits": [...] }`. For settlements, `splits` contains a single split.
 
 ### 3. List Expenses
 - **GET** `/expenses?groupId={id}&personal={bool}&friendId={id}&limit={int}&cursor={string}`
-- **Description**: Retrieve a cursor-paginated list of expenses filtered by group, personal budget, or direct friend.
-- **Response** (`200 OK`): `ListExpensesResponse` with data array and pagination cursor.
+- **Description**: Retrieve a cursor-paginated list of expenses with splits, filtered by group, personal budget, or direct friend. Splits for all items are bulk-fetched in a single query.
+- **Response** (`200 OK`): `ListExpensesResponse` with `data` array of `ExpenseWithSplits` and pagination cursor.
 
 ### 4. Get Expense Details
 - **GET** `/expenses/{id}`
 - **Description**: Retrieve a specific expense record and its full split breakdown.
-- **Response** (`200 OK`): `GetExpenseDetailsResponse`.
+- **Response** (`200 OK`): `ExpenseWithSplits` — same unified shape `{ "expense": {...}, "splits": [...] }`.
 
 ### 5. Delete Expense
 - **DELETE** `/expenses/{id}`

@@ -201,6 +201,16 @@ components:
         updatedAt:
           type: string
       type: object
+    domain.ExpenseWithSplits:
+      properties:
+        expense:
+          $ref: '#/components/schemas/domain.Expense'
+        splits:
+          items:
+            $ref: '#/components/schemas/domain.Split'
+          type: array
+          uniqueItems: false
+      type: object
     domain.Group:
       properties:
         archivedAt:
@@ -474,16 +484,6 @@ components:
           type: array
           uniqueItems: false
       type: object
-    http.CreateExpenseResponse:
-      properties:
-        expense:
-          $ref: '#/components/schemas/domain.Expense'
-        splits:
-          items:
-            $ref: '#/components/schemas/domain.Split'
-          type: array
-          uniqueItems: false
-      type: object
     http.CreateGroupRequest:
       properties:
         description:
@@ -500,16 +500,6 @@ components:
         members:
           items:
             $ref: '#/components/schemas/domain.Member'
-          type: array
-          uniqueItems: false
-      type: object
-    http.GetExpenseDetailsResponse:
-      properties:
-        expense:
-          $ref: '#/components/schemas/domain.Expense'
-        splits:
-          items:
-            $ref: '#/components/schemas/domain.Split'
           type: array
           uniqueItems: false
       type: object
@@ -532,7 +522,7 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/domain.Expense'
+            $ref: '#/components/schemas/domain.ExpenseWithSplits'
           type: array
           uniqueItems: false
         pagination:
@@ -585,13 +575,6 @@ components:
           type: string
         receivedBy:
           type: string
-      type: object
-    http.SettleExpenseResponse:
-      properties:
-        expense:
-          $ref: '#/components/schemas/domain.Expense'
-        split:
-          $ref: '#/components/schemas/domain.Split'
       type: object
     http.UpdateProfileRequest:
       properties:
@@ -756,8 +739,8 @@ paths:
       - expenses
   /expenses:
     get:
-      description: Retrieve a cursor-paginated list of expenses filtered by group,
-        personal=true, or friendId.
+      description: Retrieve a cursor-paginated list of expenses with splits, filtered
+        by group, personal=true, or friendId.
       parameters:
       - description: Filter by Group ID
         in: query
@@ -832,7 +815,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/http.CreateExpenseResponse'
+                $ref: '#/components/schemas/domain.ExpenseWithSplits'
           description: Created
         "400":
           content:
@@ -907,7 +890,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/http.GetExpenseDetailsResponse'
+                $ref: '#/components/schemas/domain.ExpenseWithSplits'
           description: OK
         "400":
           content:
@@ -951,7 +934,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/http.SettleExpenseResponse'
+                $ref: '#/components/schemas/domain.ExpenseWithSplits'
           description: Created
         "400":
           content:

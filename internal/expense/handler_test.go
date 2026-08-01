@@ -80,7 +80,7 @@ func TestHandler_CreateExpense_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusCreated, rr.Code)
-	var resp expense.CreateExpenseResponse
+	var resp expense.ExpenseWithSplits
 	err := json.Unmarshal(rr.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	assert.Equal(t, "Groceries", resp.Expense.Description)
@@ -204,6 +204,7 @@ func TestHandler_ListExpenses_GroupSuccess(t *testing.T) {
 	mockRepo.On("ListExpensesByGroup", mock.Anything, groupID, mock.Anything, mock.Anything, mock.Anything).Return([]expense.Expense{
 		{ID: "exp-1", Description: "Dinner"},
 	}, nil)
+	mockRepo.On("ListExpenseSplitsByIDs", mock.Anything, mock.Anything).Return([]expense.Split{}, nil)
 
 	uc := expense.NewUseCase(mockRepo, &mockTransactor{}, mockGroupSvc, nil, nil)
 	router := setupHandlerTestRouter(uc, currentUser)
@@ -223,6 +224,7 @@ func TestHandler_ListExpenses_PersonalSuccess(t *testing.T) {
 	mockRepo.On("ListUserPersonalExpenses", mock.Anything, currentUser.ID, mock.Anything, mock.Anything, mock.Anything).Return([]expense.Expense{
 		{ID: "exp-1", Description: "Coffee"},
 	}, nil)
+	mockRepo.On("ListExpenseSplitsByIDs", mock.Anything, mock.Anything).Return([]expense.Split{}, nil)
 
 	uc := expense.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
 	router := setupHandlerTestRouter(uc, currentUser)
@@ -243,6 +245,7 @@ func TestHandler_ListExpenses_FriendSuccess(t *testing.T) {
 	mockRepo.On("ListUserFriendExpenses", mock.Anything, currentUser.ID, mock.Anything, mock.Anything, mock.Anything).Return([]expense.Expense{
 		{ID: "exp-1", Description: "Taxi"},
 	}, nil)
+	mockRepo.On("ListExpenseSplitsByIDs", mock.Anything, mock.Anything).Return([]expense.Split{}, nil)
 
 	uc := expense.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
 	router := setupHandlerTestRouter(uc, currentUser)

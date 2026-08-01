@@ -11,6 +11,7 @@ type Repository interface {
 	CreateExpenseSplit(ctx context.Context, s *Split) error
 	GetExpenseByID(ctx context.Context, id string) (*Expense, error)
 	ListExpenseSplits(ctx context.Context, expenseID string) ([]Split, error)
+	ListExpenseSplitsByIDs(ctx context.Context, expenseIDs []string) ([]Split, error)
 	ListExpensesByGroup(ctx context.Context, groupID string, limit int32, lastTime *time.Time, lastID *string) ([]Expense, error)
 	ListUserPersonalExpenses(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Expense, error)
 	ListUserFriendExpenses(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]Expense, error)

@@ -15,6 +15,7 @@ type (
 	UserBalance        = domain.UserBalance
 	Settlement         = domain.Settlement
 	PairwiseDebt       = domain.PairwiseDebt
+	ExpenseWithSplits  = domain.ExpenseWithSplits
 	SplitType          = domain.SplitType
 	Repository         = domain.Repository
 	GroupService       = domain.GroupService
@@ -29,11 +30,8 @@ type DBRepository = data.DBRepository
 
 // Presentation DTO & Handler Aliases
 type (
-	Handler                   = http.Handler
-	CreateExpenseResponse     = http.CreateExpenseResponse
-	SettleExpenseResponse     = http.SettleExpenseResponse
-	GetExpenseDetailsResponse = http.GetExpenseDetailsResponse
-	ListExpensesResponse      = http.ListExpensesResponse
+	Handler              = http.Handler
+	ListExpensesResponse = http.ListExpensesResponse
 )
 
 // Constants
