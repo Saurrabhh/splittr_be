@@ -563,6 +563,7 @@ const listUserFriendExpensesPaginated = `-- name: ListUserFriendExpensesPaginate
 SELECT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
 FROM expenses e
 JOIN expense_splits es ON e.id = es.expense_id
+LEFT JOIN expense_splits es_total ON es_total.expense_id = e.id
 WHERE e.group_id IS NULL
   AND e.deleted_at IS NULL
   AND (e.paid_by = $1 OR es.user_id = $1)
@@ -572,7 +573,7 @@ WHERE e.group_id IS NULL
     OR (e.created_at = $3::TIMESTAMP WITH TIME ZONE AND e.id < $4::UUID)
   )
 GROUP BY e.id
-HAVING COUNT(es.expense_id) > 1
+HAVING COUNT(es_total.expense_id) > 1
 ORDER BY e.created_at DESC, e.id DESC
 LIMIT $2
 `
