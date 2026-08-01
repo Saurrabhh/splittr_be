@@ -4,16 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/go-chi/chi/v5"
 )
 
 // DecodeBody decodes the JSON request body into the target type.
-// If decoding fails, it writes a Bad Request response and returns false.
+// If decoding fails or the body contains trailing data, it writes a Bad Request response and returns false.
 func DecodeBody[T any](w http.ResponseWriter, r *http.Request) (T, bool) {
 	var req T
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	dec := json.NewDecoder(r.Body)
+	if err := dec.Decode(&req); err != nil {
+		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
+		return req, false
+	}
+	if dec.More() {
 		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
 		return req, false
 	}
@@ -21,9 +27,9 @@ func DecodeBody[T any](w http.ResponseWriter, r *http.Request) (T, bool) {
 }
 
 // URLParam returns the URL path parameter with the given key.
-// If it is missing or empty, it writes a 400 response and returns false.
+// If it is missing, empty, or whitespace, it writes a 400 response and returns false.
 func URLParam(w http.ResponseWriter, r *http.Request, key string) (string, bool) {
-	v := chi.URLParam(r, key)
+	v := strings.TrimSpace(chi.URLParam(r, key))
 	if v == "" {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeValidation,
@@ -35,9 +41,9 @@ func URLParam(w http.ResponseWriter, r *http.Request, key string) (string, bool)
 }
 
 // QueryParam returns the query parameter with the given key.
-// If it is missing or empty, it writes a 400 response and returns false.
+// If it is missing, empty, or whitespace, it writes a 400 response and returns false.
 func QueryParam(w http.ResponseWriter, r *http.Request, key string) (string, bool) {
-	v := r.URL.Query().Get(key)
+	v := strings.TrimSpace(r.URL.Query().Get(key))
 	if v == "" {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeValidation,

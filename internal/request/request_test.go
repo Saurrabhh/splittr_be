@@ -60,7 +60,33 @@ func TestDecodeBody_InvalidJSON(t *testing.T) {
 		t.Fatalf("failed to decode error response: %v", err)
 	}
 
-	if errResp.Code != string(response.ErrInvalidBody) {
+	if errResp.Code != response.ErrInvalidBody {
+		t.Errorf("expected error code %q, got %q", response.ErrInvalidBody, errResp.Code)
+	}
+	if errResp.Message != "invalid request body" {
+		t.Errorf("expected error message %q, got %q", "invalid request body", errResp.Message)
+	}
+}
+
+func TestDecodeBody_TrailingData(t *testing.T) {
+	body := `{"name":"alice"}{"extra":true}`
+	req := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(body))
+	w := httptest.NewRecorder()
+
+	_, ok := request.DecodeBody[sampleRequest](w, req)
+	if ok {
+		t.Fatal("expected DecodeBody to return false for body with trailing data")
+	}
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected status code %d, got %d", http.StatusBadRequest, w.Code)
+	}
+
+	var errResp response.ErrorResponse
+	if err := json.NewDecoder(w.Body).Decode(&errResp); err != nil {
+		t.Fatalf("failed to decode error response: %v", err)
+	}
+	if errResp.Code != response.ErrInvalidBody {
 		t.Errorf("expected error code %q, got %q", response.ErrInvalidBody, errResp.Code)
 	}
 }
@@ -116,7 +142,7 @@ func TestRun_AppError(t *testing.T) {
 		t.Fatalf("failed to decode error response: %v", err)
 	}
 
-	if errResp.Code != string(response.ErrBadRequest) {
+	if errResp.Code != response.ErrBadRequest {
 		t.Errorf("expected error code %q, got %q", response.ErrBadRequest, errResp.Code)
 	}
 	if errResp.Message != "invalid name provided" {
@@ -156,6 +182,33 @@ func TestURLParam_Missing(t *testing.T) {
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("expected status code %d, got %d", http.StatusBadRequest, w.Code)
 	}
+
+	var errResp response.ErrorResponse
+	if err := json.NewDecoder(w.Body).Decode(&errResp); err != nil {
+		t.Fatalf("failed to decode error response: %v", err)
+	}
+	if errResp.Code != response.ErrBadRequest {
+		t.Errorf("expected error code %q, got %q", response.ErrBadRequest, errResp.Code)
+	}
+	if errResp.Message != "id path parameter is required" {
+		t.Errorf("expected error message %q, got %q", "id path parameter is required", errResp.Message)
+	}
+}
+
+func TestURLParam_Whitespace(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/groups/grp-1", nil)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", "  ")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+	w := httptest.NewRecorder()
+
+	_, ok := request.URLParam(w, req, "id")
+	if ok {
+		t.Fatal("expected URLParam to return false for whitespace-only param")
+	}
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected status code %d, got %d", http.StatusBadRequest, w.Code)
+	}
 }
 
 func TestQueryParam_Present(t *testing.T) {
@@ -181,5 +234,16 @@ func TestQueryParam_Missing(t *testing.T) {
 	}
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("expected status code %d, got %d", http.StatusBadRequest, w.Code)
+	}
+
+	var errResp response.ErrorResponse
+	if err := json.NewDecoder(w.Body).Decode(&errResp); err != nil {
+		t.Fatalf("failed to decode error response: %v", err)
+	}
+	if errResp.Code != response.ErrBadRequest {
+		t.Errorf("expected error code %q, got %q", response.ErrBadRequest, errResp.Code)
+	}
+	if errResp.Message != "inviteCode query parameter is required" {
+		t.Errorf("expected error message %q, got %q", "inviteCode query parameter is required", errResp.Message)
 	}
 }

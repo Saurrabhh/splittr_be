@@ -11,16 +11,17 @@ import (
 // ErrorCode represents a centralized standard API error code.
 type ErrorCode string
 
+// Generic error codes.
 const (
-	// ErrBadRequest ErrUnauthorized ErrForbidden ErrNotFound ErrInternalServerError
-	// Generic error codes
 	ErrBadRequest          ErrorCode = "BAD_REQUEST"
 	ErrUnauthorized        ErrorCode = "UNAUTHORIZED"
 	ErrForbidden           ErrorCode = "FORBIDDEN"
 	ErrNotFound            ErrorCode = "NOT_FOUND"
 	ErrInternalServerError ErrorCode = "INTERNAL_SERVER_ERROR"
+)
 
-	// ErrInvalidBody ErrUserNotFound Domain-specific error codes
+// Domain-specific error codes.
+const (
 	ErrInvalidBody  ErrorCode = "INVALID_BODY"
 	ErrUserNotFound ErrorCode = "USER_NOT_FOUND"
 )
@@ -32,7 +33,6 @@ const (
 	TypeNotFound     ErrorType = "NOT_FOUND"
 	TypeUnauthorized ErrorType = "UNAUTHORIZED"
 	TypeForbidden    ErrorType = "FORBIDDEN"
-	TypeConflict     ErrorType = "CONFLICT"
 	TypeInternal     ErrorType = "INTERNAL"
 )
 
@@ -56,8 +56,8 @@ func (e *AppError) Unwrap() error {
 
 // ErrorResponse represents a standard JSON error response structure.
 type ErrorResponse struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
 }
 
 // JSON sends a raw JSON response with the given status code.
@@ -73,7 +73,7 @@ func Error(w http.ResponseWriter, status int, errorCode ErrorCode, message strin
 	w.WriteHeader(status)
 
 	res := ErrorResponse{
-		Code:    string(errorCode),
+		Code:    errorCode,
 		Message: message,
 	}
 
@@ -121,8 +121,6 @@ func HandleError(w http.ResponseWriter, err error) {
 			Unauthorized(w, appErr.Message)
 		case TypeForbidden:
 			Forbidden(w, appErr.Message)
-		case TypeConflict:
-			Error(w, http.StatusConflict, "CONFLICT", appErr.Message)
 		case TypeInternal:
 			log.Printf("[INTERNAL ERROR] %v", appErr.Err)
 			InternalServerError(w, "an internal database/system error occurred")

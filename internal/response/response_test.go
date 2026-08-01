@@ -39,56 +39,49 @@ func TestHandleError(t *testing.T) {
 		name           string
 		err            error
 		expectedStatus int
-		expectedCode   string
+		expectedCode   response.ErrorCode
 		expectedMsg    string
 	}{
 		{
 			name:           "TypeValidation maps to 400 Bad Request",
 			err:            &response.AppError{Type: response.TypeValidation, Message: "validation failed"},
 			expectedStatus: http.StatusBadRequest,
-			expectedCode:   string(response.ErrBadRequest),
+			expectedCode:   response.ErrBadRequest,
 			expectedMsg:    "validation failed",
 		},
 		{
 			name:           "TypeNotFound maps to 404 Not Found",
 			err:            &response.AppError{Type: response.TypeNotFound, Message: "resource not found"},
 			expectedStatus: http.StatusNotFound,
-			expectedCode:   string(response.ErrNotFound),
+			expectedCode:   response.ErrNotFound,
 			expectedMsg:    "resource not found",
 		},
 		{
 			name:           "TypeUnauthorized maps to 401 Unauthorized",
 			err:            &response.AppError{Type: response.TypeUnauthorized, Message: "unauthorized access"},
 			expectedStatus: http.StatusUnauthorized,
-			expectedCode:   string(response.ErrUnauthorized),
+			expectedCode:   response.ErrUnauthorized,
 			expectedMsg:    "unauthorized access",
 		},
 		{
 			name:           "TypeForbidden maps to 403 Forbidden",
 			err:            &response.AppError{Type: response.TypeForbidden, Message: "access forbidden"},
 			expectedStatus: http.StatusForbidden,
-			expectedCode:   string(response.ErrForbidden),
+			expectedCode:   response.ErrForbidden,
 			expectedMsg:    "access forbidden",
-		},
-		{
-			name:           "TypeConflict maps to 409 Conflict",
-			err:            &response.AppError{Type: response.TypeConflict, Message: "resource conflict"},
-			expectedStatus: http.StatusConflict,
-			expectedCode:   "CONFLICT",
-			expectedMsg:    "resource conflict",
 		},
 		{
 			name:           "TypeInternal maps to 500 Internal Server Error",
 			err:            &response.AppError{Type: response.TypeInternal, Message: "db error", Err: errors.New("connection failed")},
 			expectedStatus: http.StatusInternalServerError,
-			expectedCode:   string(response.ErrInternalServerError),
+			expectedCode:   response.ErrInternalServerError,
 			expectedMsg:    "an internal database/system error occurred",
 		},
 		{
 			name:           "Generic unhandled error maps to 500 Internal Server Error",
 			err:            errors.New("unexpected crash"),
 			expectedStatus: http.StatusInternalServerError,
-			expectedCode:   string(response.ErrInternalServerError),
+			expectedCode:   response.ErrInternalServerError,
 			expectedMsg:    "an unexpected error occurred",
 		},
 	}
