@@ -143,12 +143,9 @@ type mockNotificationSender struct {
 	mock.Mock
 }
 
-func (m *mockNotificationSender) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) (*notification.Notification, error) {
-	args := m.Called(ctx, userID, actorID, activityID, title, content)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*notification.Notification), args.Error(1)
+func (m *mockNotificationSender) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, alert notification.Alert) error {
+	args := m.Called(ctx, userID, actorID, activityID, alert)
+	return args.Error(0)
 }
 
 type mockTransactor struct {
@@ -190,7 +187,7 @@ func TestCreateExpense_Success_EqualSplit(t *testing.T) {
 		ctx, creatorID, (*string)(nil), mock.Anything, mock.Anything,
 	).Return(&activity.Activity{ID: "act-1"}, nil)
 
-	mockNotif.On("CreateAlert", ctx, "usr-2", &creatorID, mock.Anything, "New Expense", "New expense 'Dinner' of 100.00 INR added").Return(&notification.Notification{ID: "notif-1"}, nil)
+	mockNotif.On("CreateAlert", ctx, "usr-2", &creatorID, mock.Anything, mock.Anything).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockGroupSvc, mockAct, mockNotif)
 	exp, splits, err := uc.CreateExpense(ctx, "Dinner", 100.0, "INR", "Food", nil, paidBy, domain.SplitTypeEqual, inputs, creatorID)
@@ -243,7 +240,7 @@ func TestCreateExpense_Success_GroupExactSplit(t *testing.T) {
 		ctx, creatorID, &groupID, ([]string)(nil), mock.Anything,
 	).Return(&activity.Activity{ID: "act-1"}, nil)
 
-	mockNotif.On("CreateAlert", ctx, "usr-2", &creatorID, mock.Anything, "New Expense", "New expense 'Hotel' of 100.00 INR added").Return(&notification.Notification{ID: "notif-1"}, nil)
+	mockNotif.On("CreateAlert", ctx, "usr-2", &creatorID, mock.Anything, mock.Anything).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockGroupSvc, mockAct, mockNotif)
 	exp, splits, err := uc.CreateExpense(ctx, "Hotel", 100.0, "INR", "Travel", &groupID, paidBy, domain.SplitTypeExact, inputs, creatorID)
@@ -282,7 +279,7 @@ func TestCreateExpense_Success_PercentageSplit(t *testing.T) {
 		ctx, creatorID, (*string)(nil), mock.Anything, mock.Anything,
 	).Return(&activity.Activity{ID: "act-1"}, nil)
 
-	mockNotif.On("CreateAlert", ctx, "usr-2", &creatorID, mock.Anything, "New Expense", "New expense 'Party' of 200.00 USD added").Return(&notification.Notification{ID: "notif-1"}, nil)
+	mockNotif.On("CreateAlert", ctx, "usr-2", &creatorID, mock.Anything, mock.Anything).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockGroupSvc, mockAct, mockNotif)
 	exp, splits, err := uc.CreateExpense(ctx, "Party", 200.0, "USD", "Entertainment", nil, paidBy, domain.SplitTypePercentage, inputs, creatorID)
@@ -449,7 +446,7 @@ func TestSettleUp_Success(t *testing.T) {
 		ctx, createdBy, (*string)(nil), mock.Anything, mock.Anything,
 	).Return(&activity.Activity{ID: "act-1"}, nil)
 
-	mockNotif.On("CreateAlert", ctx, receivedBy, &paidBy, mock.Anything, "Payment Received", "Payment of 50.00 INR received").Return(&notification.Notification{ID: "notif-1"}, nil)
+	mockNotif.On("CreateAlert", ctx, receivedBy, &paidBy, mock.Anything, mock.Anything).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockGroupSvc, mockAct, mockNotif)
 	exp, split, err := uc.SettleUp(ctx, 50.0, "INR", nil, paidBy, receivedBy, createdBy)

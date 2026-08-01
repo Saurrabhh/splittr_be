@@ -32,7 +32,7 @@ type ActivityLogger interface {
 }
 
 type NotificationSender interface {
-	CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) (*notification.Notification, error)
+	CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, alert notification.Alert) error
 }
 
 // BalanceResponse contains a list of member balances and a list of recommended settlement transactions.
@@ -181,19 +181,18 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 			return err
 		}
 
-		notificationTitle := "New Expense"
-		notificationContent := fmt.Sprintf("New expense '%s' of %.2f %s added", desc, amount, currency)
+		expenseAlert := notification.NewExpenseAddedAlert(desc, amount, currency)
 
 		if groupID != nil && *groupID != "" {
 			for _, m := range members {
 				if m.UserID != createdBy {
-					_, _ = u.notification.CreateAlert(txCtx, m.UserID, &createdBy, &act.ID, notificationTitle, notificationContent)
+					_ = u.notification.CreateAlert(txCtx, m.UserID, &createdBy, &act.ID, expenseAlert)
 				}
 			}
 		} else {
 			for _, sp := range inputs {
 				if sp.UserID != createdBy {
-					_, _ = u.notification.CreateAlert(txCtx, sp.UserID, &createdBy, &act.ID, notificationTitle, notificationContent)
+					_ = u.notification.CreateAlert(txCtx, sp.UserID, &createdBy, &act.ID, expenseAlert)
 				}
 			}
 		}
@@ -321,13 +320,12 @@ func (u *UseCase) SettleUp(ctx context.Context, amount float64, currency string,
 			return err
 		}
 
-		_, _ = u.notification.CreateAlert(
+		_ = u.notification.CreateAlert(
 			txCtx,
 			receivedBy,
 			&paidBy,
 			&act.ID,
-			"Payment Received",
-			fmt.Sprintf("Payment of %.2f %s received", amount, currency),
+			notification.NewPaymentReceivedAlert(amount, currency),
 		)
 
 		return nil

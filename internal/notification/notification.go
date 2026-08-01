@@ -9,6 +9,8 @@ import (
 
 // Domain Type Aliases
 type (
+	Alert        = domain.Alert
+	AlertType    = domain.AlertType
 	Notification = domain.Notification
 	Repository   = domain.Repository
 	UseCase      = domain.UseCase
@@ -19,6 +21,24 @@ type DBRepository = data.DBRepository
 
 // Presentation Type Aliases
 type Handler = http.Handler
+
+// AlertType constants
+const (
+	AlertTypeExpenseAdded        = domain.AlertTypeExpenseAdded
+	AlertTypePaymentReceived     = domain.AlertTypePaymentReceived
+	AlertTypeJoinRequestPending  = domain.AlertTypeJoinRequestPending
+	AlertTypeJoinRequestApproved = domain.AlertTypeJoinRequestApproved
+	AlertTypeJoinRequestRejected = domain.AlertTypeJoinRequestRejected
+)
+
+// Type-safe Alert factory functions
+var (
+	NewExpenseAddedAlert        = domain.NewExpenseAddedAlert
+	NewPaymentReceivedAlert     = domain.NewPaymentReceivedAlert
+	NewJoinRequestPendingAlert  = domain.NewJoinRequestPendingAlert
+	NewJoinRequestApprovedAlert = domain.NewJoinRequestApprovedAlert
+	NewJoinRequestRejectedAlert = domain.NewJoinRequestRejectedAlert
+)
 
 // Constructors
 func NewRepository(database *db.DB, tm *db.TransactionManager) *DBRepository {

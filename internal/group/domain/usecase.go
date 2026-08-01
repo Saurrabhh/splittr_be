@@ -2,12 +2,12 @@ package domain
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
 	"github.com/Saurrabhh/splittr_be/internal/activity"
 	"github.com/Saurrabhh/splittr_be/internal/db"
+	"github.com/Saurrabhh/splittr_be/internal/notification"
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/google/uuid"
@@ -33,7 +33,7 @@ type ActivityLogger interface {
 
 // NotificationSender delivers notifications to users.
 type NotificationSender interface {
-	CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) error
+	CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, alert notification.Alert) error
 }
 
 // DetailsResponse is the canonical shape for any endpoint or feed payload that returns group data.
@@ -722,8 +722,7 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 					if m.Role == MemberRoleAdmin && u.notification != nil {
 						_ = u.notification.CreateAlert(
 							txCtx, m.UserID, &userID, nil,
-							"Join Request Pending",
-							fmt.Sprintf("A user requested to join group %s", g.Name),
+							notification.NewJoinRequestPendingAlert(g.Name),
 						)
 					}
 				}
@@ -832,13 +831,13 @@ func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID s
 			}
 		}
 		if u.notification != nil {
-			title := "Join Request Approved"
-			content := "Your request to join the group was approved."
+			var alert notification.Alert
 			if newStatus == MemberStatusRejected {
-				title = "Join Request Rejected"
-				content = "Your request to join the group was declined."
+				alert = notification.NewJoinRequestRejectedAlert()
+			} else {
+				alert = notification.NewJoinRequestApprovedAlert()
 			}
-			_ = u.notification.CreateAlert(txCtx, targetUserID, &adminUserID, nil, title, content)
+			_ = u.notification.CreateAlert(txCtx, targetUserID, &adminUserID, nil, alert)
 		}
 		return nil
 	})

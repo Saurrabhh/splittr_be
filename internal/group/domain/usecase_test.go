@@ -8,6 +8,7 @@ import (
 
 	"github.com/Saurrabhh/splittr_be/internal/activity"
 	"github.com/Saurrabhh/splittr_be/internal/group/domain"
+	"github.com/Saurrabhh/splittr_be/internal/notification"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -121,8 +122,8 @@ type mockNotificationSender struct {
 	mock.Mock
 }
 
-func (m *mockNotificationSender) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) error {
-	args := m.Called(ctx, userID, actorID, activityID, title, content)
+func (m *mockNotificationSender) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, alert notification.Alert) error {
+	args := m.Called(ctx, userID, actorID, activityID, alert)
 	return args.Error(0)
 }
 
@@ -322,7 +323,7 @@ func TestJoinGroup_RequireAdminApproval_Pending(t *testing.T) {
 		{GroupID: groupID, UserID: adminID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive},
 	}, nil)
 
-	mockNotif.On("CreateAlert", ctx, adminID, &userID, (*string)(nil), "Join Request Pending", mock.AnythingOfType("string")).Return(nil)
+	mockNotif.On("CreateAlert", ctx, adminID, &userID, (*string)(nil), mock.Anything).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	resp, err := uc.JoinGroup(ctx, inviteCode, userID)
@@ -357,7 +358,7 @@ func TestDecideJoinRequest_Approve(t *testing.T) {
 		ctx, adminUserID, &groupID, ([]string)(nil), mock.Anything,
 	).Return(nil)
 
-	mockNotif.On("CreateAlert", ctx, targetUserID, &adminUserID, (*string)(nil), "Join Request Approved", mock.AnythingOfType("string")).Return(nil)
+	mockNotif.On("CreateAlert", ctx, targetUserID, &adminUserID, (*string)(nil), mock.Anything).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	err := uc.DecideJoinRequest(ctx, groupID, targetUserID, "APPROVE", adminUserID)

@@ -13,6 +13,7 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/activity"
 	"github.com/Saurrabhh/splittr_be/internal/group/domain"
 	grouphttp "github.com/Saurrabhh/splittr_be/internal/group/presentation/http"
+	"github.com/Saurrabhh/splittr_be/internal/notification"
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/Saurrabhh/splittr_be/internal/user"
@@ -129,8 +130,8 @@ type mockNotificationSender struct {
 	mock.Mock
 }
 
-func (m *mockNotificationSender) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) error {
-	args := m.Called(ctx, userID, actorID, activityID, title, content)
+func (m *mockNotificationSender) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, alert notification.Alert) error {
+	args := m.Called(ctx, userID, actorID, activityID, alert)
 	return args.Error(0)
 }
 
@@ -368,7 +369,7 @@ func TestHandler_AddMember_Success(t *testing.T) {
 	}, nil)
 
 	mockAct.On("LogEvent", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	mockNotif.On("CreateAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockNotif.On("CreateAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
@@ -488,7 +489,7 @@ func TestHandler_RemoveMember_Success(t *testing.T) {
 	mockRepo.On("RemoveGroupMember", mock.Anything, groupID, targetUserID).Return(nil)
 
 	mockAct.On("LogEvent", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	mockNotif.On("CreateAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockNotif.On("CreateAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
@@ -606,7 +607,7 @@ func TestHandler_UpdateMemberRole_Success(t *testing.T) {
 	mockRepo.On("UpdateGroupMemberRole", mock.Anything, groupID, targetUserID, domain.MemberRoleAdmin).Return(nil)
 
 	mockAct.On("LogEvent", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	mockNotif.On("CreateAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockNotif.On("CreateAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	router := setupHandlerTestRouter(uc, nil, currentUser)
@@ -1022,7 +1023,7 @@ func TestHandler_DecideJoinRequest_Success(t *testing.T) {
 	mockRepo.On("UpdateMemberStatus", mock.Anything, groupID, targetUserID, domain.MemberStatusActive).Return(nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, targetUserID).Return(approvedMember, nil)
 	mockAct.On("LogEvent", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	mockNotif.On("CreateAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockNotif.On("CreateAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	router := setupHandlerTestRouter(uc, nil, currentUser)

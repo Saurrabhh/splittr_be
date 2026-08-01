@@ -48,13 +48,11 @@ func TestCreateAlert_Success(t *testing.T) {
 	actorID := "actor-1"
 	activityID := "act-1"
 	userID := "user-1"
-	title := "New Expense"
-	content := "Bob added an expense"
 
 	mockRepo.On("CreateNotification", ctx, mock.AnythingOfType("*domain.Notification")).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo)
-	notif, err := uc.CreateAlert(ctx, userID, &actorID, &activityID, title, content)
+	notif, err := uc.CreateAlert(ctx, userID, &actorID, &activityID, domain.NewExpenseAddedAlert("Dinner", 100, "INR"))
 	require.NoError(t, err)
 	require.NotNil(t, notif)
 
@@ -62,9 +60,24 @@ func TestCreateAlert_Success(t *testing.T) {
 	assert.Equal(t, userID, notif.UserID)
 	assert.Equal(t, &actorID, notif.ActorID)
 	assert.Equal(t, &activityID, notif.ActivityID)
-	assert.Equal(t, title, notif.Title)
-	assert.Equal(t, content, notif.Content)
+	assert.Equal(t, domain.AlertTypeExpenseAdded, notif.Type)
+	assert.Equal(t, "New Expense", notif.Title)
+	assert.Equal(t, "New expense 'Dinner' of 100.00 INR added", notif.Content)
 	mockRepo.AssertExpectations(t)
+}
+
+func TestCreateAlert_NilAlert(t *testing.T) {
+	mockRepo := new(mockNotificationRepository)
+	ctx := context.Background()
+
+	uc := domain.NewUseCase(mockRepo)
+	_, err := uc.CreateAlert(ctx, "user-1", nil, nil, nil)
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeValidation, appErr.Type)
+	assert.Contains(t, appErr.Message, "alert is required")
 }
 
 func TestCreateAlert_RepoError(t *testing.T) {
@@ -74,7 +87,7 @@ func TestCreateAlert_RepoError(t *testing.T) {
 	mockRepo.On("CreateNotification", ctx, mock.AnythingOfType("*domain.Notification")).Return(errors.New("db insert failure"))
 
 	uc := domain.NewUseCase(mockRepo)
-	_, err := uc.CreateAlert(ctx, "user-1", nil, nil, "Title", "Content")
+	_, err := uc.CreateAlert(ctx, "user-1", nil, nil, domain.NewPaymentReceivedAlert(50, "INR"))
 	require.Error(t, err)
 
 	var appErr *response.AppError

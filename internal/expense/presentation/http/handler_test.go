@@ -149,12 +149,9 @@ type mockNotificationSender struct {
 	mock.Mock
 }
 
-func (m *mockNotificationSender) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) (*notification.Notification, error) {
-	args := m.Called(ctx, userID, actorID, activityID, title, content)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*notification.Notification), args.Error(1)
+func (m *mockNotificationSender) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, alert notification.Alert) error {
+	args := m.Called(ctx, userID, actorID, activityID, alert)
+	return args.Error(0)
 }
 
 type mockTransactor struct {
@@ -299,7 +296,7 @@ func TestHandler_SettleUp_Success(t *testing.T) {
 		mock.Anything, currentUser.ID, (*string)(nil), mock.Anything, mock.Anything,
 	).Return(&activity.Activity{ID: "act-1"}, nil)
 
-	mockNotif.On("CreateAlert", mock.Anything, "usr-2", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&notification.Notification{ID: "notif-1"}, nil)
+	mockNotif.On("CreateAlert", mock.Anything, "usr-2", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, nil, mockAct, mockNotif)
 	router := setupHandlerTestRouter(uc, currentUser)

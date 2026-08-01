@@ -24,13 +24,13 @@ func (a activityLoggerAdapter) LogEvent(ctx context.Context, actorID string, gro
 	return err
 }
 
-// notificationSenderAdapter adapts the notification UseCase to the group domain port.
+// notificationSenderAdapter adapts the notification UseCase to the group/expense domain ports.
 type notificationSenderAdapter struct {
 	uc *notification.UseCase
 }
 
-func (a notificationSenderAdapter) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) error {
-	_, err := a.uc.CreateAlert(ctx, userID, actorID, activityID, title, content)
+func (a notificationSenderAdapter) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, alert notification.Alert) error {
+	_, err := a.uc.CreateAlert(ctx, userID, actorID, activityID, alert)
 	return err
 }
 
@@ -85,7 +85,7 @@ func initDependencies(ctx context.Context, app *Application) (*dependencies, err
 
 	// Expense domain wiring
 	expenseRepo := expense.NewRepository(app.DB, tm)
-	expenseUseCase := expense.NewUseCase(expenseRepo, tm, groupUseCase, activityUseCase, notificationUseCase)
+	expenseUseCase := expense.NewUseCase(expenseRepo, tm, groupUseCase, activityUseCase, notificationSenderAdapter{notificationUseCase})
 	expenseHandler := expense.NewHandler(expenseUseCase)
 
 	return &dependencies{

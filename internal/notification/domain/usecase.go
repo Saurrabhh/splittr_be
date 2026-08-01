@@ -20,15 +20,23 @@ func NewUseCase(repo Repository) *UseCase {
 	}
 }
 
-// CreateAlert stores a new notification for a specific recipient user.
-func (u *UseCase) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) (*Notification, error) {
+// CreateAlert stores a new typed notification for a specific recipient user.
+func (u *UseCase) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, alert Alert) (*Notification, error) {
+	if alert == nil {
+		return nil, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "alert is required",
+		}
+	}
+
 	newNotif := &Notification{
 		ID:         uuid.New().String(),
 		UserID:     userID,
 		ActorID:    actorID,
 		ActivityID: activityID,
-		Title:      title,
-		Content:    content,
+		Type:       alert.AlertType(),
+		Title:      alert.Title(),
+		Content:    alert.Content(),
 	}
 
 	if err := u.repo.CreateNotification(ctx, newNotif); err != nil {
