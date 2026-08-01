@@ -13,6 +13,8 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+const DefaultCurrency = "INR"
+
 // DBRepository handles database operations for users.
 type DBRepository struct {
 	db *db.DB
@@ -72,7 +74,7 @@ func (r *DBRepository) Create(ctx context.Context, u *domain.User) error {
 	}
 
 	if u.DefaultCurrency == "" {
-		u.DefaultCurrency = "INR"
+		u.DefaultCurrency = DefaultCurrency
 	}
 
 	client := r.tm.GetTxOrPool(ctx)

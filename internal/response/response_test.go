@@ -75,14 +75,14 @@ func TestHandleError(t *testing.T) {
 			err:            &response.AppError{Type: response.TypeInternal, Message: "db error", Err: errors.New("connection failed")},
 			expectedStatus: http.StatusInternalServerError,
 			expectedCode:   response.ErrInternalServerError,
-			expectedMsg:    "an internal database/system error occurred",
+			expectedMsg:    response.MsgInternalError,
 		},
 		{
 			name:           "Generic unhandled error maps to 500 Internal Server Error",
 			err:            errors.New("unexpected crash"),
 			expectedStatus: http.StatusInternalServerError,
 			expectedCode:   response.ErrInternalServerError,
-			expectedMsg:    "an unexpected error occurred",
+			expectedMsg:    response.MsgInternalError,
 		},
 	}
 

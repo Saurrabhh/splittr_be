@@ -118,7 +118,7 @@ func TestRegisterUser_MissingFirebaseUID(t *testing.T) {
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
-	assert.Contains(t, appErr.Message, "firebaseUID is required")
+	assert.Contains(t, appErr.Message, response.MsgInvalidParam)
 }
 
 func TestRegisterUser_MissingEmailAndPhone(t *testing.T) {
@@ -132,7 +132,7 @@ func TestRegisterUser_MissingEmailAndPhone(t *testing.T) {
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
-	assert.Contains(t, appErr.Message, "either email or phone is required")
+	assert.Contains(t, appErr.Message, response.MsgMissingEmailOrPhone)
 }
 
 func TestRegisterUser_RepoCreateError(t *testing.T) {
@@ -180,7 +180,7 @@ func TestGetUserProfile_EmptyID(t *testing.T) {
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
-	assert.Contains(t, appErr.Message, "id is required")
+	assert.Contains(t, appErr.Message, response.MsgInvalidParam)
 }
 
 func TestGetUserProfile_NotFound(t *testing.T) {
@@ -195,7 +195,7 @@ func TestGetUserProfile_NotFound(t *testing.T) {
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeNotFound, appErr.Type)
-	assert.Contains(t, appErr.Message, "user not found")
+	assert.Contains(t, appErr.Message, response.MsgUserNotFound)
 	mockRepo.AssertExpectations(t)
 }
 
@@ -287,7 +287,7 @@ func TestUpdateProfile_InvalidCurrencyLength(t *testing.T) {
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
-	assert.Contains(t, appErr.Message, "must be 3 characters")
+	assert.Contains(t, appErr.Message, response.MsgInvalidCurrency)
 }
 
 func TestUpdateProfile_UserNotFound(t *testing.T) {
@@ -395,7 +395,7 @@ func TestAddFriendByEmailOrPhone_AddSelfError(t *testing.T) {
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
-	assert.Contains(t, appErr.Message, "cannot add yourself")
+	assert.Contains(t, appErr.Message, response.MsgSelfFriendError)
 }
 
 // --- RemoveFriend Tests ---
@@ -439,7 +439,7 @@ func TestRemoveFriend_NotFriends(t *testing.T) {
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
-	assert.Contains(t, appErr.Message, "users are not friends")
+	assert.Contains(t, appErr.Message, response.MsgNotFriends)
 }
 
 // --- ListFriends Tests ---

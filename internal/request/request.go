@@ -16,11 +16,11 @@ func DecodeBody[T any](w http.ResponseWriter, r *http.Request) (T, bool) {
 	var req T
 	dec := json.NewDecoder(r.Body)
 	if err := dec.Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
+		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, response.MsgInvalidBody)
 		return req, false
 	}
 	if dec.More() {
-		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, "invalid request body")
+		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, response.MsgInvalidBody)
 		return req, false
 	}
 	return req, true
@@ -33,7 +33,7 @@ func URLParam(w http.ResponseWriter, r *http.Request, key string) (string, bool)
 	if v == "" {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: key + " path parameter is required",
+			Message: response.MsgInvalidParam,
 		})
 		return "", false
 	}
@@ -47,7 +47,7 @@ func QueryParam(w http.ResponseWriter, r *http.Request, key string) (string, boo
 	if v == "" {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: key + " query parameter is required",
+			Message: response.MsgInvalidParam,
 		})
 		return "", false
 	}

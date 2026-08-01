@@ -164,7 +164,7 @@ func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 	if g == nil {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "group not found or archived",
+			Message: response.MsgGroupNotFound,
 		}
 	}
 

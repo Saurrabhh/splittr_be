@@ -354,7 +354,7 @@ func (u *UseCase) GetExpenseDetails(ctx context.Context, expenseID, userID strin
 	if e == nil {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "expense not found",
+			Message: response.MsgExpenseNotFound,
 		}
 	}
 

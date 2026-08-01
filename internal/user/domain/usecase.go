@@ -25,13 +25,13 @@ func (u *UseCase) RegisterUser(ctx context.Context, firebaseUID string, email, p
 	if firebaseUID == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "firebaseUID is required",
+			Message: response.MsgInvalidParam,
 		}
 	}
 	if (email == nil || *email == "") && (phone == nil || *phone == "") {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "either email or phone is required",
+			Message: response.MsgMissingEmailOrPhone,
 		}
 	}
 
@@ -71,7 +71,7 @@ func (u *UseCase) GetUserProfile(ctx context.Context, id string) (*User, error) 
 	if id == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "id is required",
+			Message: response.MsgInvalidParam,
 		}
 	}
 	usr, err := u.repo.GetByID(ctx, id)
@@ -85,7 +85,7 @@ func (u *UseCase) GetUserProfile(ctx context.Context, id string) (*User, error) 
 	if usr == nil {
 		return nil, &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "user not found",
+			Message: response.MsgUserNotFound,
 		}
 	}
 	return usr, nil
@@ -96,7 +96,7 @@ func (u *UseCase) GetUserByFirebaseUID(ctx context.Context, firebaseUID string) 
 	if firebaseUID == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "firebaseUID is required",
+			Message: response.MsgInvalidParam,
 		}
 	}
 	usr, err := u.repo.GetByFirebaseUID(ctx, firebaseUID)
@@ -110,7 +110,7 @@ func (u *UseCase) GetUserByFirebaseUID(ctx context.Context, firebaseUID string) 
 	if usr == nil {
 		return nil, &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "user not found",
+			Message: response.MsgUserNotFound,
 		}
 	}
 	return usr, nil
@@ -129,7 +129,7 @@ func (u *UseCase) UpdateProfile(ctx context.Context, userID string, name string,
 	if usr == nil {
 		return nil, &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "user not found",
+			Message: response.MsgUserNotFound,
 		}
 	}
 
@@ -140,7 +140,7 @@ func (u *UseCase) UpdateProfile(ctx context.Context, userID string, name string,
 		if len(defaultCurrency) != 3 {
 			return nil, &response.AppError{
 				Type:    response.TypeValidation,
-				Message: "invalid currency code: must be 3 characters",
+				Message: response.MsgInvalidCurrency,
 			}
 		}
 		usr.DefaultCurrency = defaultCurrency
@@ -162,7 +162,7 @@ func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, em
 	if email == "" && phone == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "email or phone must be provided",
+			Message: response.MsgMissingEmailOrPhone,
 		}
 	}
 
@@ -177,14 +177,14 @@ func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, em
 	if friend == nil {
 		return nil, &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "no user found matching the provided email or phone",
+			Message: response.MsgUserNotFound,
 		}
 	}
 
 	if friend.ID == userID {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "you cannot add yourself as a friend",
+			Message: response.MsgSelfFriendError,
 		}
 	}
 
@@ -216,7 +216,7 @@ func (u *UseCase) RemoveFriend(ctx context.Context, userID string, friendID stri
 	if friendID == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "friend id is required",
+			Message: response.MsgInvalidParam,
 		}
 	}
 
@@ -231,7 +231,7 @@ func (u *UseCase) RemoveFriend(ctx context.Context, userID string, friendID stri
 	if !isFriend {
 		return &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "users are not friends",
+			Message: response.MsgNotFriends,
 		}
 	}
 
@@ -248,7 +248,7 @@ func (u *UseCase) RemoveFriend(ctx context.Context, userID string, friendID stri
 // ListFriends returns a cursor-paginated list of the user's friends.
 func (u *UseCase) ListFriends(ctx context.Context, userID string, p pagination.Params) (pagination.Response[User], error) {
 	if userID == "" {
-		return pagination.Response[User]{}, &response.AppError{Type: response.TypeValidation, Message: "user id is required"}
+		return pagination.Response[User]{}, &response.AppError{Type: response.TypeValidation, Message: response.MsgInvalidParam}
 	}
 	cursor := pagination.ParseCursor(p.Cursor)
 	friends, err := u.repo.ListFriends(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)

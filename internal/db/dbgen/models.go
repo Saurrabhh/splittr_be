@@ -230,6 +230,7 @@ type Notification struct {
 	Content    string
 	IsRead     bool
 	CreatedAt  pgtype.Timestamptz
+	Type       string
 }
 
 type SystemLimit struct {

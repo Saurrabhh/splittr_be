@@ -85,7 +85,7 @@ func (u *UseCase) MarkAsRead(ctx context.Context, id, userID string) error {
 	if !found {
 		return &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "notification not found",
+			Message: response.MsgNotificationNotFound,
 		}
 	}
 	return nil

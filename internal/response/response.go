@@ -123,14 +123,14 @@ func HandleError(w http.ResponseWriter, err error) {
 			Forbidden(w, appErr.Message)
 		case TypeInternal:
 			log.Printf("[INTERNAL ERROR] %v", appErr.Err)
-			InternalServerError(w, "an internal database/system error occurred")
+			InternalServerError(w, MsgInternalError)
 		default:
-			InternalServerError(w, "an unexpected error occurred")
+			InternalServerError(w, MsgInternalError)
 		}
 		return
 	}
 
 	// Unhandled error fallback
 	log.Printf("[UNHANDLED ERROR] %v", err)
-	InternalServerError(w, "an unexpected error occurred")
+	InternalServerError(w, MsgInternalError)
 }

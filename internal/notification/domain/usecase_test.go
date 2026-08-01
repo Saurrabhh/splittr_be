@@ -199,7 +199,7 @@ func TestMarkAsRead_NotFound(t *testing.T) {
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeNotFound, appErr.Type)
-	assert.Contains(t, appErr.Message, "notification not found")
+	assert.Contains(t, appErr.Message, response.MsgNotificationNotFound)
 	mockRepo.AssertExpectations(t)
 }
 

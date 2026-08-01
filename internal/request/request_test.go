@@ -63,8 +63,8 @@ func TestDecodeBody_InvalidJSON(t *testing.T) {
 	if errResp.Code != response.ErrInvalidBody {
 		t.Errorf("expected error code %q, got %q", response.ErrInvalidBody, errResp.Code)
 	}
-	if errResp.Message != "invalid request body" {
-		t.Errorf("expected error message %q, got %q", "invalid request body", errResp.Message)
+	if errResp.Message != response.MsgInvalidBody {
+		t.Errorf("expected error message %q, got %q", response.MsgInvalidBody, errResp.Message)
 	}
 }
 
@@ -190,8 +190,8 @@ func TestURLParam_Missing(t *testing.T) {
 	if errResp.Code != response.ErrBadRequest {
 		t.Errorf("expected error code %q, got %q", response.ErrBadRequest, errResp.Code)
 	}
-	if errResp.Message != "id path parameter is required" {
-		t.Errorf("expected error message %q, got %q", "id path parameter is required", errResp.Message)
+	if errResp.Message != response.MsgInvalidParam {
+		t.Errorf("expected error message %q, got %q", response.MsgInvalidParam, errResp.Message)
 	}
 }
 
@@ -243,7 +243,7 @@ func TestQueryParam_Missing(t *testing.T) {
 	if errResp.Code != response.ErrBadRequest {
 		t.Errorf("expected error code %q, got %q", response.ErrBadRequest, errResp.Code)
 	}
-	if errResp.Message != "inviteCode query parameter is required" {
-		t.Errorf("expected error message %q, got %q", "inviteCode query parameter is required", errResp.Message)
+	if errResp.Message != response.MsgInvalidParam {
+		t.Errorf("expected error message %q, got %q", response.MsgInvalidParam, errResp.Message)
 	}
 }
