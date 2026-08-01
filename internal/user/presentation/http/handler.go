@@ -165,7 +165,10 @@ func (h *Handler) GetFriends(w http.ResponseWriter, r *http.Request) {
 		response.HandleError(w, err)
 		return
 	}
-	response.JSON(w, http.StatusOK, result)
+	response.JSON(w, http.StatusOK, ListFriendsResponse{
+		Data:       result.Data,
+		Pagination: result.Pagination,
+	})
 }
 
 // RemoveFriend deletes a friendship link.

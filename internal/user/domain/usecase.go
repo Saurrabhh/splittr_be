@@ -36,7 +36,14 @@ func (u *UseCase) RegisterUser(ctx context.Context, firebaseUID string, email, p
 	}
 
 	existing, err := u.repo.GetByFirebaseUID(ctx, firebaseUID)
-	if err == nil && existing != nil {
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to check existing user",
+			Err:     err,
+		}
+	}
+	if existing != nil {
 		return existing, nil
 	}
 
@@ -209,7 +216,7 @@ func (u *UseCase) RemoveFriend(ctx context.Context, userID string, friendID stri
 	if friendID == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "friendID is required",
+			Message: "friend id is required",
 		}
 	}
 
@@ -241,7 +248,7 @@ func (u *UseCase) RemoveFriend(ctx context.Context, userID string, friendID stri
 // ListFriends returns a cursor-paginated list of the user's friends.
 func (u *UseCase) ListFriends(ctx context.Context, userID string, p pagination.Params) (pagination.Response[User], error) {
 	if userID == "" {
-		return pagination.Response[User]{}, &response.AppError{Type: response.TypeValidation, Message: "userID is required"}
+		return pagination.Response[User]{}, &response.AppError{Type: response.TypeValidation, Message: "user id is required"}
 	}
 	cursor := pagination.ParseCursor(p.Cursor)
 	friends, err := u.repo.ListFriends(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
