@@ -11,6 +11,7 @@ import (
 
 	"github.com/Saurrabhh/splittr_be/internal/activity/domain"
 	activityhttp "github.com/Saurrabhh/splittr_be/internal/activity/presentation/http"
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 	"github.com/go-chi/chi/v5"
@@ -88,7 +89,7 @@ func TestHandler_ListActivities_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var resp activityhttp.ListActivitiesResponse
+	var resp pagination.Response[domain.Activity]
 	err := json.Unmarshal(rr.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	assert.Len(t, resp.Data, 1)

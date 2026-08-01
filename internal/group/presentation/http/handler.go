@@ -138,7 +138,7 @@ func (h *Handler) Preview(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        limit   query  int     false  "Items per page (max 100, default 20)"
 // @Param        cursor  query  string  false  "Opaque cursor token from a previous response"
-// @Success      200  {object}  ListGroupsResponse
+// @Success      200  {object}  pagination.Response[domain.DetailsResponse]
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /groups [get]
@@ -151,10 +151,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		response.HandleError(w, err)
 		return
 	}
-	response.JSON(w, http.StatusOK, ListGroupsResponse{
-		Data:       result.Data,
-		Pagination: result.Pagination,
-	})
+	response.JSON(w, http.StatusOK, result)
 }
 
 // GetDetails returns the group metadata and its members list.
@@ -428,7 +425,7 @@ func (h *Handler) Archive(w http.ResponseWriter, r *http.Request) {
 // @Param        id       path      string  true   "Group ID"
 // @Param        limit    query     int     false  "Items per page (max 100, default 20)"
 // @Param        cursor   query     string  false  "Opaque cursor token from previous response"
-// @Success      200      {object}  activity.FeedResponse
+// @Success      200      {object}  pagination.Response[activity.Activity]
 // @Failure      401      {object}  response.ErrorResponse
 // @Failure      403      {object}  response.ErrorResponse
 // @Failure      500      {object}  response.ErrorResponse

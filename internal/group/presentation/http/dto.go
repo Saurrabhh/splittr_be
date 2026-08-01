@@ -2,14 +2,7 @@ package http
 
 import (
 	"github.com/Saurrabhh/splittr_be/internal/group/domain"
-	"github.com/Saurrabhh/splittr_be/internal/pagination"
 )
-
-// ListGroupsResponse is the paginated groups list response.
-type ListGroupsResponse struct {
-	Data       []domain.DetailsResponse `json:"data"`
-	Pagination pagination.Meta          `json:"pagination"`
-}
 
 type CreateGroupRequest struct {
 	Name                 string `json:"name"`

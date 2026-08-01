@@ -11,6 +11,7 @@ import (
 
 	"github.com/Saurrabhh/splittr_be/internal/notification/domain"
 	notifhttp "github.com/Saurrabhh/splittr_be/internal/notification/presentation/http"
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 	"github.com/go-chi/chi/v5"
@@ -84,7 +85,7 @@ func TestHandler_List_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var resp notifhttp.ListNotificationsResponse
+	var resp pagination.Response[domain.Notification]
 	err := json.Unmarshal(rr.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	assert.Len(t, resp.Data, 1)

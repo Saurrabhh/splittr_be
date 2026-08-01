@@ -18,10 +18,7 @@ type (
 type DBRepository = data.DBRepository
 
 // Presentation Type Aliases
-type (
-	Handler                   = http.Handler
-	ListNotificationsResponse = http.ListNotificationsResponse
-)
+type Handler = http.Handler
 
 // Constructors
 func NewRepository(database *db.DB, tm *db.TransactionManager) *DBRepository {

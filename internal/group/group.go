@@ -29,10 +29,7 @@ type (
 type DBRepository = data.DBRepository
 
 // Presentation Type Aliases
-type (
-	Handler            = http.Handler
-	ListGroupsResponse = http.ListGroupsResponse
-)
+type Handler = http.Handler
 
 // Constants
 const (

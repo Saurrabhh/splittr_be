@@ -152,7 +152,7 @@ func (h *Handler) AddFriend(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        limit   query  int     false  "Items per page (max 100, default 20)"
 // @Param        cursor  query  string  false  "Opaque cursor token from a previous response"
-// @Success      200  {object}  ListFriendsResponse
+// @Success      200  {object}  pagination.Response[domain.User]
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /friends [get]
@@ -165,10 +165,7 @@ func (h *Handler) GetFriends(w http.ResponseWriter, r *http.Request) {
 		response.HandleError(w, err)
 		return
 	}
-	response.JSON(w, http.StatusOK, ListFriendsResponse{
-		Data:       result.Data,
-		Pagination: result.Pagination,
-	})
+	response.JSON(w, http.StatusOK, result)
 }
 
 // RemoveFriend deletes a friendship link.

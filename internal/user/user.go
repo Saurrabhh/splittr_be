@@ -20,10 +20,7 @@ type (
 type DBRepository = data.DBRepository
 
 // Presentation Type Aliases
-type (
-	Handler             = http.Handler
-	ListFriendsResponse = http.ListFriendsResponse
-)
+type Handler = http.Handler
 
 // Middleware Helper Functions
 func WithUser(ctx context.Context, u *User) context.Context {

@@ -13,6 +13,7 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/activity"
 	"github.com/Saurrabhh/splittr_be/internal/group/domain"
 	grouphttp "github.com/Saurrabhh/splittr_be/internal/group/presentation/http"
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 	"github.com/go-chi/chi/v5"
@@ -958,7 +959,7 @@ func TestHandler_List_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var resp grouphttp.ListGroupsResponse
+	var resp pagination.Response[domain.DetailsResponse]
 	err := json.Unmarshal(rr.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	assert.Len(t, resp.Data, 1)

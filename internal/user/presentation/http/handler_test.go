@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Saurrabhh/splittr_be/internal/auth"
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/user/domain"
 	userhttp "github.com/Saurrabhh/splittr_be/internal/user/presentation/http"
 	"github.com/go-chi/chi/v5"
@@ -459,7 +460,7 @@ func TestHandler_GetFriends_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var resp userhttp.ListFriendsResponse
+	var resp pagination.Response[domain.User]
 	err := json.Unmarshal(rr.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	assert.Len(t, resp.Data, 1)

@@ -5,7 +5,6 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/activity/domain"
 	activityhttp "github.com/Saurrabhh/splittr_be/internal/activity/presentation/http"
 	"github.com/Saurrabhh/splittr_be/internal/db"
-	"github.com/Saurrabhh/splittr_be/internal/pagination"
 )
 
 // Type aliases for domain entities and value objects
@@ -25,17 +24,6 @@ type Handler = activityhttp.Handler
 
 // Data Type Aliases
 type DBRepository = data.DBRepository
-
-// Response DTOs
-type ListActivitiesResponse struct {
-	Data       []domain.Activity `json:"data"`
-	Pagination pagination.Meta   `json:"pagination"`
-}
-
-type FeedResponse struct {
-	Data       []domain.Activity `json:"data"`
-	Pagination pagination.Meta   `json:"pagination"`
-}
 
 // EntityType constants
 const (

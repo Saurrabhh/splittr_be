@@ -37,7 +37,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 // @Produce      json
 // @Param        limit   query  int     false  "Items per page (max 100, default 20)"
 // @Param        cursor  query  string  false  "Opaque cursor token from a previous response"
-// @Success      200  {object}  ListNotificationsResponse
+// @Success      200  {object}  pagination.Response[domain.Notification]
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /notifications [get]
