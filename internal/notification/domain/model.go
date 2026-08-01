@@ -9,6 +9,7 @@ type Notification struct {
 	ActorID    *string   `json:"actorId,omitempty"`
 	ActorName  *string   `json:"actorName,omitempty"`
 	ActivityID *string   `json:"activityId,omitempty"`
+	Type       AlertType `json:"type"`
 	Title      string    `json:"title"`
 	Content    string    `json:"content"`
 	IsRead     bool      `json:"isRead"`
