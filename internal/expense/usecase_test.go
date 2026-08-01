@@ -225,8 +225,8 @@ func TestCreateExpense_Success_GroupExactSplit(t *testing.T) {
 	}
 
 	members := []group.Member{
-		{GroupID: groupID, UserID: "usr-1", Role: "admin"},
-		{GroupID: groupID, UserID: "usr-2", Role: "member"},
+		{GroupID: groupID, UserID: "usr-1", Role: group.MemberRoleAdmin},
+		{GroupID: groupID, UserID: "usr-2", Role: group.MemberRoleMember},
 	}
 
 	mockGroupSvc.On("GetGroupDetails", ctx, groupID, creatorID).Return(&group.Group{ID: groupID}, members, nil)
@@ -357,7 +357,7 @@ func TestCreateExpense_ValidationErrors(t *testing.T) {
 	// Non-member payer rejection in group
 	groupID := "grp-1"
 	members := []group.Member{
-		{GroupID: groupID, UserID: "usr-2", Role: "member"},
+		{GroupID: groupID, UserID: "usr-2", Role: group.MemberRoleMember},
 	}
 	mockGroupSvc.On("GetGroupDetails", ctx, groupID, "usr-1").Return(&group.Group{ID: groupID}, members, nil).Once()
 
@@ -368,7 +368,7 @@ func TestCreateExpense_ValidationErrors(t *testing.T) {
 
 	// Non-member split user rejection in group
 	membersWithPayer := []group.Member{
-		{GroupID: groupID, UserID: "usr-1", Role: "admin"},
+		{GroupID: groupID, UserID: "usr-1", Role: group.MemberRoleAdmin},
 	}
 	mockGroupSvc.On("GetGroupDetails", ctx, groupID, "usr-1").Return(&group.Group{ID: groupID}, membersWithPayer, nil).Once()
 

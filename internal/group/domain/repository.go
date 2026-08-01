@@ -17,10 +17,10 @@ type Repository interface {
 	Update(ctx context.Context, g *Group) error
 	ResetInviteCode(ctx context.Context, groupID, newInviteCode string, expiresAt time.Time) (*Group, error)
 	Archive(ctx context.Context, id string) error
-	AddGroupMember(ctx context.Context, groupID, userID, role, status string) error
-	UpdateMemberStatus(ctx context.Context, groupID, userID, status string) error
+	AddGroupMember(ctx context.Context, groupID, userID string, role MemberRole, status MemberStatus) error
+	UpdateMemberStatus(ctx context.Context, groupID, userID string, status MemberStatus) error
 	RemoveGroupMember(ctx context.Context, groupID, userID string) error
-	UpdateGroupMemberRole(ctx context.Context, groupID, userID, role string) error
+	UpdateGroupMemberRole(ctx context.Context, groupID, userID string, role MemberRole) error
 }
 
 // GroupWithMembers wraps a Group entity with its active members.

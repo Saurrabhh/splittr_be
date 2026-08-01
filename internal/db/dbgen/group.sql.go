@@ -22,8 +22,8 @@ DO UPDATE SET role = EXCLUDED.role, status = EXCLUDED.status, joined_at = NOW()
 type AddGroupMemberParams struct {
 	GroupID uuid.UUID
 	UserID  uuid.UUID
-	Role    string
-	Status  string
+	Role    MemberRole
+	Status  MemberStatus
 }
 
 func (q *Queries) AddGroupMember(ctx context.Context, arg AddGroupMemberParams) error {
@@ -190,8 +190,8 @@ type GetGroupMemberParams struct {
 type GetGroupMemberRow struct {
 	GroupID  uuid.UUID
 	UserID   uuid.UUID
-	Role     string
-	Status   string
+	Role     MemberRole
+	Status   MemberStatus
 	JoinedAt pgtype.Timestamptz
 }
 
@@ -244,7 +244,7 @@ const listGroupMembers = `-- name: ListGroupMembers :many
 SELECT gm.group_id, gm.user_id, gm.role, gm.status, gm.joined_at, u.name, u.email, u.phone
 FROM group_members gm
 JOIN users u ON gm.user_id = u.id
-WHERE gm.group_id = $1 AND ($2::text = '' OR gm.status = $2::text)
+WHERE gm.group_id = $1 AND ($2::text = '' OR gm.status::text = $2::text)
 `
 
 type ListGroupMembersParams struct {
@@ -255,8 +255,8 @@ type ListGroupMembersParams struct {
 type ListGroupMembersRow struct {
 	GroupID  uuid.UUID
 	UserID   uuid.UUID
-	Role     string
-	Status   string
+	Role     MemberRole
+	Status   MemberStatus
 	JoinedAt pgtype.Timestamptz
 	Name     string
 	Email    pgtype.Text
@@ -627,7 +627,7 @@ WHERE group_id = $1 AND user_id = $2
 type UpdateGroupMemberRoleParams struct {
 	GroupID uuid.UUID
 	UserID  uuid.UUID
-	Role    string
+	Role    MemberRole
 }
 
 func (q *Queries) UpdateGroupMemberRole(ctx context.Context, arg UpdateGroupMemberRoleParams) error {
@@ -644,7 +644,7 @@ WHERE group_id = $1 AND user_id = $2
 type UpdateMemberStatusParams struct {
 	GroupID uuid.UUID
 	UserID  uuid.UUID
-	Status  string
+	Status  MemberStatus
 }
 
 func (q *Queries) UpdateMemberStatus(ctx context.Context, arg UpdateMemberStatusParams) error {

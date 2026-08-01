@@ -12,6 +12,7 @@ import (
 type (
 	Group                    = domain.Group
 	Member                   = domain.Member
+	MemberRole               = domain.MemberRole
 	MemberStatus             = domain.MemberStatus
 	Preview                  = domain.Preview
 	DecideJoinRequestPayload = domain.DecideJoinRequestPayload
@@ -38,6 +39,11 @@ const (
 	MemberStatusActive   = domain.MemberStatusActive
 	MemberStatusPending  = domain.MemberStatusPending
 	MemberStatusRejected = domain.MemberStatusRejected
+)
+
+const (
+	MemberRoleAdmin  = domain.MemberRoleAdmin
+	MemberRoleMember = domain.MemberRoleMember
 )
 
 // Constructors

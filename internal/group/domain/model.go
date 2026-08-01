@@ -10,6 +10,13 @@ const (
 	MemberStatusRejected MemberStatus = "REJECTED"
 )
 
+type MemberRole string
+
+const (
+	MemberRoleAdmin  MemberRole = "ADMIN"
+	MemberRoleMember MemberRole = "MEMBER"
+)
+
 // Group represents a bill-splitting group.
 type Group struct {
 	ID                   string     `json:"id"`
@@ -26,14 +33,14 @@ type Group struct {
 
 // Member represents a user's membership details in a group, enriched with basic user details.
 type Member struct {
-	GroupID  string    `json:"groupId"`
-	UserID   string    `json:"userId"`
-	Role     string    `json:"role"`
-	Status   string    `json:"status"`
-	JoinedAt time.Time `json:"joinedAt"`
-	Name     string    `json:"name"`
-	Email    *string   `json:"email,omitempty"`
-	Phone    *string   `json:"phone,omitempty"`
+	GroupID  string       `json:"groupId"`
+	UserID   string       `json:"userId"`
+	Role     MemberRole   `json:"role"`
+	Status   MemberStatus `json:"status"`
+	JoinedAt time.Time    `json:"joinedAt"`
+	Name     string       `json:"name"`
+	Email    *string      `json:"email,omitempty"`
+	Phone    *string      `json:"phone,omitempty"`
 }
 
 // Preview represents a summary of a group's details before joining.

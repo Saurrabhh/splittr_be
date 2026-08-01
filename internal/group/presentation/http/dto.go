@@ -32,5 +32,5 @@ type AddMemberRequest struct {
 }
 
 type UpdateRoleRequest struct {
-	Role string `json:"role"`
+	Role domain.MemberRole `json:"role"`
 }

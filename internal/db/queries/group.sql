@@ -54,7 +54,7 @@ WHERE group_id = $1 AND user_id = $2;
 SELECT gm.group_id, gm.user_id, gm.role, gm.status, gm.joined_at, u.name, u.email, u.phone
 FROM group_members gm
 JOIN users u ON gm.user_id = u.id
-WHERE gm.group_id = $1 AND ($2::text = '' OR gm.status = $2::text);
+WHERE gm.group_id = $1 AND ($2::text = '' OR gm.status::text = $2::text);
 
 -- name: ListUserGroups :many
 SELECT g.id, g.name, g.description, g.invite_code, g.invite_code_expires_at, g.require_admin_approval, g.created_by, g.created_at, g.updated_at, g.archived_at

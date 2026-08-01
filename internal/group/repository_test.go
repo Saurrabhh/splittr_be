@@ -103,7 +103,7 @@ func TestRepository_GetByInviteCode_And_Preview(t *testing.T) {
 		CreatedBy:   &creator.ID,
 	}
 	require.NoError(t, groupRepo.CreateGroup(ctx, g))
-	require.NoError(t, groupRepo.AddGroupMember(ctx, groupID, creator.ID, "admin"))
+	require.NoError(t, groupRepo.AddGroupMember(ctx, groupID, creator.ID, group.MemberRoleAdmin, group.MemberStatusActive))
 
 	// GetByInviteCode Success
 	fetched, err := groupRepo.GetByInviteCode(ctx, inviteCode)
@@ -215,21 +215,21 @@ func TestRepository_GroupMembers_CRUD(t *testing.T) {
 	require.NoError(t, groupRepo.CreateGroup(ctx, g))
 
 	// Add Members
-	require.NoError(t, groupRepo.AddGroupMember(ctx, groupID, u1.ID, "admin"))
-	require.NoError(t, groupRepo.AddGroupMember(ctx, groupID, u2.ID, "member"))
+	require.NoError(t, groupRepo.AddGroupMember(ctx, groupID, u1.ID, group.MemberRoleAdmin, group.MemberStatusActive))
+	require.NoError(t, groupRepo.AddGroupMember(ctx, groupID, u2.ID, group.MemberRoleMember, group.MemberStatusActive))
 
 	// GetGroupMember Success
 	m1, err := groupRepo.GetGroupMember(ctx, groupID, u1.ID)
 	require.NoError(t, err)
 	require.NotNil(t, m1)
-	assert.Equal(t, "admin", m1.Role)
+	assert.Equal(t, group.MemberRoleAdmin, m1.Role)
 	assert.Equal(t, groupID, m1.GroupID)
 	assert.Equal(t, u1.ID, m1.UserID)
 
 	m2, err := groupRepo.GetGroupMember(ctx, groupID, u2.ID)
 	require.NoError(t, err)
 	require.NotNil(t, m2)
-	assert.Equal(t, "member", m2.Role)
+	assert.Equal(t, group.MemberRoleMember, m2.Role)
 
 	// GetGroupMember Not Found
 	nonMember, err := groupRepo.GetGroupMember(ctx, groupID, uuid.New().String())
@@ -241,20 +241,20 @@ func TestRepository_GroupMembers_CRUD(t *testing.T) {
 	require.Error(t, err)
 
 	// ListGroupMembers Success
-	members, err := groupRepo.ListGroupMembers(ctx, groupID)
+	members, err := groupRepo.ListGroupMembers(ctx, groupID, "")
 	require.NoError(t, err)
 	assert.Len(t, members, 2)
 
 	// UpdateGroupMemberRole Success
-	err = groupRepo.UpdateGroupMemberRole(ctx, groupID, u2.ID, "admin")
+	err = groupRepo.UpdateGroupMemberRole(ctx, groupID, u2.ID, group.MemberRoleAdmin)
 	require.NoError(t, err)
 
 	updatedM2, err := groupRepo.GetGroupMember(ctx, groupID, u2.ID)
 	require.NoError(t, err)
-	assert.Equal(t, "admin", updatedM2.Role)
+	assert.Equal(t, group.MemberRoleAdmin, updatedM2.Role)
 
 	// UpdateGroupMemberRole Invalid UUID
-	err = groupRepo.UpdateGroupMemberRole(ctx, "invalid-uuid", u2.ID, "member")
+	err = groupRepo.UpdateGroupMemberRole(ctx, "invalid-uuid", u2.ID, group.MemberRoleMember)
 	require.Error(t, err)
 
 	// RemoveGroupMember Success
@@ -286,9 +286,9 @@ func TestRepository_ListUserGroupsWithMembers(t *testing.T) {
 	require.NoError(t, groupRepo.CreateGroup(ctx, g1))
 	require.NoError(t, groupRepo.CreateGroup(ctx, g2))
 
-	require.NoError(t, groupRepo.AddGroupMember(ctx, g1ID, u1.ID, "admin"))
-	require.NoError(t, groupRepo.AddGroupMember(ctx, g1ID, u2.ID, "member"))
-	require.NoError(t, groupRepo.AddGroupMember(ctx, g2ID, u1.ID, "admin"))
+	require.NoError(t, groupRepo.AddGroupMember(ctx, g1ID, u1.ID, group.MemberRoleAdmin, group.MemberStatusActive))
+	require.NoError(t, groupRepo.AddGroupMember(ctx, g1ID, u2.ID, group.MemberRoleMember, group.MemberStatusActive))
+	require.NoError(t, groupRepo.AddGroupMember(ctx, g2ID, u1.ID, group.MemberRoleAdmin, group.MemberStatusActive))
 
 	// List groups for u1
 	groupsList, err := groupRepo.ListUserGroupsWithMembers(ctx, u1.ID, 10, nil, nil)
@@ -326,20 +326,20 @@ func TestRepository_ForeignKeys_And_ConstraintEdgeCases(t *testing.T) {
 
 	// 1. Non-existent User ID in AddGroupMember (Foreign Key Constraint)
 	nonExistentUserID := uuid.New().String()
-	err := groupRepo.AddGroupMember(ctx, g1ID, nonExistentUserID, "member")
+	err := groupRepo.AddGroupMember(ctx, g1ID, nonExistentUserID, group.MemberRoleMember, group.MemberStatusActive)
 	require.Error(t, err, "expected foreign key violation for non-existent user")
 
 	// 2. Non-existent Group ID in AddGroupMember (Foreign Key Constraint)
 	nonExistentGroupID := uuid.New().String()
-	err = groupRepo.AddGroupMember(ctx, nonExistentGroupID, u1.ID, "member")
+	err = groupRepo.AddGroupMember(ctx, nonExistentGroupID, u1.ID, group.MemberRoleMember, group.MemberStatusActive)
 	require.Error(t, err, "expected foreign key violation for non-existent group")
 
 	// 3. Duplicate Group Member Insertion is handled via ON CONFLICT DO NOTHING
-	require.NoError(t, groupRepo.AddGroupMember(ctx, g1ID, u1.ID, "admin"))
-	err = groupRepo.AddGroupMember(ctx, g1ID, u1.ID, "member")
+	require.NoError(t, groupRepo.AddGroupMember(ctx, g1ID, u1.ID, group.MemberRoleAdmin, group.MemberStatusActive))
+	err = groupRepo.AddGroupMember(ctx, g1ID, u1.ID, group.MemberRoleMember, group.MemberStatusActive)
 	require.NoError(t, err, "ON CONFLICT DO NOTHING handles duplicate insertion silently")
 
-	members, err := groupRepo.ListGroupMembers(ctx, g1ID)
+	members, err := groupRepo.ListGroupMembers(ctx, g1ID, "")
 	require.NoError(t, err)
 	assert.Len(t, members, 1)
 }

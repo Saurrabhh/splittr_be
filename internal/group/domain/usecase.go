@@ -36,9 +36,9 @@ type DetailsResponse struct {
 
 // JoinResponse returned when joining a group (either active or pending).
 type JoinResponse struct {
-	Status  string `json:"status"`
-	Message string `json:"message,omitempty"`
-	Group   *Group `json:"group,omitempty"`
+	Status  MemberStatus `json:"status"`
+	Message string       `json:"message,omitempty"`
+	Group   *Group       `json:"group,omitempty"`
 }
 
 // UseCase manages business workflows for the group domain.
@@ -92,7 +92,7 @@ func (u *UseCase) CreateGroup(ctx context.Context, name, description string, req
 		if err := u.repo.CreateGroup(txCtx, newGroup); err != nil {
 			return err
 		}
-		if err := u.repo.AddGroupMember(txCtx, newGroup.ID, creatorID, "admin", string(MemberStatusActive)); err != nil {
+		if err := u.repo.AddGroupMember(txCtx, newGroup.ID, creatorID, MemberRoleAdmin, MemberStatusActive); err != nil {
 			return err
 		}
 		members, err := u.repo.ListGroupMembers(txCtx, newGroup.ID, string(MemberStatusActive))
@@ -138,7 +138,7 @@ func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 			Err:     err,
 		}
 	}
-	if member == nil || member.Status != string(MemberStatusActive) {
+	if member == nil || member.Status != MemberStatusActive {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeForbidden,
 			Message: "access denied: not an active group member",
@@ -210,6 +210,15 @@ func (u *UseCase) ListMembers(ctx context.Context, groupID, statusFilter, action
 	}
 
 	statusFilter = strings.ToUpper(strings.TrimSpace(statusFilter))
+	switch statusFilter {
+	case "", "ALL", string(MemberStatusActive), string(MemberStatusPending), string(MemberStatusRejected):
+	default:
+		return nil, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "status must be one of: ACTIVE, PENDING, REJECTED, ALL",
+		}
+	}
+
 	if statusFilter != "" && statusFilter != string(MemberStatusActive) {
 		isAdmin, err := u.checkIsAdmin(ctx, groupID, actionByUserID)
 		if err != nil {
@@ -226,7 +235,7 @@ func (u *UseCase) ListMembers(ctx context.Context, groupID, statusFilter, action
 		if err != nil {
 			return nil, &response.AppError{Type: response.TypeInternal, Message: "failed to verify member role", Err: err}
 		}
-		if member == nil || member.Status != string(MemberStatusActive) {
+		if member == nil || member.Status != MemberStatusActive {
 			return nil, &response.AppError{Type: response.TypeForbidden, Message: "access denied: not an active group member"}
 		}
 	}
@@ -283,7 +292,7 @@ func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 	}
 
 	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
-		if err := u.repo.AddGroupMember(txCtx, groupID, targetUserID, "member", string(MemberStatusActive)); err != nil {
+		if err := u.repo.AddGroupMember(txCtx, groupID, targetUserID, MemberRoleMember, MemberStatusActive); err != nil {
 			return err
 		}
 
@@ -356,7 +365,7 @@ func (u *UseCase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 		}
 	}
 
-	if targetMember.Role == "admin" {
+	if targetMember.Role == MemberRoleAdmin {
 		members, err := u.repo.ListGroupMembers(ctx, groupID, string(MemberStatusActive))
 		if err != nil {
 			return &response.AppError{
@@ -367,7 +376,7 @@ func (u *UseCase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 		}
 		adminCount := 0
 		for _, m := range members {
-			if m.Role == "admin" {
+			if m.Role == MemberRoleAdmin {
 				adminCount++
 			}
 		}
@@ -411,7 +420,7 @@ func (u *UseCase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 }
 
 // UpdateMemberRole updates a member's role (admin or member).
-func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID, newRole, actionByUserID string) error {
+func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID string, newRole MemberRole, actionByUserID string) error {
 	if groupID == "" || targetUserID == "" || newRole == "" || actionByUserID == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
@@ -419,10 +428,10 @@ func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID, n
 		}
 	}
 
-	if newRole != "admin" && newRole != "member" {
+	if newRole != MemberRoleAdmin && newRole != MemberRoleMember {
 		return &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "role must be 'admin' or 'member'",
+			Message: "role must be 'ADMIN' or 'MEMBER'",
 		}
 	}
 
@@ -465,7 +474,7 @@ func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID, n
 		}
 		_, err = u.activity.LogEvent(
 			txCtx, actionByUserID, &groupID, nil,
-			activity.NewMemberRoleUpdatedEvent(targetUserID, newRole, payload),
+			activity.NewMemberRoleUpdatedEvent(targetUserID, string(newRole), payload),
 		)
 		return err
 	})
@@ -647,13 +656,13 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 		}
 	}
 	if existing != nil {
-		if existing.Status == string(MemberStatusActive) {
-			return &JoinResponse{Status: string(MemberStatusActive), Group: g}, nil
+		if existing.Status == MemberStatusActive {
+			return &JoinResponse{Status: MemberStatusActive, Group: g}, nil
 		}
-		if existing.Status == string(MemberStatusPending) {
-			return &JoinResponse{Status: string(MemberStatusPending), Message: "Join request submitted for admin approval"}, nil
+		if existing.Status == MemberStatusPending {
+			return &JoinResponse{Status: MemberStatusPending, Message: "Join request submitted for admin approval"}, nil
 		}
-		if existing.Status == string(MemberStatusRejected) {
+		if existing.Status == MemberStatusRejected {
 			return nil, &response.AppError{
 				Type:    response.TypeForbidden,
 				Message: "your join request was rejected by an admin",
@@ -667,7 +676,7 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 	}
 
 	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
-		if err := u.repo.AddGroupMember(txCtx, g.ID, userID, "member", string(targetStatus)); err != nil {
+		if err := u.repo.AddGroupMember(txCtx, g.ID, userID, MemberRoleMember, targetStatus); err != nil {
 			return err
 		}
 
@@ -675,7 +684,7 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 			members, err := u.repo.ListGroupMembers(txCtx, g.ID, string(MemberStatusActive))
 			if err == nil {
 				for _, m := range members {
-					if m.Role == "admin" && u.notification != nil {
+					if m.Role == MemberRoleAdmin && u.notification != nil {
 						_, _ = u.notification.CreateAlert(
 							txCtx, m.UserID, &userID, nil,
 							"Join Request Pending",
@@ -717,9 +726,9 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 	}
 
 	if targetStatus == MemberStatusPending {
-		return &JoinResponse{Status: string(MemberStatusPending), Message: "Join request submitted for admin approval"}, nil
+		return &JoinResponse{Status: MemberStatusPending, Message: "Join request submitted for admin approval"}, nil
 	}
-	return &JoinResponse{Status: string(MemberStatusActive), Group: g}, nil
+	return &JoinResponse{Status: MemberStatusActive, Group: g}, nil
 }
 
 // DecideJoinRequest approves or rejects a pending join request. Admin only.
@@ -756,7 +765,7 @@ func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID, 
 	}
 
 	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
-		if err := u.repo.UpdateMemberStatus(txCtx, groupID, targetUserID, string(newStatus)); err != nil {
+		if err := u.repo.UpdateMemberStatus(txCtx, groupID, targetUserID, newStatus); err != nil {
 			return err
 		}
 
@@ -861,8 +870,8 @@ func (u *UseCase) checkIsAdmin(ctx context.Context, groupID, userID string) (boo
 			Err:     err,
 		}
 	}
-	if member == nil || member.Status != string(MemberStatusActive) {
+	if member == nil || member.Status != MemberStatusActive {
 		return false, nil
 	}
-	return member.Role == "admin", nil
+	return member.Role == MemberRoleAdmin, nil
 }

@@ -373,7 +373,7 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "status": {
-                        "type": "string"
+                        "$ref": "#/components/schemas/domain.MemberStatus"
                     }
                 },
                 "type": "object"
@@ -454,16 +454,40 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "role": {
-                        "type": "string"
+                        "$ref": "#/components/schemas/domain.MemberRole"
                     },
                     "status": {
-                        "type": "string"
+                        "$ref": "#/components/schemas/domain.MemberStatus"
                     },
                     "userId": {
                         "type": "string"
                     }
                 },
                 "type": "object"
+            },
+            "domain.MemberRole": {
+                "enum": [
+                    "ADMIN",
+                    "MEMBER"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "MemberRoleAdmin",
+                    "MemberRoleMember"
+                ]
+            },
+            "domain.MemberStatus": {
+                "enum": [
+                    "ACTIVE",
+                    "PENDING",
+                    "REJECTED"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "MemberStatusActive",
+                    "MemberStatusPending",
+                    "MemberStatusRejected"
+                ]
             },
             "domain.Notification": {
                 "properties": {
@@ -882,7 +906,7 @@ const docTemplate = `{
             "http.UpdateRoleRequest": {
                 "properties": {
                     "role": {
-                        "type": "string"
+                        "$ref": "#/components/schemas/domain.MemberRole"
                     }
                 },
                 "type": "object"

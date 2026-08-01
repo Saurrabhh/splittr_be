@@ -227,13 +227,13 @@ func parseGroupIDAndUserID(groupID, userID string) (uuid.UUID, uuid.UUID, error)
 }
 
 // AddGroupMember adds a member to the group with status.
-func (r *DBRepository) AddGroupMember(ctx context.Context, groupID, userID, role, status string) error {
+func (r *DBRepository) AddGroupMember(ctx context.Context, groupID, userID string, role domain.MemberRole, status domain.MemberStatus) error {
 	parsedGroupID, parsedUserID, err := parseGroupIDAndUserID(groupID, userID)
 	if err != nil {
 		return err
 	}
 	if status == "" {
-		status = string(domain.MemberStatusActive)
+		status = domain.MemberStatusActive
 	}
 
 	client := r.tm.GetTxOrPool(ctx)
@@ -242,8 +242,8 @@ func (r *DBRepository) AddGroupMember(ctx context.Context, groupID, userID, role
 	err = q.AddGroupMember(ctx, dbgen.AddGroupMemberParams{
 		GroupID: parsedGroupID,
 		UserID:  parsedUserID,
-		Role:    role,
-		Status:  status,
+		Role:    dbgen.MemberRole(role),
+		Status:  dbgen.MemberStatus(status),
 	})
 	if err != nil {
 		return fmt.Errorf("add group member: %w", err)
@@ -252,7 +252,7 @@ func (r *DBRepository) AddGroupMember(ctx context.Context, groupID, userID, role
 }
 
 // UpdateMemberStatus updates a member's status in a group.
-func (r *DBRepository) UpdateMemberStatus(ctx context.Context, groupID, userID, status string) error {
+func (r *DBRepository) UpdateMemberStatus(ctx context.Context, groupID, userID string, status domain.MemberStatus) error {
 	parsedGroupID, parsedUserID, err := parseGroupIDAndUserID(groupID, userID)
 	if err != nil {
 		return err
@@ -264,7 +264,7 @@ func (r *DBRepository) UpdateMemberStatus(ctx context.Context, groupID, userID, 
 	err = q.UpdateMemberStatus(ctx, dbgen.UpdateMemberStatusParams{
 		GroupID: parsedGroupID,
 		UserID:  parsedUserID,
-		Status:  status,
+		Status:  dbgen.MemberStatus(status),
 	})
 	if err != nil {
 		return fmt.Errorf("update member status: %w", err)
@@ -293,7 +293,7 @@ func (r *DBRepository) RemoveGroupMember(ctx context.Context, groupID, userID st
 }
 
 // UpdateGroupMemberRole updates a member's role.
-func (r *DBRepository) UpdateGroupMemberRole(ctx context.Context, groupID, userID, role string) error {
+func (r *DBRepository) UpdateGroupMemberRole(ctx context.Context, groupID, userID string, role domain.MemberRole) error {
 	parsedGroupID, parsedUserID, err := parseGroupIDAndUserID(groupID, userID)
 	if err != nil {
 		return err
@@ -305,7 +305,7 @@ func (r *DBRepository) UpdateGroupMemberRole(ctx context.Context, groupID, userI
 	err = q.UpdateGroupMemberRole(ctx, dbgen.UpdateGroupMemberRoleParams{
 		GroupID: parsedGroupID,
 		UserID:  parsedUserID,
-		Role:    role,
+		Role:    dbgen.MemberRole(role),
 	})
 	if err != nil {
 		return fmt.Errorf("update group member role: %w", err)
@@ -341,8 +341,8 @@ func (r *DBRepository) GetGroupMember(ctx context.Context, groupID, userID strin
 	return &domain.Member{
 		GroupID:  gm.GroupID.String(),
 		UserID:   gm.UserID.String(),
-		Role:     gm.Role,
-		Status:   gm.Status,
+		Role:     domain.MemberRole(gm.Role),
+		Status:   domain.MemberStatus(gm.Status),
 		JoinedAt: gm.JoinedAt.Time,
 	}, nil
 }
@@ -370,8 +370,8 @@ func (r *DBRepository) ListGroupMembers(ctx context.Context, groupID string, sta
 		members = append(members, domain.Member{
 			GroupID:  row.GroupID.String(),
 			UserID:   row.UserID.String(),
-			Role:     row.Role,
-			Status:   row.Status,
+			Role:     domain.MemberRole(row.Role),
+			Status:   domain.MemberStatus(row.Status),
 			JoinedAt: row.JoinedAt.Time,
 			Name:     row.Name,
 			Email:    textToPtr(row.Email),
