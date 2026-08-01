@@ -182,12 +182,8 @@ func (h *Handler) GetFriends(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) RemoveFriend(w http.ResponseWriter, r *http.Request) {
 	currUser := MustFrom(r.Context())
 
-	friendID := chi.URLParam(r, "friendId")
-	if friendID == "" {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeValidation,
-			Message: "friendId is required",
-		})
+	friendID, ok := request.URLParam(w, r, "friendId")
+	if !ok {
 		return
 	}
 

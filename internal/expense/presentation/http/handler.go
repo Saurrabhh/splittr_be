@@ -202,12 +202,8 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 // @Router       /expenses/{id} [get]
 // @Security     BearerAuth
 func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
-	expenseID := chi.URLParam(r, "id")
-	if expenseID == "" {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeValidation,
-			Message: "expense id is required",
-		})
+	expenseID, ok := request.URLParam(w, r, "id")
+	if !ok {
 		return
 	}
 
@@ -237,12 +233,8 @@ func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 // @Router       /expenses/{id} [delete]
 // @Security     BearerAuth
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
-	expenseID := chi.URLParam(r, "id")
-	if expenseID == "" {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeValidation,
-			Message: "expense id is required",
-		})
+	expenseID, ok := request.URLParam(w, r, "id")
+	if !ok {
 		return
 	}
 

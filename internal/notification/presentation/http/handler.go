@@ -5,6 +5,7 @@ import (
 
 	"github.com/Saurrabhh/splittr_be/internal/notification/domain"
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
+	"github.com/Saurrabhh/splittr_be/internal/request"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 	"github.com/go-chi/chi/v5"
@@ -67,12 +68,8 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
-	id := chi.URLParam(r, "id")
-	if id == "" {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeValidation,
-			Message: "notification id is required",
-		})
+	id, ok := request.URLParam(w, r, "id")
+	if !ok {
 		return
 	}
 
