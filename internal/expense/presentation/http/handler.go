@@ -195,6 +195,8 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 // @Success      200  {object}  domain.ExpenseWithSplits
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
+// @Failure      403  {object}  response.ErrorResponse
+// @Failure      404  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /expenses/{id} [get]
 // @Security     BearerAuth
@@ -226,6 +228,8 @@ func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 // @Success      204  "No Content"
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
+// @Failure      403  {object}  response.ErrorResponse
+// @Failure      404  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /expenses/{id} [delete]
 // @Security     BearerAuth

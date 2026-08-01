@@ -18,41 +18,6 @@ FROM expense_splits es
 JOIN users u ON es.user_id = u.id
 WHERE es.expense_id = $1;
 
--- name: ListExpensesByGroup :many
-SELECT id, description, amount, currency, category, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at
-FROM expenses
-WHERE group_id = $1 AND deleted_at IS NULL
-ORDER BY spent_at DESC;
-
--- name: ListUserPersonalExpenses :many
--- Retrieve expenses logged purely for personal budgeting (paid by user, and user is the ONLY split member)
-SELECT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
-FROM expenses e
-WHERE e.paid_by = $1 
-  AND e.group_id IS NULL 
-  AND e.deleted_at IS NULL
-  AND (
-      SELECT COUNT(*) 
-      FROM expense_splits es 
-      WHERE es.expense_id = e.id
-  ) = 1
-ORDER BY e.spent_at DESC;
-
--- name: ListUserFriendExpenses :many
--- Retrieve direct (non-group) splits between current user and any other user
-SELECT DISTINCT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
-FROM expenses e
-JOIN expense_splits es ON e.id = es.expense_id
-WHERE e.group_id IS NULL 
-  AND e.deleted_at IS NULL
-  AND (e.paid_by = $1 OR es.user_id = $1)
-  AND (
-      SELECT COUNT(*) 
-      FROM expense_splits es2 
-      WHERE es2.expense_id = e.id
-  ) > 1
-ORDER BY e.spent_at DESC;
-
 -- name: DeleteExpense :exec
 UPDATE expenses
 SET deleted_at = NOW(), updated_at = NOW()

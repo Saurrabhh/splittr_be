@@ -86,7 +86,8 @@ func toExpensesFromFriendPaginated(rows []dbgen.ListUserFriendExpensesPaginatedR
 func toDomainExpense(dbg dbgen.Expense) *domain.Expense {
 	var groupIDStr *string
 	if dbg.GroupID.Valid {
-		groupIDStr = new(uuid.UUID(dbg.GroupID.Bytes).String())
+		s := uuid.UUID(dbg.GroupID.Bytes).String()
+		groupIDStr = &s
 	}
 
 	var deletedAtTime *time.Time

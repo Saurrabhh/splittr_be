@@ -366,61 +366,6 @@ func (q *Queries) ListExpenseSplitsByIDs(ctx context.Context, dollar_1 []uuid.UU
 	return items, nil
 }
 
-const listExpensesByGroup = `-- name: ListExpensesByGroup :many
-SELECT id, description, amount, currency, category, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at
-FROM expenses
-WHERE group_id = $1 AND deleted_at IS NULL
-ORDER BY spent_at DESC
-`
-
-type ListExpensesByGroupRow struct {
-	ID          uuid.UUID
-	Description string
-	Amount      pgtype.Numeric
-	Currency    string
-	Category    string
-	GroupID     pgtype.UUID
-	PaidBy      uuid.UUID
-	CreatedBy   uuid.UUID
-	IsPayment   bool
-	SpentAt     pgtype.Timestamptz
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
-}
-
-func (q *Queries) ListExpensesByGroup(ctx context.Context, groupID pgtype.UUID) ([]ListExpensesByGroupRow, error) {
-	rows, err := q.db.Query(ctx, listExpensesByGroup, groupID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListExpensesByGroupRow
-	for rows.Next() {
-		var i ListExpensesByGroupRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Description,
-			&i.Amount,
-			&i.Currency,
-			&i.Category,
-			&i.GroupID,
-			&i.PaidBy,
-			&i.CreatedBy,
-			&i.IsPayment,
-			&i.SpentAt,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listExpensesByGroupPaginated = `-- name: ListExpensesByGroupPaginated :many
 SELECT id, description, amount, currency, category, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at
 FROM expenses
@@ -471,70 +416,6 @@ func (q *Queries) ListExpensesByGroupPaginated(ctx context.Context, arg ListExpe
 	var items []ListExpensesByGroupPaginatedRow
 	for rows.Next() {
 		var i ListExpensesByGroupPaginatedRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Description,
-			&i.Amount,
-			&i.Currency,
-			&i.Category,
-			&i.GroupID,
-			&i.PaidBy,
-			&i.CreatedBy,
-			&i.IsPayment,
-			&i.SpentAt,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listUserFriendExpenses = `-- name: ListUserFriendExpenses :many
-SELECT DISTINCT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
-FROM expenses e
-JOIN expense_splits es ON e.id = es.expense_id
-WHERE e.group_id IS NULL 
-  AND e.deleted_at IS NULL
-  AND (e.paid_by = $1 OR es.user_id = $1)
-  AND (
-      SELECT COUNT(*) 
-      FROM expense_splits es2 
-      WHERE es2.expense_id = e.id
-  ) > 1
-ORDER BY e.spent_at DESC
-`
-
-type ListUserFriendExpensesRow struct {
-	ID          uuid.UUID
-	Description string
-	Amount      pgtype.Numeric
-	Currency    string
-	Category    string
-	GroupID     pgtype.UUID
-	PaidBy      uuid.UUID
-	CreatedBy   uuid.UUID
-	IsPayment   bool
-	SpentAt     pgtype.Timestamptz
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
-}
-
-// Retrieve direct (non-group) splits between current user and any other user
-func (q *Queries) ListUserFriendExpenses(ctx context.Context, paidBy uuid.UUID) ([]ListUserFriendExpensesRow, error) {
-	rows, err := q.db.Query(ctx, listUserFriendExpenses, paidBy)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListUserFriendExpensesRow
-	for rows.Next() {
-		var i ListUserFriendExpensesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Description,
@@ -614,69 +495,6 @@ func (q *Queries) ListUserFriendExpensesPaginated(ctx context.Context, arg ListU
 	var items []ListUserFriendExpensesPaginatedRow
 	for rows.Next() {
 		var i ListUserFriendExpensesPaginatedRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Description,
-			&i.Amount,
-			&i.Currency,
-			&i.Category,
-			&i.GroupID,
-			&i.PaidBy,
-			&i.CreatedBy,
-			&i.IsPayment,
-			&i.SpentAt,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listUserPersonalExpenses = `-- name: ListUserPersonalExpenses :many
-SELECT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at
-FROM expenses e
-WHERE e.paid_by = $1 
-  AND e.group_id IS NULL 
-  AND e.deleted_at IS NULL
-  AND (
-      SELECT COUNT(*) 
-      FROM expense_splits es 
-      WHERE es.expense_id = e.id
-  ) = 1
-ORDER BY e.spent_at DESC
-`
-
-type ListUserPersonalExpensesRow struct {
-	ID          uuid.UUID
-	Description string
-	Amount      pgtype.Numeric
-	Currency    string
-	Category    string
-	GroupID     pgtype.UUID
-	PaidBy      uuid.UUID
-	CreatedBy   uuid.UUID
-	IsPayment   bool
-	SpentAt     pgtype.Timestamptz
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
-}
-
-// Retrieve expenses logged purely for personal budgeting (paid by user, and user is the ONLY split member)
-func (q *Queries) ListUserPersonalExpenses(ctx context.Context, paidBy uuid.UUID) ([]ListUserPersonalExpensesRow, error) {
-	rows, err := q.db.Query(ctx, listUserPersonalExpenses, paidBy)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListUserPersonalExpensesRow
-	for rows.Next() {
-		var i ListUserPersonalExpensesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Description,

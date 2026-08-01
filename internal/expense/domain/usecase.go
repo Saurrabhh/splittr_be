@@ -85,8 +85,10 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 		currency = "INR"
 	}
 
+	var members []group.Member
 	if groupID != nil && *groupID != "" {
-		_, members, err := u.groupSvc.GetGroupDetails(ctx, *groupID, createdBy)
+		var err error
+		_, members, err = u.groupSvc.GetGroupDetails(ctx, *groupID, createdBy)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -183,12 +185,9 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 		notificationContent := fmt.Sprintf("New expense '%s' of %.2f %s added", desc, amount, currency)
 
 		if groupID != nil && *groupID != "" {
-			_, members, err := u.groupSvc.GetGroupDetails(txCtx, *groupID, createdBy)
-			if err == nil {
-				for _, m := range members {
-					if m.UserID != createdBy {
-						_, _ = u.notification.CreateAlert(txCtx, m.UserID, &createdBy, &act.ID, notificationTitle, notificationContent)
-					}
+			for _, m := range members {
+				if m.UserID != createdBy {
+					_, _ = u.notification.CreateAlert(txCtx, m.UserID, &createdBy, &act.ID, notificationTitle, notificationContent)
 				}
 			}
 		} else {
@@ -211,7 +210,11 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 
 	enrichedSplits, err := u.repo.ListExpenseSplits(ctx, newExpense.ID)
 	if err != nil {
-		return newExpense, nil, nil
+		return nil, nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to load expense splits",
+			Err:     err,
+		}
 	}
 
 	return newExpense, enrichedSplits, nil
@@ -223,6 +226,12 @@ func (u *UseCase) SettleUp(ctx context.Context, amount float64, currency string,
 		return nil, nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: "settlement amount must be greater than zero",
+		}
+	}
+	if receivedBy == "" {
+		return nil, nil, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "recipient is required",
 		}
 	}
 	if paidBy == receivedBy {
@@ -274,6 +283,8 @@ func (u *UseCase) SettleUp(ctx context.Context, amount float64, currency string,
 		SplitType: SplitTypeExact,
 	}
 
+	var finalSplit *Split
+
 	err := u.tx.RunInTx(ctx, func(txCtx context.Context) error {
 		if err := u.repo.CreateExpense(txCtx, newExpense); err != nil {
 			return err
@@ -292,7 +303,6 @@ func (u *UseCase) SettleUp(ctx context.Context, amount float64, currency string,
 		if err != nil {
 			return err
 		}
-		var finalSplit *Split
 		if len(enrichedSplits) > 0 {
 			finalSplit = &enrichedSplits[0]
 		} else {
@@ -330,12 +340,7 @@ func (u *UseCase) SettleUp(ctx context.Context, amount float64, currency string,
 		}
 	}
 
-	splits, err := u.repo.ListExpenseSplits(ctx, newExpense.ID)
-	if err == nil && len(splits) > 0 {
-		return newExpense, &splits[0], nil
-	}
-
-	return newExpense, split, nil
+	return newExpense, finalSplit, nil
 }
 
 // GetExpenseDetails retrieves an expense and its splits, checking view permissions.
@@ -618,7 +623,7 @@ func calculateSplits(totalAmount float64, splitType SplitType, inputs []InputSpl
 			splits = append(splits, Split{
 				UserID:     in.UserID,
 				Amount:     float64(shareCents) / 100.0,
-				SplitValue: new(*in.Percentage),
+				SplitValue: in.Percentage,
 			})
 		}
 

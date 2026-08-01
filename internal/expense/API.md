@@ -43,7 +43,7 @@ The Expense module manages shared group and individual expenses, splitting logic
 ### 3. List Expenses
 - **GET** `/expenses?groupId={id}&personal={bool}&friendId={id}&limit={int}&cursor={string}`
 - **Description**: Retrieve a cursor-paginated list of expenses with splits, filtered by group, personal budget, or direct friend. Splits for all items are bulk-fetched in a single query.
-- **Response** (`200 OK`): `ListExpensesResponse` with `data` array of `ExpenseWithSplits` and pagination cursor.
+- **Response** (`200 OK`): paginated `Page` envelope — `data` array of `ExpenseWithSplits` plus `pagination` metadata (`nextCursor`, `hasMore`).
 
 ### 4. Get Expense Details
 - **GET** `/expenses/{id}`

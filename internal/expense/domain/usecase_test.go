@@ -395,6 +395,36 @@ func TestCreateExpense_TransactionFailure(t *testing.T) {
 	assert.Contains(t, appErr.Message, "create expense transaction failed")
 }
 
+func TestCreateExpense_RefetchSplitsError(t *testing.T) {
+	mockRepo := new(mockExpenseRepository)
+	mockAct := new(mockActivityLogger)
+	mockNotif := new(mockNotificationSender)
+	mockTx := &mockTransactor{}
+	ctx := context.Background()
+
+	creatorID := "usr-1"
+	inputs := []domain.InputSplit{{UserID: "usr-1"}}
+
+	mockRepo.On("CreateExpense", ctx, mock.AnythingOfType("*domain.Expense")).Return(nil)
+	mockRepo.On("CreateExpenseSplit", ctx, mock.AnythingOfType("*domain.Split")).Return(nil)
+	mockRepo.On("ListExpenseSplits", ctx, mock.AnythingOfType("string")).Return([]domain.Split{
+		{ExpenseID: "exp-1", UserID: "usr-1", Amount: 100.0},
+	}, nil).Once()
+	mockRepo.On("ListExpenseSplits", ctx, mock.AnythingOfType("string")).Return(nil, errors.New("db down")).Once()
+
+	mockAct.On("LogEvent",
+		ctx, creatorID, (*string)(nil), mock.Anything, mock.Anything,
+	).Return(&activity.Activity{ID: "act-1"}, nil)
+
+	uc := domain.NewUseCase(mockRepo, mockTx, nil, mockAct, mockNotif)
+	_, _, err := uc.CreateExpense(ctx, "Dinner", 100.0, "INR", "Food", nil, creatorID, domain.SplitTypeEqual, inputs, creatorID)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeInternal, appErr.Type)
+	assert.Contains(t, appErr.Message, "failed to load expense splits")
+}
+
 // --- SettleUp Tests ---
 
 func TestSettleUp_Success(t *testing.T) {
@@ -451,6 +481,12 @@ func TestSettleUp_ValidationErrors(t *testing.T) {
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
 	assert.Contains(t, appErr.Message, "payer and payee must be different users")
+
+	// empty receivedBy
+	_, _, err = uc.SettleUp(ctx, 50.0, "INR", nil, "usr-1", "", "usr-1")
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeValidation, appErr.Type)
+	assert.Contains(t, appErr.Message, "recipient is required")
 }
 
 // --- GetExpenseDetails Tests ---
