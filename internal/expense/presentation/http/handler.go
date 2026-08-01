@@ -170,7 +170,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	} else {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "missing filter parameter: must supply groupId, personal=true, or friendId",
+			Message: response.MsgMissingFilterParam,
 		})
 		return
 	}

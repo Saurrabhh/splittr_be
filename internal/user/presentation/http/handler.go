@@ -61,7 +61,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	if identity == nil {
 		response.HandleError(w, &response.AppError{
 			Type:    response.TypeUnauthorized,
-			Message: "unauthorized: missing auth credentials",
+			Message: response.MsgUnauthorized,
 		})
 		return
 	}
@@ -70,7 +70,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		if req.Name == "" {
 			return nil, &response.AppError{
 				Type:    response.TypeValidation,
-				Message: "name is required",
+				Message: response.MsgMissingName,
 			}
 		}
 

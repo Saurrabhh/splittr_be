@@ -12,6 +12,7 @@ const (
 
 // Validation & Input Errors
 const (
+	MsgMissingName           = "Please enter a valid name."
 	MsgMissingEmailOrPhone   = "Please provide either an email address or phone number."
 	MsgInvalidCurrency       = "Currency code must be a valid 3-letter code."
 	MsgSelfFriendError       = "You cannot add yourself as a friend."
@@ -29,6 +30,7 @@ const (
 	MsgAlreadyInGroup        = "You are already a member of this group."
 	MsgCannotRemoveCreator   = "The group creator cannot be removed."
 	MsgAlertRequired         = "Alert payload is required."
+	MsgMissingFilterParam    = "Please specify a valid expense filter."
 )
 
 // Domain Specific Errors
