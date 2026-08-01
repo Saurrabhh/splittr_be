@@ -10,6 +10,7 @@ import (
 
 	"github.com/Saurrabhh/splittr_be/internal/request"
 	"github.com/Saurrabhh/splittr_be/internal/response"
+	"github.com/go-chi/chi/v5"
 )
 
 type sampleRequest struct {
@@ -120,5 +121,65 @@ func TestRun_AppError(t *testing.T) {
 	}
 	if errResp.Message != "invalid name provided" {
 		t.Errorf("expected error message %q, got %q", "invalid name provided", errResp.Message)
+	}
+}
+
+func TestURLParam_Present(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/groups/grp-1", nil)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", "grp-1")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+	w := httptest.NewRecorder()
+
+	v, ok := request.URLParam(w, req, "id")
+	if !ok {
+		t.Fatal("expected URLParam to return true when param present")
+	}
+	if v != "grp-1" {
+		t.Errorf("expected value %q, got %q", "grp-1", v)
+	}
+	if w.Code != http.StatusOK {
+		t.Errorf("expected no error response, got status %d", w.Code)
+	}
+}
+
+func TestURLParam_Missing(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/groups/grp-1", nil)
+	rctx := chi.NewRouteContext()
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+	w := httptest.NewRecorder()
+
+	_, ok := request.URLParam(w, req, "id")
+	if ok {
+		t.Fatal("expected URLParam to return false when param missing")
+	}
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected status code %d, got %d", http.StatusBadRequest, w.Code)
+	}
+}
+
+func TestQueryParam_Present(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/groups/preview?inviteCode=inv-123", nil)
+	w := httptest.NewRecorder()
+
+	v, ok := request.QueryParam(w, req, "inviteCode")
+	if !ok {
+		t.Fatal("expected QueryParam to return true when param present")
+	}
+	if v != "inv-123" {
+		t.Errorf("expected value %q, got %q", "inv-123", v)
+	}
+}
+
+func TestQueryParam_Missing(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/groups/preview", nil)
+	w := httptest.NewRecorder()
+
+	_, ok := request.QueryParam(w, req, "inviteCode")
+	if ok {
+		t.Fatal("expected QueryParam to return false when param missing")
+	}
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected status code %d, got %d", http.StatusBadRequest, w.Code)
 	}
 }

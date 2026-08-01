@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/Saurrabhh/splittr_be/internal/config"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoad_ValidLocalEnv(t *testing.T) {
@@ -65,7 +66,7 @@ func TestLoad_MissingRequiredDatabaseURL(t *testing.T) {
 	t.Chdir(t.TempDir())
 
 	t.Setenv("APP_ENV", "local")
-	os.Unsetenv("DATABASE_URL")
+	require.NoError(t, os.Unsetenv("DATABASE_URL"))
 
 	cfg, err := config.Load()
 	if err == nil {

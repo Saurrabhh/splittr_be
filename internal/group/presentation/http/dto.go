@@ -5,16 +5,10 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
 )
 
-// DetailsResponse is the canonical shape for any endpoint or feed payload that returns group data.
-type DetailsResponse struct {
-	Group   domain.Group    `json:"group"`
-	Members []domain.Member `json:"members"`
-}
-
-// ListGroupsResponse represents the paginated groups list response.
+// ListGroupsResponse is the paginated groups list response.
 type ListGroupsResponse struct {
-	Data       []DetailsResponse `json:"data"`
-	Pagination pagination.Meta   `json:"pagination"`
+	Data       []domain.DetailsResponse `json:"data"`
+	Pagination pagination.Meta          `json:"pagination"`
 }
 
 type CreateGroupRequest struct {

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Saurrabhh/splittr_be/internal/response"
+	"github.com/go-chi/chi/v5"
 )
 
 // DecodeBody decodes the JSON request body into the target type.
@@ -17,6 +18,34 @@ func DecodeBody[T any](w http.ResponseWriter, r *http.Request) (T, bool) {
 		return req, false
 	}
 	return req, true
+}
+
+// URLParam returns the URL path parameter with the given key.
+// If it is missing or empty, it writes a 400 response and returns false.
+func URLParam(w http.ResponseWriter, r *http.Request, key string) (string, bool) {
+	v := chi.URLParam(r, key)
+	if v == "" {
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: key + " path parameter is required",
+		})
+		return "", false
+	}
+	return v, true
+}
+
+// QueryParam returns the query parameter with the given key.
+// If it is missing or empty, it writes a 400 response and returns false.
+func QueryParam(w http.ResponseWriter, r *http.Request, key string) (string, bool) {
+	v := r.URL.Query().Get(key)
+	if v == "" {
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: key + " query parameter is required",
+		})
+		return "", false
+	}
+	return v, true
 }
 
 // Run handles the standard decode-execute-respond lifecycle for a JSON endpoint.

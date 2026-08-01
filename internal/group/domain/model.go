@@ -52,7 +52,15 @@ type Preview struct {
 	RequireAdminApproval bool    `json:"requireAdminApproval"`
 }
 
-// DecideJoinRequestPayload body for approving or rejecting a join request.
+// JoinRequestAction is the action an admin can take on a pending join request.
+type JoinRequestAction string
+
+const (
+	JoinRequestActionApprove JoinRequestAction = "APPROVE"
+	JoinRequestActionReject  JoinRequestAction = "REJECT"
+)
+
+// DecideJoinRequestPayload is the request body for approving or rejecting a join request.
 type DecideJoinRequestPayload struct {
-	Action string `json:"action"` // "APPROVE" or "REJECT"
+	Action JoinRequestAction `json:"action"`
 }

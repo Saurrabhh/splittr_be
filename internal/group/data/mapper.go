@@ -11,7 +11,8 @@ import (
 func mapGroupFields(id uuid.UUID, name string, description pgtype.Text, inviteCode pgtype.Text, inviteCodeExpiresAt pgtype.Timestamptz, requireAdminApproval bool, createdBy pgtype.UUID, createdAt pgtype.Timestamptz, updatedAt pgtype.Timestamptz, archivedAt pgtype.Timestamptz) *domain.Group {
 	var createdByStr *string
 	if createdBy.Valid {
-		createdByStr = new(uuid.UUID(createdBy.Bytes).String())
+		s := uuid.UUID(createdBy.Bytes).String()
+		createdByStr = &s
 	}
 
 	var archivedAtTime *time.Time

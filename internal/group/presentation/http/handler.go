@@ -117,12 +117,8 @@ func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 // @Router       /groups/preview [get]
 // @Security     BearerAuth
 func (h *Handler) Preview(w http.ResponseWriter, r *http.Request) {
-	inviteCode := r.URL.Query().Get("inviteCode")
-	if inviteCode == "" {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeValidation,
-			Message: "inviteCode query parameter is required",
-		})
+	inviteCode, ok := request.QueryParam(w, r, "inviteCode")
+	if !ok {
 		return
 	}
 
@@ -155,7 +151,10 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		response.HandleError(w, err)
 		return
 	}
-	response.JSON(w, http.StatusOK, result)
+	response.JSON(w, http.StatusOK, ListGroupsResponse{
+		Data:       result.Data,
+		Pagination: result.Pagination,
+	})
 }
 
 // GetDetails returns the group metadata and its members list.
@@ -164,19 +163,15 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 // @Tags         groups
 // @Produce      json
 // @Param        id path string true "Group ID"
-// @Success      200  {object}  DetailsResponse
+// @Success      200  {object}  domain.DetailsResponse
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /groups/{id} [get]
 // @Security     BearerAuth
 func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
-	groupID := chi.URLParam(r, "id")
-	if groupID == "" {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeValidation,
-			Message: "group id is required",
-		})
+	groupID, ok := request.URLParam(w, r, "id")
+	if !ok {
 		return
 	}
 
@@ -188,7 +183,7 @@ func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, DetailsResponse{
+	response.JSON(w, http.StatusOK, domain.DetailsResponse{
 		Group:   *g,
 		Members: members,
 	})
@@ -208,7 +203,10 @@ func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 // @Router       /groups/{id}/members [get]
 // @Security     BearerAuth
 func (h *Handler) ListMembers(w http.ResponseWriter, r *http.Request) {
-	groupID := chi.URLParam(r, "id")
+	groupID, ok := request.URLParam(w, r, "id")
+	if !ok {
+		return
+	}
 	statusFilter := r.URL.Query().Get("status")
 	currUser := user.MustFrom(r.Context())
 
@@ -235,12 +233,8 @@ func (h *Handler) ListMembers(w http.ResponseWriter, r *http.Request) {
 // @Router       /groups/{id}/members [post]
 // @Security     BearerAuth
 func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
-	groupID := chi.URLParam(r, "id")
-	if groupID == "" {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeValidation,
-			Message: "group id is required",
-		})
+	groupID, ok := request.URLParam(w, r, "id")
+	if !ok {
 		return
 	}
 
@@ -276,13 +270,12 @@ func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
 // @Router       /groups/{id}/members/{userId} [delete]
 // @Security     BearerAuth
 func (h *Handler) RemoveMember(w http.ResponseWriter, r *http.Request) {
-	groupID := chi.URLParam(r, "id")
-	targetUserID := chi.URLParam(r, "userId")
-	if groupID == "" || targetUserID == "" {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeValidation,
-			Message: "group id and user id are required",
-		})
+	groupID, ok := request.URLParam(w, r, "id")
+	if !ok {
+		return
+	}
+	targetUserID, ok := request.URLParam(w, r, "userId")
+	if !ok {
 		return
 	}
 
@@ -313,13 +306,12 @@ func (h *Handler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 // @Router       /groups/{id}/members/{userId}/role [put]
 // @Security     BearerAuth
 func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
-	groupID := chi.URLParam(r, "id")
-	targetUserID := chi.URLParam(r, "userId")
-	if groupID == "" || targetUserID == "" {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeValidation,
-			Message: "group id and user id are required",
-		})
+	groupID, ok := request.URLParam(w, r, "id")
+	if !ok {
+		return
+	}
+	targetUserID, ok := request.URLParam(w, r, "userId")
+	if !ok {
 		return
 	}
 
@@ -352,8 +344,14 @@ func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 // @Router       /groups/{id}/members/{userId}/decision [post]
 // @Security     BearerAuth
 func (h *Handler) DecideJoinRequest(w http.ResponseWriter, r *http.Request) {
-	groupID := chi.URLParam(r, "id")
-	targetUserID := chi.URLParam(r, "userId")
+	groupID, ok := request.URLParam(w, r, "id")
+	if !ok {
+		return
+	}
+	targetUserID, ok := request.URLParam(w, r, "userId")
+	if !ok {
+		return
+	}
 	currUser := user.MustFrom(r.Context())
 
 	request.Run(w, r, http.StatusOK, func(ctx context.Context, req domain.DecideJoinRequestPayload) (response.MessageResponse, error) {
@@ -378,7 +376,10 @@ func (h *Handler) DecideJoinRequest(w http.ResponseWriter, r *http.Request) {
 // @Router       /groups/{id}/invite-code/reset [post]
 // @Security     BearerAuth
 func (h *Handler) ResetInviteCode(w http.ResponseWriter, r *http.Request) {
-	groupID := chi.URLParam(r, "id")
+	groupID, ok := request.URLParam(w, r, "id")
+	if !ok {
+		return
+	}
 	currUser := user.MustFrom(r.Context())
 
 	g, err := h.uc.ResetInviteCode(r.Context(), groupID, currUser.ID)
@@ -396,19 +397,15 @@ func (h *Handler) ResetInviteCode(w http.ResponseWriter, r *http.Request) {
 // @Tags         groups
 // @Produce      json
 // @Param        id path string true "Group ID"
-// @Success      200  {object}  response.MessageResponse "Success message"
+// @Success      204  "No Content"
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /groups/{id} [delete]
 // @Security     BearerAuth
 func (h *Handler) Archive(w http.ResponseWriter, r *http.Request) {
-	groupID := chi.URLParam(r, "id")
-	if groupID == "" {
-		response.HandleError(w, &response.AppError{
-			Type:    response.TypeValidation,
-			Message: "group id is required",
-		})
+	groupID, ok := request.URLParam(w, r, "id")
+	if !ok {
 		return
 	}
 
@@ -420,7 +417,7 @@ func (h *Handler) Archive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, response.MessageResponse{Message: "group archived successfully"})
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // GetFeed retrieves group activities with cursor-based pagination.
@@ -438,8 +435,12 @@ func (h *Handler) Archive(w http.ResponseWriter, r *http.Request) {
 // @Router       /groups/{id}/feed [get]
 // @Security     BearerAuth
 func (h *Handler) GetFeed(w http.ResponseWriter, r *http.Request) {
+	groupID, ok := request.URLParam(w, r, "id")
+	if !ok {
+		return
+	}
+
 	currUser := user.MustFrom(r.Context())
-	groupID := chi.URLParam(r, "id")
 
 	p := pagination.ParseParams(r, 20, 100)
 

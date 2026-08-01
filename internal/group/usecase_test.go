@@ -8,7 +8,6 @@ import (
 
 	"github.com/Saurrabhh/splittr_be/internal/activity"
 	"github.com/Saurrabhh/splittr_be/internal/group"
-	"github.com/Saurrabhh/splittr_be/internal/notification"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -113,24 +112,18 @@ func (m *mockActivityLogger) LogEvent(
 	groupID *string,
 	visibleToUserIDs []string,
 	event activity.Event,
-) (*activity.Activity, error) {
+) error {
 	args := m.Called(ctx, actorID, groupID, visibleToUserIDs, event)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*activity.Activity), args.Error(1)
+	return args.Error(0)
 }
 
 type mockNotificationSender struct {
 	mock.Mock
 }
 
-func (m *mockNotificationSender) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) (*notification.Notification, error) {
+func (m *mockNotificationSender) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) error {
 	args := m.Called(ctx, userID, actorID, activityID, title, content)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*notification.Notification), args.Error(1)
+	return args.Error(0)
 }
 
 type mockTransactor struct {
@@ -165,7 +158,7 @@ func TestCreateGroup_Success(t *testing.T) {
 
 	mockAct.On("LogEvent",
 		ctx, creatorID, mock.Anything, ([]string)(nil), mock.Anything,
-	).Return(&activity.Activity{ID: "act-1"}, nil)
+	).Return(nil)
 
 	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	g, err := uc.CreateGroup(ctx, groupName, groupDesc, false, creatorID)
@@ -271,7 +264,7 @@ func TestJoinGroup_NewMember_Success(t *testing.T) {
 
 	mockAct.On("LogEvent",
 		ctx, userID, &groupID, ([]string)(nil), mock.Anything,
-	).Return(&activity.Activity{ID: "act-join"}, nil)
+	).Return(nil)
 
 	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	resp, err := uc.JoinGroup(ctx, inviteCode, userID)
@@ -329,7 +322,7 @@ func TestJoinGroup_RequireAdminApproval_Pending(t *testing.T) {
 		{GroupID: groupID, UserID: adminID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive},
 	}, nil)
 
-	mockNotif.On("CreateAlert", ctx, adminID, &userID, (*string)(nil), "Join Request Pending", mock.AnythingOfType("string")).Return(&notification.Notification{ID: "notif-1"}, nil)
+	mockNotif.On("CreateAlert", ctx, adminID, &userID, (*string)(nil), "Join Request Pending", mock.AnythingOfType("string")).Return(nil)
 
 	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	resp, err := uc.JoinGroup(ctx, inviteCode, userID)
@@ -355,15 +348,16 @@ func TestDecideJoinRequest_Approve(t *testing.T) {
 	adminMember := &group.Member{GroupID: groupID, UserID: adminUserID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive}
 	approvedMember := &group.Member{GroupID: groupID, UserID: targetUserID, Role: group.MemberRoleMember, Status: group.MemberStatusActive}
 
+	mockRepo.On("GetByID", ctx, groupID).Return(&group.Group{ID: groupID}, nil)
 	mockRepo.On("GetGroupMember", ctx, groupID, adminUserID).Return(adminMember, nil)
 	mockRepo.On("UpdateMemberStatus", ctx, groupID, targetUserID, group.MemberStatusActive).Return(nil)
 	mockRepo.On("GetGroupMember", ctx, groupID, targetUserID).Return(approvedMember, nil)
 
 	mockAct.On("LogEvent",
 		ctx, adminUserID, &groupID, ([]string)(nil), mock.Anything,
-	).Return(&activity.Activity{ID: "act-approved"}, nil)
+	).Return(nil)
 
-	mockNotif.On("CreateAlert", ctx, targetUserID, &adminUserID, (*string)(nil), "Join Request Approved", mock.AnythingOfType("string")).Return(&notification.Notification{ID: "n-1"}, nil)
+	mockNotif.On("CreateAlert", ctx, targetUserID, &adminUserID, (*string)(nil), "Join Request Approved", mock.AnythingOfType("string")).Return(nil)
 
 	uc := group.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
 	err := uc.DecideJoinRequest(ctx, groupID, targetUserID, "APPROVE", adminUserID)
@@ -387,6 +381,7 @@ func TestResetInviteCode_Success(t *testing.T) {
 	adminMember := &group.Member{GroupID: groupID, UserID: adminUserID, Role: group.MemberRoleAdmin, Status: group.MemberStatusActive}
 	updatedGroup := &group.Group{ID: groupID, Name: "Trip"}
 
+	mockRepo.On("GetByID", ctx, groupID).Return(updatedGroup, nil)
 	mockRepo.On("GetGroupMember", ctx, groupID, adminUserID).Return(adminMember, nil)
 	mockRepo.On("ResetInviteCode", ctx, groupID, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(updatedGroup, nil)
 

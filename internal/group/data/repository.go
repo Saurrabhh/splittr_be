@@ -50,8 +50,6 @@ func (r *DBRepository) CreateGroup(ctx context.Context, g *domain.Group) error {
 	var expiresAt pgtype.Timestamptz
 	if g.InviteCodeExpiresAt != nil {
 		expiresAt = pgtype.Timestamptz{Time: *g.InviteCodeExpiresAt, Valid: true}
-	} else {
-		expiresAt = pgtype.Timestamptz{Time: time.Now().Add(7 * 24 * time.Hour), Valid: true}
 	}
 
 	dbGroup, err := q.CreateGroup(ctx, dbgen.CreateGroupParams{

@@ -14,6 +14,26 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/user"
 )
 
+// activityLoggerAdapter adapts the activity UseCase to the group domain port.
+type activityLoggerAdapter struct {
+	uc *activity.UseCase
+}
+
+func (a activityLoggerAdapter) LogEvent(ctx context.Context, actorID string, groupID *string, visibleToUserIDs []string, event activity.Event) error {
+	_, err := a.uc.LogEvent(ctx, actorID, groupID, visibleToUserIDs, event)
+	return err
+}
+
+// notificationSenderAdapter adapts the notification UseCase to the group domain port.
+type notificationSenderAdapter struct {
+	uc *notification.UseCase
+}
+
+func (a notificationSenderAdapter) CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) error {
+	_, err := a.uc.CreateAlert(ctx, userID, actorID, activityID, title, content)
+	return err
+}
+
 // dependencies holds all wired repository, usecase, and handler instances.
 type dependencies struct {
 	authMiddleware      *auth.Middleware
@@ -60,7 +80,7 @@ func initDependencies(ctx context.Context, app *Application) (*dependencies, err
 
 	// Group domain wiring
 	groupRepo := group.NewRepository(app.DB, tm)
-	groupUseCase := group.NewUseCase(groupRepo, tm, activityUseCase, notificationUseCase)
+	groupUseCase := group.NewUseCase(groupRepo, tm, activityLoggerAdapter{activityUseCase}, notificationSenderAdapter{notificationUseCase})
 	groupHandler := group.NewHandler(groupUseCase, activityUseCase)
 
 	// Expense domain wiring

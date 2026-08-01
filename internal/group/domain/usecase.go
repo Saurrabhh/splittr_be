@@ -8,12 +8,19 @@ import (
 
 	"github.com/Saurrabhh/splittr_be/internal/activity"
 	"github.com/Saurrabhh/splittr_be/internal/db"
-	"github.com/Saurrabhh/splittr_be/internal/notification"
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/google/uuid"
 )
 
+const inviteTTL = 7 * 24 * time.Hour
+
+// newInviteCode generates a fresh invite code for a group.
+func newInviteCode() string {
+	return "invite-" + uuid.New().String()[:8]
+}
+
+// ActivityLogger records group activity events.
 type ActivityLogger interface {
 	LogEvent(
 		ctx context.Context,
@@ -21,11 +28,12 @@ type ActivityLogger interface {
 		groupID *string,
 		visibleToUserIDs []string,
 		event activity.Event,
-	) (*activity.Activity, error)
+	) error
 }
 
+// NotificationSender delivers notifications to users.
 type NotificationSender interface {
-	CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) (*notification.Notification, error)
+	CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, title, content string) error
 }
 
 // DetailsResponse is the canonical shape for any endpoint or feed payload that returns group data.
@@ -34,7 +42,7 @@ type DetailsResponse struct {
 	Members []Member `json:"members"`
 }
 
-// JoinResponse returned when joining a group (either active or pending).
+// JoinResponse is returned when joining a group, either as an active member or pending approval.
 type JoinResponse struct {
 	Status  MemberStatus `json:"status"`
 	Message string       `json:"message,omitempty"`
@@ -70,14 +78,16 @@ func (u *UseCase) CreateGroup(ctx context.Context, name, description string, req
 	if creatorID == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "creator ID is required",
+			Message: "creator id is required",
 		}
 	}
 
-	expiresAt := time.Now().Add(7 * 24 * time.Hour)
+	expiresAt := time.Now().Add(inviteTTL)
+	inviteCode := newInviteCode()
 	newGroup := &Group{
 		ID:                   uuid.New().String(),
 		Name:                 name,
+		InviteCode:           &inviteCode,
 		InviteCodeExpiresAt:  &expiresAt,
 		RequireAdminApproval: requireAdminApproval,
 		CreatedBy:            &creatorID,
@@ -85,8 +95,6 @@ func (u *UseCase) CreateGroup(ctx context.Context, name, description string, req
 	if description != "" {
 		newGroup.Description = &description
 	}
-
-	newGroup.InviteCode = new("invite-" + uuid.New().String()[:8])
 
 	err := u.tx.RunInTx(ctx, func(txCtx context.Context) error {
 		if err := u.repo.CreateGroup(txCtx, newGroup); err != nil {
@@ -104,7 +112,7 @@ func (u *UseCase) CreateGroup(ctx context.Context, name, description string, req
 			Group:   *newGroup,
 			Members: members,
 		}
-		_, err = u.activity.LogEvent(
+		err = u.activity.LogEvent(
 			txCtx, creatorID, &newGroup.ID, nil,
 			activity.NewGroupCreatedEvent(newGroup.ID, payload),
 		)
@@ -126,7 +134,7 @@ func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 	if groupID == "" || userID == "" {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "group ID and user ID are required",
+			Message: "group id and user id are required",
 		}
 	}
 
@@ -175,7 +183,7 @@ func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 // ListUserGroups returns a cursor-paginated list of groups the user actively belongs to.
 func (u *UseCase) ListUserGroups(ctx context.Context, userID string, p pagination.Params) (pagination.Response[DetailsResponse], error) {
 	if userID == "" {
-		return pagination.Response[DetailsResponse]{}, &response.AppError{Type: response.TypeValidation, Message: "user ID is required"}
+		return pagination.Response[DetailsResponse]{}, &response.AppError{Type: response.TypeValidation, Message: "user id is required"}
 	}
 	cursor := pagination.ParseCursor(p.Cursor)
 	rows, err := u.repo.ListUserGroupsWithMembers(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
@@ -189,10 +197,7 @@ func (u *UseCase) ListUserGroups(ctx context.Context, userID string, p paginatio
 
 	detailsList := make([]DetailsResponse, 0, len(rows))
 	for _, row := range rows {
-		detailsList = append(detailsList, DetailsResponse{
-			Group:   row.Group,
-			Members: row.Members,
-		})
+		detailsList = append(detailsList, DetailsResponse(row))
 	}
 
 	return pagination.BuildResponse(detailsList, p.Limit, func(g DetailsResponse) string {
@@ -205,7 +210,7 @@ func (u *UseCase) ListMembers(ctx context.Context, groupID, statusFilter, action
 	if groupID == "" || actionByUserID == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "group ID and user ID are required",
+			Message: "group id and user id are required",
 		}
 	}
 
@@ -261,18 +266,7 @@ func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 	if groupID == "" || targetUserID == "" || actionByUserID == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "missing required fields",
-		}
-	}
-
-	isAdmin, err := u.checkIsAdmin(ctx, groupID, actionByUserID)
-	if err != nil {
-		return err
-	}
-	if !isAdmin {
-		return &response.AppError{
-			Type:    response.TypeForbidden,
-			Message: "only admins can add members to the group",
+			Message: "group id, target user id, and action user id are required",
 		}
 	}
 
@@ -288,6 +282,17 @@ func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 		return &response.AppError{
 			Type:    response.TypeNotFound,
 			Message: "group not found",
+		}
+	}
+
+	isAdmin, err := u.checkIsAdmin(ctx, groupID, actionByUserID)
+	if err != nil {
+		return err
+	}
+	if !isAdmin {
+		return &response.AppError{
+			Type:    response.TypeForbidden,
+			Message: "only admins can add members to the group",
 		}
 	}
 
@@ -311,7 +316,7 @@ func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 		payload := activity.MemberPayload{
 			Member: targetMember,
 		}
-		_, err = u.activity.LogEvent(
+		err = u.activity.LogEvent(
 			txCtx, actionByUserID, &groupID, nil,
 			activity.NewMemberAddedEvent(targetUserID, payload),
 		)
@@ -333,7 +338,22 @@ func (u *UseCase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 	if groupID == "" || targetUserID == "" || actionByUserID == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "missing required fields",
+			Message: "group id, target user id, and action user id are required",
+		}
+	}
+
+	g, err := u.repo.GetByID(ctx, groupID)
+	if err != nil {
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve group details",
+			Err:     err,
+		}
+	}
+	if g == nil {
+		return &response.AppError{
+			Type:    response.TypeNotFound,
+			Message: "group not found",
 		}
 	}
 
@@ -403,7 +423,7 @@ func (u *UseCase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 			evt = activity.NewMemberKickedEvent(targetUserID, payload)
 		}
 
-		_, err = u.activity.LogEvent(
+		err = u.activity.LogEvent(
 			txCtx, actionByUserID, &groupID, nil, evt,
 		)
 		return err
@@ -424,7 +444,7 @@ func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID st
 	if groupID == "" || targetUserID == "" || newRole == "" || actionByUserID == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "missing required fields",
+			Message: "group id, target user id, role, and action user id are required",
 		}
 	}
 
@@ -432,6 +452,21 @@ func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID st
 		return &response.AppError{
 			Type:    response.TypeValidation,
 			Message: "role must be 'ADMIN' or 'MEMBER'",
+		}
+	}
+
+	g, err := u.repo.GetByID(ctx, groupID)
+	if err != nil {
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve group details",
+			Err:     err,
+		}
+	}
+	if g == nil {
+		return &response.AppError{
+			Type:    response.TypeNotFound,
+			Message: "group not found",
 		}
 	}
 
@@ -472,7 +507,7 @@ func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID st
 		payload := activity.MemberPayload{
 			Member: member,
 		}
-		_, err = u.activity.LogEvent(
+		err = u.activity.LogEvent(
 			txCtx, actionByUserID, &groupID, nil,
 			activity.NewMemberRoleUpdatedEvent(targetUserID, string(newRole), payload),
 		)
@@ -494,18 +529,7 @@ func (u *UseCase) UpdateGroup(ctx context.Context, groupID, name, description st
 	if groupID == "" || name == "" || actionByUserID == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "group ID, name, and action user ID are required",
-		}
-	}
-
-	isAdmin, err := u.checkIsAdmin(ctx, groupID, actionByUserID)
-	if err != nil {
-		return nil, err
-	}
-	if !isAdmin {
-		return nil, &response.AppError{
-			Type:    response.TypeForbidden,
-			Message: "only admins can update group details",
+			Message: "group id, name, and action user id are required",
 		}
 	}
 
@@ -521,6 +545,17 @@ func (u *UseCase) UpdateGroup(ctx context.Context, groupID, name, description st
 		return nil, &response.AppError{
 			Type:    response.TypeNotFound,
 			Message: "group not found",
+		}
+	}
+
+	isAdmin, err := u.checkIsAdmin(ctx, groupID, actionByUserID)
+	if err != nil {
+		return nil, err
+	}
+	if !isAdmin {
+		return nil, &response.AppError{
+			Type:    response.TypeForbidden,
+			Message: "only admins can update group details",
 		}
 	}
 
@@ -540,7 +575,7 @@ func (u *UseCase) UpdateGroup(ctx context.Context, groupID, name, description st
 		payload := activity.GroupPayload{
 			Group: g,
 		}
-		_, err = u.activity.LogEvent(
+		err = u.activity.LogEvent(
 			txCtx, actionByUserID, &groupID, nil,
 			activity.NewGroupUpdatedEvent(groupID, payload),
 		)
@@ -562,18 +597,7 @@ func (u *UseCase) ArchiveGroup(ctx context.Context, groupID, actionByUserID stri
 	if groupID == "" || actionByUserID == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "group ID and user ID are required",
-		}
-	}
-
-	isAdmin, err := u.checkIsAdmin(ctx, groupID, actionByUserID)
-	if err != nil {
-		return err
-	}
-	if !isAdmin {
-		return &response.AppError{
-			Type:    response.TypeForbidden,
-			Message: "only admins can archive the group",
+			Message: "group id and action user id are required",
 		}
 	}
 
@@ -592,6 +616,17 @@ func (u *UseCase) ArchiveGroup(ctx context.Context, groupID, actionByUserID stri
 		}
 	}
 
+	isAdmin, err := u.checkIsAdmin(ctx, groupID, actionByUserID)
+	if err != nil {
+		return err
+	}
+	if !isAdmin {
+		return &response.AppError{
+			Type:    response.TypeForbidden,
+			Message: "only admins can archive the group",
+		}
+	}
+
 	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
 		if err := u.repo.Archive(txCtx, groupID); err != nil {
 			return err
@@ -600,7 +635,7 @@ func (u *UseCase) ArchiveGroup(ctx context.Context, groupID, actionByUserID stri
 		payload := activity.GroupPayload{
 			Group: g,
 		}
-		_, err = u.activity.LogEvent(
+		err = u.activity.LogEvent(
 			txCtx, actionByUserID, &groupID, nil,
 			activity.NewGroupArchivedEvent(groupID, payload),
 		)
@@ -621,7 +656,7 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 	if inviteCode == "" || userID == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "invite code and user ID are required",
+			Message: "invite code and user id are required",
 		}
 	}
 
@@ -685,7 +720,7 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 			if err == nil {
 				for _, m := range members {
 					if m.Role == MemberRoleAdmin && u.notification != nil {
-						_, _ = u.notification.CreateAlert(
+						_ = u.notification.CreateAlert(
 							txCtx, m.UserID, &userID, nil,
 							"Join Request Pending",
 							fmt.Sprintf("A user requested to join group %s", g.Name),
@@ -711,7 +746,7 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 		payload := activity.MemberPayload{
 			Member: targetMember,
 		}
-		_, err = u.activity.LogEvent(
+		err = u.activity.LogEvent(
 			txCtx, userID, &g.ID, nil,
 			activity.NewMemberJoinedEvent(userID, payload),
 		)
@@ -732,11 +767,26 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 }
 
 // DecideJoinRequest approves or rejects a pending join request. Admin only.
-func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID, action, adminUserID string) error {
+func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID string, action JoinRequestAction, adminUserID string) error {
 	if groupID == "" || targetUserID == "" || action == "" || adminUserID == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "group ID, target user ID, action, and admin user ID are required",
+			Message: "group id, target user id, action, and admin user id are required",
+		}
+	}
+
+	g, err := u.repo.GetByID(ctx, groupID)
+	if err != nil {
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve group details",
+			Err:     err,
+		}
+	}
+	if g == nil {
+		return &response.AppError{
+			Type:    response.TypeNotFound,
+			Message: "group not found",
 		}
 	}
 
@@ -751,13 +801,13 @@ func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID, 
 		}
 	}
 
-	actionUpper := strings.ToUpper(action)
 	var newStatus MemberStatus
-	if actionUpper == "APPROVE" {
+	switch action {
+	case JoinRequestActionApprove:
 		newStatus = MemberStatusActive
-	} else if actionUpper == "REJECT" {
+	case JoinRequestActionReject:
 		newStatus = MemberStatusRejected
-	} else {
+	default:
 		return &response.AppError{
 			Type:    response.TypeValidation,
 			Message: "action must be 'APPROVE' or 'REJECT'",
@@ -775,7 +825,7 @@ func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID, 
 				payload := activity.MemberPayload{
 					Member: *member,
 				}
-				_, _ = u.activity.LogEvent(
+				_ = u.activity.LogEvent(
 					txCtx, adminUserID, &groupID, nil,
 					activity.NewMemberJoinedEvent(targetUserID, payload),
 				)
@@ -788,7 +838,7 @@ func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID, 
 				title = "Join Request Rejected"
 				content = "Your request to join the group was declined."
 			}
-			_, _ = u.notification.CreateAlert(txCtx, targetUserID, &adminUserID, nil, title, content)
+			_ = u.notification.CreateAlert(txCtx, targetUserID, &adminUserID, nil, title, content)
 		}
 		return nil
 	})
@@ -808,7 +858,22 @@ func (u *UseCase) ResetInviteCode(ctx context.Context, groupID, adminUserID stri
 	if groupID == "" || adminUserID == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "group ID and admin user ID are required",
+			Message: "group id and admin user id are required",
+		}
+	}
+
+	g, err := u.repo.GetByID(ctx, groupID)
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve group details",
+			Err:     err,
+		}
+	}
+	if g == nil {
+		return nil, &response.AppError{
+			Type:    response.TypeNotFound,
+			Message: "group not found",
 		}
 	}
 
@@ -823,10 +888,15 @@ func (u *UseCase) ResetInviteCode(ctx context.Context, groupID, adminUserID stri
 		}
 	}
 
-	newInviteCode := "invite-" + uuid.New().String()[:8]
-	expiresAt := time.Now().Add(7 * 24 * time.Hour)
+	code := newInviteCode()
+	expiresAt := time.Now().Add(inviteTTL)
 
-	updatedGroup, err := u.repo.ResetInviteCode(ctx, groupID, newInviteCode, expiresAt)
+	var updatedGroup *Group
+	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
+		var err error
+		updatedGroup, err = u.repo.ResetInviteCode(txCtx, groupID, code, expiresAt)
+		return err
+	})
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
@@ -849,7 +919,11 @@ func (u *UseCase) GetGroupPreview(ctx context.Context, inviteCode string) (*Prev
 
 	preview, err := u.repo.GetPreviewByInviteCode(ctx, inviteCode)
 	if err != nil {
-		return nil, err
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to retrieve group preview",
+			Err:     err,
+		}
 	}
 	if preview == nil {
 		return nil, &response.AppError{

@@ -197,8 +197,22 @@ const docTemplate = `{
             "domain.DecideJoinRequestPayload": {
                 "properties": {
                     "action": {
-                        "description": "\"APPROVE\" or \"REJECT\"",
-                        "type": "string"
+                        "$ref": "#/components/schemas/domain.JoinRequestAction"
+                    }
+                },
+                "type": "object"
+            },
+            "domain.DetailsResponse": {
+                "properties": {
+                    "group": {
+                        "$ref": "#/components/schemas/domain.Group"
+                    },
+                    "members": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.Member"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
                     }
                 },
                 "type": "object"
@@ -363,6 +377,17 @@ const docTemplate = `{
                     }
                 },
                 "type": "object"
+            },
+            "domain.JoinRequestAction": {
+                "enum": [
+                    "APPROVE",
+                    "REJECT"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "JoinRequestActionApprove",
+                    "JoinRequestActionReject"
+                ]
             },
             "domain.JoinResponse": {
                 "properties": {
@@ -766,21 +791,6 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "http.DetailsResponse": {
-                "properties": {
-                    "group": {
-                        "$ref": "#/components/schemas/domain.Group"
-                    },
-                    "members": {
-                        "items": {
-                            "$ref": "#/components/schemas/domain.Member"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
             "http.JoinGroupRequest": {
                 "properties": {
                     "inviteCode": {
@@ -838,7 +848,7 @@ const docTemplate = `{
                 "properties": {
                     "data": {
                         "items": {
-                            "$ref": "#/components/schemas/http.DetailsResponse"
+                            "$ref": "#/components/schemas/domain.DetailsResponse"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -2037,15 +2047,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/response.MessageResponse"
-                                }
-                            }
-                        },
-                        "description": "Success message"
+                    "204": {
+                        "description": "No Content"
                     },
                     "400": {
                         "content": {
@@ -2106,7 +2109,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/http.DetailsResponse"
+                                    "$ref": "#/components/schemas/domain.DetailsResponse"
                                 }
                             }
                         },

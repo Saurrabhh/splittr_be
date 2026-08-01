@@ -76,7 +76,7 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
 ### 12. Archive Group
 - **DELETE** `/groups/{id}`
 - **Description**: Soft-delete a group. Admin only.
-- **Response** (`200 OK`): `MessageResponse`.
+- **Response** (`204 No Content`).
 
 ### 13. Get Group Activity Feed
 - **GET** `/groups/{id}/feed?limit={int}&cursor={string}`
