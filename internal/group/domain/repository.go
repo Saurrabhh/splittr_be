@@ -1,0 +1,30 @@
+package domain
+
+import (
+	"context"
+	"time"
+)
+
+// Repository defines the storage contract for groups and memberships.
+type Repository interface {
+	GetByID(ctx context.Context, id string) (*Group, error)
+	GetByInviteCode(ctx context.Context, inviteCode string) (*Group, error)
+	GetPreviewByInviteCode(ctx context.Context, inviteCode string) (*Preview, error)
+	GetGroupMember(ctx context.Context, groupID, userID string) (*Member, error)
+	ListGroupMembers(ctx context.Context, groupID string, status string) ([]Member, error)
+	ListUserGroupsWithMembers(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]GroupWithMembers, error)
+	CreateGroup(ctx context.Context, g *Group) error
+	Update(ctx context.Context, g *Group) error
+	ResetInviteCode(ctx context.Context, groupID, newInviteCode string, expiresAt time.Time) (*Group, error)
+	Archive(ctx context.Context, id string) error
+	AddGroupMember(ctx context.Context, groupID, userID, role, status string) error
+	UpdateMemberStatus(ctx context.Context, groupID, userID, status string) error
+	RemoveGroupMember(ctx context.Context, groupID, userID string) error
+	UpdateGroupMemberRole(ctx context.Context, groupID, userID, role string) error
+}
+
+// GroupWithMembers wraps a Group entity with its active members.
+type GroupWithMembers struct {
+	Group   Group
+	Members []Member
+}

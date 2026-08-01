@@ -23,237 +23,6 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "appconfig.AppConfigData": {
-                "properties": {
-                    "domain": {
-                        "$ref": "#/components/schemas/appconfig.DomainConfig"
-                    },
-                    "featureFlags": {
-                        "additionalProperties": {
-                            "type": "boolean"
-                        },
-                        "type": "object"
-                    },
-                    "legal": {
-                        "$ref": "#/components/schemas/appconfig.LegalConfig"
-                    },
-                    "system": {
-                        "$ref": "#/components/schemas/appconfig.SystemConfig"
-                    },
-                    "userContext": {
-                        "$ref": "#/components/schemas/appconfig.UserContext"
-                    }
-                },
-                "type": "object"
-            },
-            "appconfig.AppVersion": {
-                "properties": {
-                    "forceUpdate": {
-                        "type": "boolean"
-                    },
-                    "latestVersion": {
-                        "type": "string"
-                    },
-                    "minSupportedVersion": {
-                        "type": "string"
-                    },
-                    "updateMessage": {
-                        "type": "string"
-                    },
-                    "updateUrl": {
-                        "additionalProperties": {
-                            "type": "string"
-                        },
-                        "type": "object"
-                    }
-                },
-                "type": "object"
-            },
-            "appconfig.Category": {
-                "properties": {
-                    "iconUrl": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "appconfig.Currency": {
-                "properties": {
-                    "code": {
-                        "type": "string"
-                    },
-                    "decimalPlaces": {
-                        "type": "integer"
-                    },
-                    "isDefault": {
-                        "type": "boolean"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "symbol": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "appconfig.DomainConfig": {
-                "properties": {
-                    "categories": {
-                        "items": {
-                            "$ref": "#/components/schemas/appconfig.Category"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "currencies": {
-                        "items": {
-                            "$ref": "#/components/schemas/appconfig.Currency"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "limits": {
-                        "$ref": "#/components/schemas/appconfig.LimitsConfig"
-                    },
-                    "paymentIntegrations": {
-                        "items": {
-                            "$ref": "#/components/schemas/appconfig.PaymentIntegration"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "splitTypes": {
-                        "items": {
-                            "$ref": "#/components/schemas/appconfig.SplitTypeConfig"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
-            "appconfig.LegalConfig": {
-                "properties": {
-                    "faqUrl": {
-                        "type": "string"
-                    },
-                    "privacyPolicyUrl": {
-                        "type": "string"
-                    },
-                    "supportEmail": {
-                        "type": "string"
-                    },
-                    "termsOfServiceUrl": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "appconfig.LimitsConfig": {
-                "properties": {
-                    "allowedReceiptMimeTypes": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "maxExpenseAmount": {
-                        "type": "number"
-                    },
-                    "maxGroupMembers": {
-                        "type": "integer"
-                    },
-                    "maxReceiptSizeMb": {
-                        "type": "integer"
-                    },
-                    "maxSplitParticipants": {
-                        "type": "integer"
-                    }
-                },
-                "type": "object"
-            },
-            "appconfig.MaintenanceConfig": {
-                "properties": {
-                    "estimatedEndTime": {
-                        "type": "string"
-                    },
-                    "inMaintenance": {
-                        "type": "boolean"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "readOnlyMode": {
-                        "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
-            "appconfig.PaymentIntegration": {
-                "properties": {
-                    "deepLinkScheme": {
-                        "type": "string"
-                    },
-                    "enabled": {
-                        "type": "boolean"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "appconfig.SplitTypeConfig": {
-                "properties": {
-                    "code": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "label": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "appconfig.SystemConfig": {
-                "properties": {
-                    "appVersion": {
-                        "$ref": "#/components/schemas/appconfig.AppVersion"
-                    },
-                    "maintenance": {
-                        "$ref": "#/components/schemas/appconfig.MaintenanceConfig"
-                    }
-                },
-                "type": "object"
-            },
-            "appconfig.UserContext": {
-                "properties": {
-                    "isAuthenticated": {
-                        "type": "boolean"
-                    },
-                    "userFeatureFlags": {
-                        "additionalProperties": {},
-                        "type": "object"
-                    },
-                    "userPreferredCurrency": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
             "domain.ActionType": {
                 "enum": [
                     "EXPENSE_CREATED",
@@ -326,6 +95,150 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "domain.AppConfigData": {
+                "properties": {
+                    "domain": {
+                        "$ref": "#/components/schemas/domain.DomainConfig"
+                    },
+                    "featureFlags": {
+                        "additionalProperties": {
+                            "type": "boolean"
+                        },
+                        "type": "object"
+                    },
+                    "legal": {
+                        "$ref": "#/components/schemas/domain.LegalConfig"
+                    },
+                    "system": {
+                        "$ref": "#/components/schemas/domain.SystemConfig"
+                    },
+                    "userContext": {
+                        "$ref": "#/components/schemas/domain.UserContext"
+                    }
+                },
+                "type": "object"
+            },
+            "domain.AppVersion": {
+                "properties": {
+                    "forceUpdate": {
+                        "type": "boolean"
+                    },
+                    "latestVersion": {
+                        "type": "string"
+                    },
+                    "minSupportedVersion": {
+                        "type": "string"
+                    },
+                    "updateMessage": {
+                        "type": "string"
+                    },
+                    "updateUrl": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "domain.BalanceResponse": {
+                "properties": {
+                    "balances": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.UserBalance"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "settlements": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.Settlement"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "domain.Category": {
+                "properties": {
+                    "iconUrl": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "domain.Currency": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "decimalPlaces": {
+                        "type": "integer"
+                    },
+                    "isDefault": {
+                        "type": "boolean"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "symbol": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "domain.DecideJoinRequestPayload": {
+                "properties": {
+                    "action": {
+                        "description": "\"APPROVE\" or \"REJECT\"",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "domain.DomainConfig": {
+                "properties": {
+                    "categories": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.Category"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "currencies": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.Currency"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "limits": {
+                        "$ref": "#/components/schemas/domain.LimitsConfig"
+                    },
+                    "paymentIntegrations": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.PaymentIntegration"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "splitTypes": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.SplitTypeConfig"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
             "domain.EntityType": {
                 "enum": [
                     "EXPENSE",
@@ -341,41 +254,7 @@ const docTemplate = `{
                     "EntityTypeGroup"
                 ]
             },
-            "expense.BalanceResponse": {
-                "properties": {
-                    "balances": {
-                        "items": {
-                            "$ref": "#/components/schemas/expense.UserBalance"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "settlements": {
-                        "items": {
-                            "$ref": "#/components/schemas/expense.Settlement"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
-            "expense.CreateExpenseResponse": {
-                "properties": {
-                    "expense": {
-                        "$ref": "#/components/schemas/expense.Expense"
-                    },
-                    "splits": {
-                        "items": {
-                            "$ref": "#/components/schemas/expense.Split"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
-            "expense.Expense": {
+            "domain.Expense": {
                 "properties": {
                     "amount": {
                         "type": "number"
@@ -419,22 +298,42 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "expense.GetExpenseDetailsResponse": {
+            "domain.Group": {
                 "properties": {
-                    "expense": {
-                        "$ref": "#/components/schemas/expense.Expense"
+                    "archivedAt": {
+                        "type": "string"
                     },
-                    "splits": {
-                        "items": {
-                            "$ref": "#/components/schemas/expense.Split"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "createdBy": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "inviteCode": {
+                        "type": "string"
+                    },
+                    "inviteCodeExpiresAt": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "requireAdminApproval": {
+                        "type": "boolean"
+                    },
+                    "updatedAt": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
             },
-            "expense.InputSplit": {
+            "domain.InputSplit": {
                 "properties": {
                     "amount": {
                         "description": "Required if splitType is EXACT",
@@ -450,251 +349,10 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "expense.ListExpensesResponse": {
-                "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/expense.Expense"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "pagination": {
-                        "$ref": "#/components/schemas/pagination.Meta"
-                    }
-                },
-                "type": "object"
-            },
-            "expense.SettleExpenseResponse": {
-                "properties": {
-                    "expense": {
-                        "$ref": "#/components/schemas/expense.Expense"
-                    },
-                    "split": {
-                        "$ref": "#/components/schemas/expense.Split"
-                    }
-                },
-                "type": "object"
-            },
-            "expense.Settlement": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "fromUserId": {
-                        "type": "string"
-                    },
-                    "fromUserName": {
-                        "type": "string"
-                    },
-                    "toUserId": {
-                        "type": "string"
-                    },
-                    "toUserName": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "expense.Split": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "email": {
-                        "type": "string"
-                    },
-                    "expenseId": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "phone": {
-                        "type": "string"
-                    },
-                    "splitType": {
-                        "$ref": "#/components/schemas/expense.SplitType"
-                    },
-                    "splitValue": {
-                        "type": "number"
-                    },
-                    "userId": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "expense.SplitType": {
-                "enum": [
-                    "EQUAL",
-                    "EXACT",
-                    "PERCENTAGE"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "SplitTypeEqual",
-                    "SplitTypeExact",
-                    "SplitTypePercentage"
-                ]
-            },
-            "expense.UserBalance": {
-                "properties": {
-                    "netBalance": {
-                        "type": "number"
-                    },
-                    "userId": {
-                        "type": "string"
-                    },
-                    "userName": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "expense.createExpenseRequest": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "category": {
-                        "type": "string"
-                    },
-                    "currency": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "groupId": {
-                        "type": "string"
-                    },
-                    "paidBy": {
-                        "type": "string"
-                    },
-                    "splitType": {
-                        "$ref": "#/components/schemas/expense.SplitType"
-                    },
-                    "splits": {
-                        "items": {
-                            "$ref": "#/components/schemas/expense.InputSplit"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
-            "expense.settleExpenseRequest": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "currency": {
-                        "type": "string"
-                    },
-                    "groupId": {
-                        "type": "string"
-                    },
-                    "paidBy": {
-                        "type": "string"
-                    },
-                    "receivedBy": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "group.DecideJoinRequestPayload": {
-                "properties": {
-                    "action": {
-                        "description": "\"APPROVE\" or \"REJECT\"",
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "group.DetailsResponse": {
-                "properties": {
-                    "archivedAt": {
-                        "type": "string"
-                    },
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "createdBy": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "inviteCode": {
-                        "type": "string"
-                    },
-                    "inviteCodeExpiresAt": {
-                        "type": "string"
-                    },
-                    "members": {
-                        "items": {
-                            "$ref": "#/components/schemas/group.Member"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "requireAdminApproval": {
-                        "type": "boolean"
-                    },
-                    "updatedAt": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "group.Group": {
-                "properties": {
-                    "archivedAt": {
-                        "type": "string"
-                    },
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "createdBy": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "inviteCode": {
-                        "type": "string"
-                    },
-                    "inviteCodeExpiresAt": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "requireAdminApproval": {
-                        "type": "boolean"
-                    },
-                    "updatedAt": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "group.JoinResponse": {
+            "domain.JoinResponse": {
                 "properties": {
                     "group": {
-                        "$ref": "#/components/schemas/group.Group"
+                        "$ref": "#/components/schemas/domain.Group"
                     },
                     "message": {
                         "type": "string"
@@ -705,22 +363,65 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "group.ListGroupsResponse": {
+            "domain.LegalConfig": {
                 "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/group.DetailsResponse"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
+                    "faqUrl": {
+                        "type": "string"
                     },
-                    "pagination": {
-                        "$ref": "#/components/schemas/pagination.Meta"
+                    "privacyPolicyUrl": {
+                        "type": "string"
+                    },
+                    "supportEmail": {
+                        "type": "string"
+                    },
+                    "termsOfServiceUrl": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
             },
-            "group.Member": {
+            "domain.LimitsConfig": {
+                "properties": {
+                    "allowedReceiptMimeTypes": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "maxExpenseAmount": {
+                        "type": "number"
+                    },
+                    "maxGroupMembers": {
+                        "type": "integer"
+                    },
+                    "maxReceiptSizeMb": {
+                        "type": "integer"
+                    },
+                    "maxSplitParticipants": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "domain.MaintenanceConfig": {
+                "properties": {
+                    "estimatedEndTime": {
+                        "type": "string"
+                    },
+                    "inMaintenance": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "readOnlyMode": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "domain.Member": {
                 "properties": {
                     "email": {
                         "type": "string"
@@ -749,95 +450,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "group.Preview": {
-                "properties": {
-                    "creatorName": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "memberCount": {
-                        "type": "integer"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "requireAdminApproval": {
-                        "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
-            "group.addMemberRequest": {
-                "properties": {
-                    "userId": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "group.createGroupRequest": {
-                "properties": {
-                    "description": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "requireAdminApproval": {
-                        "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
-            "group.joinGroupRequest": {
-                "properties": {
-                    "inviteCode": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "group.updateRoleRequest": {
-                "properties": {
-                    "role": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "http.ListActivitiesResponse": {
-                "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/domain.Activity"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "pagination": {
-                        "$ref": "#/components/schemas/pagination.Meta"
-                    }
-                },
-                "type": "object"
-            },
-            "notification.ListNotificationsResponse": {
-                "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/notification.Notification"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "pagination": {
-                        "$ref": "#/components/schemas/pagination.Meta"
-                    }
-                },
-                "type": "object"
-            },
-            "notification.Notification": {
+            "domain.Notification": {
                 "properties": {
                     "activityId": {
                         "type": "string"
@@ -869,52 +482,131 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "pagination.Meta": {
+            "domain.PaymentIntegration": {
                 "properties": {
-                    "hasMore": {
+                    "deepLinkScheme": {
+                        "type": "string"
+                    },
+                    "enabled": {
                         "type": "boolean"
                     },
-                    "nextCursor": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
                         "type": "string"
                     }
                 },
                 "type": "object"
             },
-            "response.ErrorResponse": {
+            "domain.Preview": {
+                "properties": {
+                    "creatorName": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "memberCount": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "requireAdminApproval": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "domain.Settlement": {
+                "properties": {
+                    "amount": {
+                        "type": "number"
+                    },
+                    "fromUserId": {
+                        "type": "string"
+                    },
+                    "fromUserName": {
+                        "type": "string"
+                    },
+                    "toUserId": {
+                        "type": "string"
+                    },
+                    "toUserName": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "domain.Split": {
+                "properties": {
+                    "amount": {
+                        "type": "number"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "expenseId": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "splitType": {
+                        "$ref": "#/components/schemas/domain.SplitType"
+                    },
+                    "splitValue": {
+                        "type": "number"
+                    },
+                    "userId": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "domain.SplitType": {
+                "enum": [
+                    "EQUAL",
+                    "EXACT",
+                    "PERCENTAGE"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "SplitTypeEqual",
+                    "SplitTypeExact",
+                    "SplitTypePercentage"
+                ]
+            },
+            "domain.SplitTypeConfig": {
                 "properties": {
                     "code": {
                         "type": "string"
                     },
-                    "message": {
+                    "description": {
                         "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "response.MessageResponse": {
-                "properties": {
-                    "message": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "user.ListFriendsResponse": {
-                "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/user.User"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
                     },
-                    "pagination": {
-                        "$ref": "#/components/schemas/pagination.Meta"
+                    "label": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
             },
-            "user.User": {
+            "domain.SystemConfig": {
+                "properties": {
+                    "appVersion": {
+                        "$ref": "#/components/schemas/domain.AppVersion"
+                    },
+                    "maintenance": {
+                        "$ref": "#/components/schemas/domain.MaintenanceConfig"
+                    }
+                },
+                "type": "object"
+            },
+            "domain.User": {
                 "properties": {
                     "createdAt": {
                         "type": "string"
@@ -940,7 +632,36 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "user.addFriendRequest": {
+            "domain.UserBalance": {
+                "properties": {
+                    "netBalance": {
+                        "type": "number"
+                    },
+                    "userId": {
+                        "type": "string"
+                    },
+                    "userName": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "domain.UserContext": {
+                "properties": {
+                    "isAuthenticated": {
+                        "type": "boolean"
+                    },
+                    "userFeatureFlags": {
+                        "additionalProperties": {},
+                        "type": "object"
+                    },
+                    "userPreferredCurrency": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "http.AddFriendRequest": {
                 "properties": {
                     "friendEmail": {
                         "type": "string"
@@ -951,7 +672,190 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "user.registerRequest": {
+            "http.AddMemberRequest": {
+                "properties": {
+                    "userId": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "http.CreateExpenseRequest": {
+                "properties": {
+                    "amount": {
+                        "type": "number"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "groupId": {
+                        "type": "string"
+                    },
+                    "paidBy": {
+                        "type": "string"
+                    },
+                    "splitType": {
+                        "$ref": "#/components/schemas/domain.SplitType"
+                    },
+                    "splits": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.InputSplit"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "http.CreateExpenseResponse": {
+                "properties": {
+                    "expense": {
+                        "$ref": "#/components/schemas/domain.Expense"
+                    },
+                    "splits": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.Split"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "http.CreateGroupRequest": {
+                "properties": {
+                    "description": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "requireAdminApproval": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "http.DetailsResponse": {
+                "properties": {
+                    "group": {
+                        "$ref": "#/components/schemas/domain.Group"
+                    },
+                    "members": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.Member"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "http.GetExpenseDetailsResponse": {
+                "properties": {
+                    "expense": {
+                        "$ref": "#/components/schemas/domain.Expense"
+                    },
+                    "splits": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.Split"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "http.JoinGroupRequest": {
+                "properties": {
+                    "inviteCode": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "http.ListActivitiesResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.Activity"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/pagination.Meta"
+                    }
+                },
+                "type": "object"
+            },
+            "http.ListExpensesResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.Expense"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/pagination.Meta"
+                    }
+                },
+                "type": "object"
+            },
+            "http.ListFriendsResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.User"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/pagination.Meta"
+                    }
+                },
+                "type": "object"
+            },
+            "http.ListGroupsResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/http.DetailsResponse"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/pagination.Meta"
+                    }
+                },
+                "type": "object"
+            },
+            "http.ListNotificationsResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.Notification"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/pagination.Meta"
+                    }
+                },
+                "type": "object"
+            },
+            "http.RegisterRequest": {
                 "properties": {
                     "name": {
                         "type": "string"
@@ -959,12 +863,81 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "user.updateProfileRequest": {
+            "http.SettleExpenseRequest": {
+                "properties": {
+                    "amount": {
+                        "type": "number"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "groupId": {
+                        "type": "string"
+                    },
+                    "paidBy": {
+                        "type": "string"
+                    },
+                    "receivedBy": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "http.SettleExpenseResponse": {
+                "properties": {
+                    "expense": {
+                        "$ref": "#/components/schemas/domain.Expense"
+                    },
+                    "split": {
+                        "$ref": "#/components/schemas/domain.Split"
+                    }
+                },
+                "type": "object"
+            },
+            "http.UpdateProfileRequest": {
                 "properties": {
                     "defaultCurrency": {
                         "type": "string"
                     },
                     "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "http.UpdateRoleRequest": {
+                "properties": {
+                    "role": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "pagination.Meta": {
+                "properties": {
+                    "hasMore": {
+                        "type": "boolean"
+                    },
+                    "nextCursor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "response.ErrorResponse": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "response.MessageResponse": {
+                "properties": {
+                    "message": {
                         "type": "string"
                     }
                 },
@@ -1079,7 +1052,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/appconfig.AppConfigData"
+                                    "$ref": "#/components/schemas/domain.AppConfigData"
                                 }
                             }
                         },
@@ -1131,7 +1104,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/expense.BalanceResponse"
+                                    "$ref": "#/components/schemas/domain.BalanceResponse"
                                 }
                             }
                         },
@@ -1229,7 +1202,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/expense.ListExpensesResponse"
+                                    "$ref": "#/components/schemas/http.ListExpensesResponse"
                                 }
                             }
                         },
@@ -1287,7 +1260,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/expense.createExpenseRequest",
+                                        "$ref": "#/components/schemas/http.CreateExpenseRequest",
                                         "summary": "request",
                                         "description": "Expense details and splits structure"
                                     }
@@ -1303,7 +1276,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/expense.CreateExpenseResponse"
+                                    "$ref": "#/components/schemas/http.CreateExpenseResponse"
                                 }
                             }
                         },
@@ -1363,7 +1336,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/expense.settleExpenseRequest",
+                                        "$ref": "#/components/schemas/http.SettleExpenseRequest",
                                         "summary": "request",
                                         "description": "Settlement details"
                                     }
@@ -1379,7 +1352,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/expense.SettleExpenseResponse"
+                                    "$ref": "#/components/schemas/http.SettleExpenseResponse"
                                 }
                             }
                         },
@@ -1504,7 +1477,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/expense.GetExpenseDetailsResponse"
+                                    "$ref": "#/components/schemas/http.GetExpenseDetailsResponse"
                                 }
                             }
                         },
@@ -1578,7 +1551,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/user.ListFriendsResponse"
+                                    "$ref": "#/components/schemas/http.ListFriendsResponse"
                                 }
                             }
                         },
@@ -1626,7 +1599,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/user.addFriendRequest",
+                                        "$ref": "#/components/schemas/http.AddFriendRequest",
                                         "summary": "request",
                                         "description": "Friend email or phone"
                                     }
@@ -1642,7 +1615,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/user.User"
+                                    "$ref": "#/components/schemas/domain.User"
                                 }
                             }
                         },
@@ -1776,7 +1749,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/group.ListGroupsResponse"
+                                    "$ref": "#/components/schemas/http.ListGroupsResponse"
                                 }
                             }
                         },
@@ -1824,7 +1797,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/group.createGroupRequest",
+                                        "$ref": "#/components/schemas/http.CreateGroupRequest",
                                         "summary": "request",
                                         "description": "Group creation data"
                                     }
@@ -1840,7 +1813,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/group.Group"
+                                    "$ref": "#/components/schemas/domain.Group"
                                 }
                             }
                         },
@@ -1900,7 +1873,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/group.joinGroupRequest",
+                                        "$ref": "#/components/schemas/http.JoinGroupRequest",
                                         "summary": "request",
                                         "description": "Group join data"
                                     }
@@ -1916,7 +1889,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/group.JoinResponse"
+                                    "$ref": "#/components/schemas/domain.JoinResponse"
                                 }
                             }
                         },
@@ -2003,7 +1976,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/group.Preview"
+                                    "$ref": "#/components/schemas/domain.Preview"
                                 }
                             }
                         },
@@ -2135,7 +2108,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/group.DetailsResponse"
+                                    "$ref": "#/components/schemas/http.DetailsResponse"
                                 }
                             }
                         },
@@ -2285,7 +2258,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/group.Group"
+                                    "$ref": "#/components/schemas/domain.Group"
                                 }
                             }
                         },
@@ -2361,7 +2334,7 @@ const docTemplate = `{
                             "application/json": {
                                 "schema": {
                                     "items": {
-                                        "$ref": "#/components/schemas/group.Member"
+                                        "$ref": "#/components/schemas/domain.Member"
                                     },
                                     "type": "array"
                                 }
@@ -2432,7 +2405,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/group.addMemberRequest",
+                                        "$ref": "#/components/schemas/http.AddMemberRequest",
                                         "summary": "request",
                                         "description": "User ID of the member to add"
                                     }
@@ -2597,7 +2570,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/group.DecideJoinRequestPayload",
+                                        "$ref": "#/components/schemas/domain.DecideJoinRequestPayload",
                                         "summary": "request",
                                         "description": "Action (APPROVE or REJECT)"
                                     }
@@ -2703,7 +2676,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/group.updateRoleRequest",
+                                        "$ref": "#/components/schemas/http.UpdateRoleRequest",
                                         "summary": "request",
                                         "description": "New role value"
                                     }
@@ -2793,7 +2766,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/notification.ListNotificationsResponse"
+                                    "$ref": "#/components/schemas/http.ListNotificationsResponse"
                                 }
                             }
                         },
@@ -2956,7 +2929,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/user.registerRequest",
+                                        "$ref": "#/components/schemas/http.RegisterRequest",
                                         "summary": "request",
                                         "description": "Registration data"
                                     }
@@ -2972,7 +2945,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/user.User"
+                                    "$ref": "#/components/schemas/domain.User"
                                 }
                             }
                         },
@@ -3028,7 +3001,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/user.User"
+                                    "$ref": "#/components/schemas/domain.User"
                                 }
                             }
                         },
@@ -3076,7 +3049,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/user.updateProfileRequest",
+                                        "$ref": "#/components/schemas/http.UpdateProfileRequest",
                                         "summary": "request",
                                         "description": "Profile details to update"
                                     }
@@ -3092,7 +3065,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/user.User"
+                                    "$ref": "#/components/schemas/domain.User"
                                 }
                             }
                         },

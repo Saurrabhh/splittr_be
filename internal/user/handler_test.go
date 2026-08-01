@@ -9,6 +9,7 @@ import (
 
 	"github.com/Saurrabhh/splittr_be/internal/auth"
 	"github.com/Saurrabhh/splittr_be/internal/user"
+	"github.com/Saurrabhh/splittr_be/internal/user/domain"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -43,8 +44,8 @@ func TestHandler_Register_Success(t *testing.T) {
 	expectedUser := &user.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice", Email: &email}
 
 	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-123").Return(nil, nil)
-	mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*user.User")).Run(func(args mock.Arguments) {
-		u := args.Get(1).(*user.User)
+	mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.User")).Run(func(args mock.Arguments) {
+		u := args.Get(1).(*domain.User)
 		u.ID = "usr-1"
 	}).Return(nil)
 
@@ -162,7 +163,7 @@ func TestHandler_UpdateMe_Success(t *testing.T) {
 
 	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-123").Return(currentUser, nil)
 	mockRepo.On("GetByID", mock.Anything, "usr-1").Return(currentUser, nil)
-	mockRepo.On("UpdateUser", mock.Anything, mock.AnythingOfType("*user.User")).Return(nil)
+	mockRepo.On("UpdateUser", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
 
 	uc := user.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, identity)

@@ -171,8 +171,8 @@ func TestCreateExpense_Success_EqualSplit(t *testing.T) {
 		{UserID: "usr-2"},
 	}
 
-	mockRepo.On("CreateExpense", ctx, mock.AnythingOfType("*expense.Expense")).Return(nil)
-	mockRepo.On("CreateExpenseSplit", ctx, mock.AnythingOfType("*expense.Split")).Return(nil)
+	mockRepo.On("CreateExpense", ctx, mock.AnythingOfType("*domain.Expense")).Return(nil)
+	mockRepo.On("CreateExpenseSplit", ctx, mock.AnythingOfType("*domain.Split")).Return(nil)
 	mockRepo.On("ListExpenseSplits", ctx, mock.AnythingOfType("string")).Return([]expense.Split{
 		{ExpenseID: "exp-1", UserID: "usr-1", Amount: 50.0},
 		{ExpenseID: "exp-1", UserID: "usr-2", Amount: 50.0},
@@ -224,8 +224,8 @@ func TestCreateExpense_Success_GroupExactSplit(t *testing.T) {
 	mockGroupSvc.On("GetGroupDetails", ctx, groupID, creatorID).Return(&group.Group{ID: groupID}, members, nil)
 	mockGroupSvc.On("GetGroupDetails", mock.Anything, groupID, creatorID).Return(&group.Group{ID: groupID}, members, nil)
 
-	mockRepo.On("CreateExpense", ctx, mock.AnythingOfType("*expense.Expense")).Return(nil)
-	mockRepo.On("CreateExpenseSplit", ctx, mock.AnythingOfType("*expense.Split")).Return(nil)
+	mockRepo.On("CreateExpense", ctx, mock.AnythingOfType("*domain.Expense")).Return(nil)
+	mockRepo.On("CreateExpenseSplit", ctx, mock.AnythingOfType("*domain.Split")).Return(nil)
 	mockRepo.On("ListExpenseSplits", ctx, mock.AnythingOfType("string")).Return([]expense.Split{
 		{ExpenseID: "exp-1", UserID: "usr-1", Amount: 60.0},
 		{ExpenseID: "exp-1", UserID: "usr-2", Amount: 40.0},
@@ -263,8 +263,8 @@ func TestCreateExpense_Success_PercentageSplit(t *testing.T) {
 		{UserID: "usr-2", Percentage: &p2},
 	}
 
-	mockRepo.On("CreateExpense", ctx, mock.AnythingOfType("*expense.Expense")).Return(nil)
-	mockRepo.On("CreateExpenseSplit", ctx, mock.AnythingOfType("*expense.Split")).Return(nil)
+	mockRepo.On("CreateExpense", ctx, mock.AnythingOfType("*domain.Expense")).Return(nil)
+	mockRepo.On("CreateExpenseSplit", ctx, mock.AnythingOfType("*domain.Split")).Return(nil)
 	mockRepo.On("ListExpenseSplits", ctx, mock.AnythingOfType("string")).Return([]expense.Split{
 		{ExpenseID: "exp-1", UserID: "usr-1", Amount: 140.0},
 		{ExpenseID: "exp-1", UserID: "usr-2", Amount: 60.0},
@@ -401,8 +401,8 @@ func TestSettleUp_Success(t *testing.T) {
 	receivedBy := "usr-2"
 	createdBy := "usr-1"
 
-	mockRepo.On("CreateExpense", ctx, mock.AnythingOfType("*expense.Expense")).Return(nil)
-	mockRepo.On("CreateExpenseSplit", ctx, mock.AnythingOfType("*expense.Split")).Return(nil)
+	mockRepo.On("CreateExpense", ctx, mock.AnythingOfType("*domain.Expense")).Return(nil)
+	mockRepo.On("CreateExpenseSplit", ctx, mock.AnythingOfType("*domain.Split")).Return(nil)
 	mockRepo.On("ListExpenseSplits", ctx, mock.AnythingOfType("string")).Return([]expense.Split{
 		{ExpenseID: "exp-1", UserID: receivedBy, Amount: 50.0},
 	}, nil)

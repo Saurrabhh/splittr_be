@@ -50,7 +50,7 @@ func TestCreateAlert_Success(t *testing.T) {
 	title := "New Expense"
 	content := "Bob added an expense"
 
-	mockRepo.On("CreateNotification", ctx, mock.AnythingOfType("*notification.Notification")).Return(nil)
+	mockRepo.On("CreateNotification", ctx, mock.AnythingOfType("*domain.Notification")).Return(nil)
 
 	uc := notification.NewUseCase(mockRepo)
 	notif, err := uc.CreateAlert(ctx, userID, &actorID, &activityID, title, content)
@@ -70,7 +70,7 @@ func TestCreateAlert_RepoError(t *testing.T) {
 	mockRepo := new(mockNotificationRepository)
 	ctx := context.Background()
 
-	mockRepo.On("CreateNotification", ctx, mock.AnythingOfType("*notification.Notification")).Return(errors.New("db insert failure"))
+	mockRepo.On("CreateNotification", ctx, mock.AnythingOfType("*domain.Notification")).Return(errors.New("db insert failure"))
 
 	uc := notification.NewUseCase(mockRepo)
 	_, err := uc.CreateAlert(ctx, "user-1", nil, nil, "Title", "Content")

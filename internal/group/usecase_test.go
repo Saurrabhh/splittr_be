@@ -59,12 +59,12 @@ func (m *mockGroupRepository) ListGroupMembers(ctx context.Context, groupID stri
 	return args.Get(0).([]group.Member), args.Error(1)
 }
 
-func (m *mockGroupRepository) ListUserGroupsWithMembers(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]group.DetailsResponse, error) {
+func (m *mockGroupRepository) ListUserGroupsWithMembers(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]group.GroupWithMembers, error) {
 	args := m.Called(ctx, userID, limit, lastTime, lastID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]group.DetailsResponse), args.Error(1)
+	return args.Get(0).([]group.GroupWithMembers), args.Error(1)
 }
 
 func (m *mockGroupRepository) CreateGroup(ctx context.Context, g *group.Group) error {
@@ -157,7 +157,7 @@ func TestCreateGroup_Success(t *testing.T) {
 	groupName := "Trip to Hawaii"
 	groupDesc := "Fun vacation"
 
-	mockRepo.On("CreateGroup", ctx, mock.AnythingOfType("*group.Group")).Return(nil)
+	mockRepo.On("CreateGroup", ctx, mock.AnythingOfType("*domain.Group")).Return(nil)
 	mockRepo.On("AddGroupMember", ctx, mock.AnythingOfType("string"), creatorID, "admin", string(group.MemberStatusActive)).Return(nil)
 	mockRepo.On("ListGroupMembers", ctx, mock.AnythingOfType("string"), string(group.MemberStatusActive)).Return([]group.Member{
 		{GroupID: "grp-1", UserID: creatorID, Role: "admin", Status: string(group.MemberStatusActive)},

@@ -79,7 +79,7 @@ func TestRegisterUser_Success(t *testing.T) {
 
 	email := "alice@example.com"
 	mockRepo.On("GetByFirebaseUID", ctx, "fb-123").Return(nil, nil)
-	mockRepo.On("Create", ctx, mock.AnythingOfType("*user.User")).Return(nil)
+	mockRepo.On("Create", ctx, mock.AnythingOfType("*domain.User")).Return(nil)
 
 	uc := user.NewUseCase(mockRepo)
 	u, err := uc.RegisterUser(ctx, "fb-123", &email, nil, "Alice")
@@ -141,7 +141,7 @@ func TestRegisterUser_RepoCreateError(t *testing.T) {
 	email := "alice@example.com"
 
 	mockRepo.On("GetByFirebaseUID", ctx, "fb-123").Return(nil, nil)
-	mockRepo.On("Create", ctx, mock.AnythingOfType("*user.User")).Return(errors.New("db error"))
+	mockRepo.On("Create", ctx, mock.AnythingOfType("*domain.User")).Return(errors.New("db error"))
 
 	uc := user.NewUseCase(mockRepo)
 	_, err := uc.RegisterUser(ctx, "fb-123", &email, nil, "Alice")
@@ -264,7 +264,7 @@ func TestUpdateProfile_Success(t *testing.T) {
 	ctx := context.Background()
 	existingUser := &user.User{ID: "usr-1", Name: "Old Name", DefaultCurrency: "INR"}
 	mockRepo.On("GetByID", ctx, "usr-1").Return(existingUser, nil)
-	mockRepo.On("UpdateUser", ctx, mock.AnythingOfType("*user.User")).Return(nil)
+	mockRepo.On("UpdateUser", ctx, mock.AnythingOfType("*domain.User")).Return(nil)
 
 	uc := user.NewUseCase(mockRepo)
 	u, err := uc.UpdateProfile(ctx, "usr-1", "New Name", "USD")
@@ -309,7 +309,7 @@ func TestUpdateProfile_RepoUpdateError(t *testing.T) {
 	ctx := context.Background()
 	existingUser := &user.User{ID: "usr-1", Name: "Alice", DefaultCurrency: "INR"}
 	mockRepo.On("GetByID", ctx, "usr-1").Return(existingUser, nil)
-	mockRepo.On("UpdateUser", ctx, mock.AnythingOfType("*user.User")).Return(errors.New("db error"))
+	mockRepo.On("UpdateUser", ctx, mock.AnythingOfType("*domain.User")).Return(errors.New("db error"))
 
 	uc := user.NewUseCase(mockRepo)
 	_, err := uc.UpdateProfile(ctx, "usr-1", "New Name", "USD")

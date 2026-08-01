@@ -79,7 +79,7 @@ func TestHandler_CreateGroup_Success(t *testing.T) {
 	currentUser := &user.User{ID: "usr-creator", Name: "Creator"}
 	createdGroup := &group.Group{ID: "grp-1", Name: "New Group", CreatedBy: &currentUser.ID}
 
-	mockRepo.On("CreateGroup", mock.Anything, mock.AnythingOfType("*group.Group")).Return(nil)
+	mockRepo.On("CreateGroup", mock.Anything, mock.AnythingOfType("*domain.Group")).Return(nil)
 	mockRepo.On("AddGroupMember", mock.Anything, mock.Anything, currentUser.ID, "admin", string(group.MemberStatusActive)).Return(nil)
 	mockRepo.On("ListGroupMembers", mock.Anything, mock.Anything, mock.Anything).Return([]group.Member{
 		{GroupID: "grp-1", UserID: currentUser.ID, Role: "admin", Status: string(group.MemberStatusActive)},
@@ -823,7 +823,7 @@ func TestHandler_List_Success(t *testing.T) {
 	mockRepo := new(mockGroupRepository)
 	currentUser := &user.User{ID: "usr-1"}
 
-	groupsList := []group.DetailsResponse{
+	groupsList := []group.GroupWithMembers{
 		{Group: group.Group{ID: "grp-1", Name: "Group 1"}},
 	}
 	mockRepo.On("ListUserGroupsWithMembers", mock.Anything, currentUser.ID, int32(21), mock.Anything, mock.Anything).Return(groupsList, nil)

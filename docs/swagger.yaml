@@ -10,158 +10,6 @@ components:
         pagination:
           $ref: '#/components/schemas/pagination.Meta'
       type: object
-    appconfig.AppConfigData:
-      properties:
-        domain:
-          $ref: '#/components/schemas/appconfig.DomainConfig'
-        featureFlags:
-          additionalProperties:
-            type: boolean
-          type: object
-        legal:
-          $ref: '#/components/schemas/appconfig.LegalConfig'
-        system:
-          $ref: '#/components/schemas/appconfig.SystemConfig'
-        userContext:
-          $ref: '#/components/schemas/appconfig.UserContext'
-      type: object
-    appconfig.AppVersion:
-      properties:
-        forceUpdate:
-          type: boolean
-        latestVersion:
-          type: string
-        minSupportedVersion:
-          type: string
-        updateMessage:
-          type: string
-        updateUrl:
-          additionalProperties:
-            type: string
-          type: object
-      type: object
-    appconfig.Category:
-      properties:
-        iconUrl:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-      type: object
-    appconfig.Currency:
-      properties:
-        code:
-          type: string
-        decimalPlaces:
-          type: integer
-        isDefault:
-          type: boolean
-        name:
-          type: string
-        symbol:
-          type: string
-      type: object
-    appconfig.DomainConfig:
-      properties:
-        categories:
-          items:
-            $ref: '#/components/schemas/appconfig.Category'
-          type: array
-          uniqueItems: false
-        currencies:
-          items:
-            $ref: '#/components/schemas/appconfig.Currency'
-          type: array
-          uniqueItems: false
-        limits:
-          $ref: '#/components/schemas/appconfig.LimitsConfig'
-        paymentIntegrations:
-          items:
-            $ref: '#/components/schemas/appconfig.PaymentIntegration'
-          type: array
-          uniqueItems: false
-        splitTypes:
-          items:
-            $ref: '#/components/schemas/appconfig.SplitTypeConfig'
-          type: array
-          uniqueItems: false
-      type: object
-    appconfig.LegalConfig:
-      properties:
-        faqUrl:
-          type: string
-        privacyPolicyUrl:
-          type: string
-        supportEmail:
-          type: string
-        termsOfServiceUrl:
-          type: string
-      type: object
-    appconfig.LimitsConfig:
-      properties:
-        allowedReceiptMimeTypes:
-          items:
-            type: string
-          type: array
-          uniqueItems: false
-        maxExpenseAmount:
-          type: number
-        maxGroupMembers:
-          type: integer
-        maxReceiptSizeMb:
-          type: integer
-        maxSplitParticipants:
-          type: integer
-      type: object
-    appconfig.MaintenanceConfig:
-      properties:
-        estimatedEndTime:
-          type: string
-        inMaintenance:
-          type: boolean
-        message:
-          type: string
-        readOnlyMode:
-          type: boolean
-      type: object
-    appconfig.PaymentIntegration:
-      properties:
-        deepLinkScheme:
-          type: string
-        enabled:
-          type: boolean
-        id:
-          type: string
-        name:
-          type: string
-      type: object
-    appconfig.SplitTypeConfig:
-      properties:
-        code:
-          type: string
-        description:
-          type: string
-        label:
-          type: string
-      type: object
-    appconfig.SystemConfig:
-      properties:
-        appVersion:
-          $ref: '#/components/schemas/appconfig.AppVersion'
-        maintenance:
-          $ref: '#/components/schemas/appconfig.MaintenanceConfig'
-      type: object
-    appconfig.UserContext:
-      properties:
-        isAuthenticated:
-          type: boolean
-        userFeatureFlags:
-          additionalProperties: {}
-          type: object
-        userPreferredCurrency:
-          type: string
-      type: object
     domain.ActionType:
       enum:
       - EXPENSE_CREATED
@@ -216,6 +64,102 @@ components:
         name:
           type: string
       type: object
+    domain.AppConfigData:
+      properties:
+        domain:
+          $ref: '#/components/schemas/domain.DomainConfig'
+        featureFlags:
+          additionalProperties:
+            type: boolean
+          type: object
+        legal:
+          $ref: '#/components/schemas/domain.LegalConfig'
+        system:
+          $ref: '#/components/schemas/domain.SystemConfig'
+        userContext:
+          $ref: '#/components/schemas/domain.UserContext'
+      type: object
+    domain.AppVersion:
+      properties:
+        forceUpdate:
+          type: boolean
+        latestVersion:
+          type: string
+        minSupportedVersion:
+          type: string
+        updateMessage:
+          type: string
+        updateUrl:
+          additionalProperties:
+            type: string
+          type: object
+      type: object
+    domain.BalanceResponse:
+      properties:
+        balances:
+          items:
+            $ref: '#/components/schemas/domain.UserBalance'
+          type: array
+          uniqueItems: false
+        settlements:
+          items:
+            $ref: '#/components/schemas/domain.Settlement'
+          type: array
+          uniqueItems: false
+      type: object
+    domain.Category:
+      properties:
+        iconUrl:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+      type: object
+    domain.Currency:
+      properties:
+        code:
+          type: string
+        decimalPlaces:
+          type: integer
+        isDefault:
+          type: boolean
+        name:
+          type: string
+        symbol:
+          type: string
+      type: object
+    domain.DecideJoinRequestPayload:
+      properties:
+        action:
+          description: '"APPROVE" or "REJECT"'
+          type: string
+      type: object
+    domain.DomainConfig:
+      properties:
+        categories:
+          items:
+            $ref: '#/components/schemas/domain.Category'
+          type: array
+          uniqueItems: false
+        currencies:
+          items:
+            $ref: '#/components/schemas/domain.Currency'
+          type: array
+          uniqueItems: false
+        limits:
+          $ref: '#/components/schemas/domain.LimitsConfig'
+        paymentIntegrations:
+          items:
+            $ref: '#/components/schemas/domain.PaymentIntegration'
+          type: array
+          uniqueItems: false
+        splitTypes:
+          items:
+            $ref: '#/components/schemas/domain.SplitTypeConfig'
+          type: array
+          uniqueItems: false
+      type: object
     domain.EntityType:
       enum:
       - EXPENSE
@@ -228,30 +172,7 @@ components:
       - EntityTypeSettlement
       - EntityTypeMember
       - EntityTypeGroup
-    expense.BalanceResponse:
-      properties:
-        balances:
-          items:
-            $ref: '#/components/schemas/expense.UserBalance'
-          type: array
-          uniqueItems: false
-        settlements:
-          items:
-            $ref: '#/components/schemas/expense.Settlement'
-          type: array
-          uniqueItems: false
-      type: object
-    expense.CreateExpenseResponse:
-      properties:
-        expense:
-          $ref: '#/components/schemas/expense.Expense'
-        splits:
-          items:
-            $ref: '#/components/schemas/expense.Split'
-          type: array
-          uniqueItems: false
-      type: object
-    expense.Expense:
+    domain.Expense:
       properties:
         amount:
           type: number
@@ -280,17 +201,30 @@ components:
         updatedAt:
           type: string
       type: object
-    expense.GetExpenseDetailsResponse:
+    domain.Group:
       properties:
-        expense:
-          $ref: '#/components/schemas/expense.Expense'
-        splits:
-          items:
-            $ref: '#/components/schemas/expense.Split'
-          type: array
-          uniqueItems: false
+        archivedAt:
+          type: string
+        createdAt:
+          type: string
+        createdBy:
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        inviteCode:
+          type: string
+        inviteCodeExpiresAt:
+          type: string
+        name:
+          type: string
+        requireAdminApproval:
+          type: boolean
+        updatedAt:
+          type: string
       type: object
-    expense.InputSplit:
+    domain.InputSplit:
       properties:
         amount:
           description: Required if splitType is EXACT
@@ -301,186 +235,54 @@ components:
         userId:
           type: string
       type: object
-    expense.ListExpensesResponse:
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/expense.Expense'
-          type: array
-          uniqueItems: false
-        pagination:
-          $ref: '#/components/schemas/pagination.Meta'
-      type: object
-    expense.SettleExpenseResponse:
-      properties:
-        expense:
-          $ref: '#/components/schemas/expense.Expense'
-        split:
-          $ref: '#/components/schemas/expense.Split'
-      type: object
-    expense.Settlement:
-      properties:
-        amount:
-          type: number
-        fromUserId:
-          type: string
-        fromUserName:
-          type: string
-        toUserId:
-          type: string
-        toUserName:
-          type: string
-      type: object
-    expense.Split:
-      properties:
-        amount:
-          type: number
-        email:
-          type: string
-        expenseId:
-          type: string
-        name:
-          type: string
-        phone:
-          type: string
-        splitType:
-          $ref: '#/components/schemas/expense.SplitType'
-        splitValue:
-          type: number
-        userId:
-          type: string
-      type: object
-    expense.SplitType:
-      enum:
-      - EQUAL
-      - EXACT
-      - PERCENTAGE
-      type: string
-      x-enum-varnames:
-      - SplitTypeEqual
-      - SplitTypeExact
-      - SplitTypePercentage
-    expense.UserBalance:
-      properties:
-        netBalance:
-          type: number
-        userId:
-          type: string
-        userName:
-          type: string
-      type: object
-    expense.createExpenseRequest:
-      properties:
-        amount:
-          type: number
-        category:
-          type: string
-        currency:
-          type: string
-        description:
-          type: string
-        groupId:
-          type: string
-        paidBy:
-          type: string
-        splitType:
-          $ref: '#/components/schemas/expense.SplitType'
-        splits:
-          items:
-            $ref: '#/components/schemas/expense.InputSplit'
-          type: array
-          uniqueItems: false
-      type: object
-    expense.settleExpenseRequest:
-      properties:
-        amount:
-          type: number
-        currency:
-          type: string
-        groupId:
-          type: string
-        paidBy:
-          type: string
-        receivedBy:
-          type: string
-      type: object
-    group.DecideJoinRequestPayload:
-      properties:
-        action:
-          description: '"APPROVE" or "REJECT"'
-          type: string
-      type: object
-    group.DetailsResponse:
-      properties:
-        archivedAt:
-          type: string
-        createdAt:
-          type: string
-        createdBy:
-          type: string
-        description:
-          type: string
-        id:
-          type: string
-        inviteCode:
-          type: string
-        inviteCodeExpiresAt:
-          type: string
-        members:
-          items:
-            $ref: '#/components/schemas/group.Member'
-          type: array
-          uniqueItems: false
-        name:
-          type: string
-        requireAdminApproval:
-          type: boolean
-        updatedAt:
-          type: string
-      type: object
-    group.Group:
-      properties:
-        archivedAt:
-          type: string
-        createdAt:
-          type: string
-        createdBy:
-          type: string
-        description:
-          type: string
-        id:
-          type: string
-        inviteCode:
-          type: string
-        inviteCodeExpiresAt:
-          type: string
-        name:
-          type: string
-        requireAdminApproval:
-          type: boolean
-        updatedAt:
-          type: string
-      type: object
-    group.JoinResponse:
+    domain.JoinResponse:
       properties:
         group:
-          $ref: '#/components/schemas/group.Group'
+          $ref: '#/components/schemas/domain.Group'
         message:
           type: string
         status:
           type: string
       type: object
-    group.ListGroupsResponse:
+    domain.LegalConfig:
       properties:
-        data:
+        faqUrl:
+          type: string
+        privacyPolicyUrl:
+          type: string
+        supportEmail:
+          type: string
+        termsOfServiceUrl:
+          type: string
+      type: object
+    domain.LimitsConfig:
+      properties:
+        allowedReceiptMimeTypes:
           items:
-            $ref: '#/components/schemas/group.DetailsResponse'
+            type: string
           type: array
           uniqueItems: false
-        pagination:
-          $ref: '#/components/schemas/pagination.Meta'
+        maxExpenseAmount:
+          type: number
+        maxGroupMembers:
+          type: integer
+        maxReceiptSizeMb:
+          type: integer
+        maxSplitParticipants:
+          type: integer
       type: object
-    group.Member:
+    domain.MaintenanceConfig:
+      properties:
+        estimatedEndTime:
+          type: string
+        inMaintenance:
+          type: boolean
+        message:
+          type: string
+        readOnlyMode:
+          type: boolean
+      type: object
+    domain.Member:
       properties:
         email:
           type: string
@@ -499,64 +301,7 @@ components:
         userId:
           type: string
       type: object
-    group.Preview:
-      properties:
-        creatorName:
-          type: string
-        description:
-          type: string
-        memberCount:
-          type: integer
-        name:
-          type: string
-        requireAdminApproval:
-          type: boolean
-      type: object
-    group.addMemberRequest:
-      properties:
-        userId:
-          type: string
-      type: object
-    group.createGroupRequest:
-      properties:
-        description:
-          type: string
-        name:
-          type: string
-        requireAdminApproval:
-          type: boolean
-      type: object
-    group.joinGroupRequest:
-      properties:
-        inviteCode:
-          type: string
-      type: object
-    group.updateRoleRequest:
-      properties:
-        role:
-          type: string
-      type: object
-    http.ListActivitiesResponse:
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/domain.Activity'
-          type: array
-          uniqueItems: false
-        pagination:
-          $ref: '#/components/schemas/pagination.Meta'
-      type: object
-    notification.ListNotificationsResponse:
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/notification.Notification'
-          type: array
-          uniqueItems: false
-        pagination:
-          $ref: '#/components/schemas/pagination.Meta'
-      type: object
-    notification.Notification:
+    domain.Notification:
       properties:
         activityId:
           type: string
@@ -577,6 +322,289 @@ components:
         userId:
           type: string
       type: object
+    domain.PaymentIntegration:
+      properties:
+        deepLinkScheme:
+          type: string
+        enabled:
+          type: boolean
+        id:
+          type: string
+        name:
+          type: string
+      type: object
+    domain.Preview:
+      properties:
+        creatorName:
+          type: string
+        description:
+          type: string
+        memberCount:
+          type: integer
+        name:
+          type: string
+        requireAdminApproval:
+          type: boolean
+      type: object
+    domain.Settlement:
+      properties:
+        amount:
+          type: number
+        fromUserId:
+          type: string
+        fromUserName:
+          type: string
+        toUserId:
+          type: string
+        toUserName:
+          type: string
+      type: object
+    domain.Split:
+      properties:
+        amount:
+          type: number
+        email:
+          type: string
+        expenseId:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+        splitType:
+          $ref: '#/components/schemas/domain.SplitType'
+        splitValue:
+          type: number
+        userId:
+          type: string
+      type: object
+    domain.SplitType:
+      enum:
+      - EQUAL
+      - EXACT
+      - PERCENTAGE
+      type: string
+      x-enum-varnames:
+      - SplitTypeEqual
+      - SplitTypeExact
+      - SplitTypePercentage
+    domain.SplitTypeConfig:
+      properties:
+        code:
+          type: string
+        description:
+          type: string
+        label:
+          type: string
+      type: object
+    domain.SystemConfig:
+      properties:
+        appVersion:
+          $ref: '#/components/schemas/domain.AppVersion'
+        maintenance:
+          $ref: '#/components/schemas/domain.MaintenanceConfig'
+      type: object
+    domain.User:
+      properties:
+        createdAt:
+          type: string
+        defaultCurrency:
+          type: string
+        email:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+        updatedAt:
+          type: string
+      type: object
+    domain.UserBalance:
+      properties:
+        netBalance:
+          type: number
+        userId:
+          type: string
+        userName:
+          type: string
+      type: object
+    domain.UserContext:
+      properties:
+        isAuthenticated:
+          type: boolean
+        userFeatureFlags:
+          additionalProperties: {}
+          type: object
+        userPreferredCurrency:
+          type: string
+      type: object
+    http.AddFriendRequest:
+      properties:
+        friendEmail:
+          type: string
+        friendPhone:
+          type: string
+      type: object
+    http.AddMemberRequest:
+      properties:
+        userId:
+          type: string
+      type: object
+    http.CreateExpenseRequest:
+      properties:
+        amount:
+          type: number
+        category:
+          type: string
+        currency:
+          type: string
+        description:
+          type: string
+        groupId:
+          type: string
+        paidBy:
+          type: string
+        splitType:
+          $ref: '#/components/schemas/domain.SplitType'
+        splits:
+          items:
+            $ref: '#/components/schemas/domain.InputSplit'
+          type: array
+          uniqueItems: false
+      type: object
+    http.CreateExpenseResponse:
+      properties:
+        expense:
+          $ref: '#/components/schemas/domain.Expense'
+        splits:
+          items:
+            $ref: '#/components/schemas/domain.Split'
+          type: array
+          uniqueItems: false
+      type: object
+    http.CreateGroupRequest:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+        requireAdminApproval:
+          type: boolean
+      type: object
+    http.DetailsResponse:
+      properties:
+        group:
+          $ref: '#/components/schemas/domain.Group'
+        members:
+          items:
+            $ref: '#/components/schemas/domain.Member'
+          type: array
+          uniqueItems: false
+      type: object
+    http.GetExpenseDetailsResponse:
+      properties:
+        expense:
+          $ref: '#/components/schemas/domain.Expense'
+        splits:
+          items:
+            $ref: '#/components/schemas/domain.Split'
+          type: array
+          uniqueItems: false
+      type: object
+    http.JoinGroupRequest:
+      properties:
+        inviteCode:
+          type: string
+      type: object
+    http.ListActivitiesResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/domain.Activity'
+          type: array
+          uniqueItems: false
+        pagination:
+          $ref: '#/components/schemas/pagination.Meta'
+      type: object
+    http.ListExpensesResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/domain.Expense'
+          type: array
+          uniqueItems: false
+        pagination:
+          $ref: '#/components/schemas/pagination.Meta'
+      type: object
+    http.ListFriendsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/domain.User'
+          type: array
+          uniqueItems: false
+        pagination:
+          $ref: '#/components/schemas/pagination.Meta'
+      type: object
+    http.ListGroupsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/http.DetailsResponse'
+          type: array
+          uniqueItems: false
+        pagination:
+          $ref: '#/components/schemas/pagination.Meta'
+      type: object
+    http.ListNotificationsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/domain.Notification'
+          type: array
+          uniqueItems: false
+        pagination:
+          $ref: '#/components/schemas/pagination.Meta'
+      type: object
+    http.RegisterRequest:
+      properties:
+        name:
+          type: string
+      type: object
+    http.SettleExpenseRequest:
+      properties:
+        amount:
+          type: number
+        currency:
+          type: string
+        groupId:
+          type: string
+        paidBy:
+          type: string
+        receivedBy:
+          type: string
+      type: object
+    http.SettleExpenseResponse:
+      properties:
+        expense:
+          $ref: '#/components/schemas/domain.Expense'
+        split:
+          $ref: '#/components/schemas/domain.Split'
+      type: object
+    http.UpdateProfileRequest:
+      properties:
+        defaultCurrency:
+          type: string
+        name:
+          type: string
+      type: object
+    http.UpdateRoleRequest:
+      properties:
+        role:
+          type: string
+      type: object
     pagination.Meta:
       properties:
         hasMore:
@@ -594,52 +622,6 @@ components:
     response.MessageResponse:
       properties:
         message:
-          type: string
-      type: object
-    user.ListFriendsResponse:
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/user.User'
-          type: array
-          uniqueItems: false
-        pagination:
-          $ref: '#/components/schemas/pagination.Meta'
-      type: object
-    user.User:
-      properties:
-        createdAt:
-          type: string
-        defaultCurrency:
-          type: string
-        email:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        phone:
-          type: string
-        updatedAt:
-          type: string
-      type: object
-    user.addFriendRequest:
-      properties:
-        friendEmail:
-          type: string
-        friendPhone:
-          type: string
-      type: object
-    user.registerRequest:
-      properties:
-        name:
-          type: string
-      type: object
-    user.updateProfileRequest:
-      properties:
-        defaultCurrency:
-          type: string
-        name:
           type: string
       type: object
   securitySchemes:
@@ -715,7 +697,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/appconfig.AppConfigData'
+                $ref: '#/components/schemas/domain.AppConfigData'
           description: OK
         "304":
           description: Not Modified
@@ -747,7 +729,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/expense.BalanceResponse'
+                $ref: '#/components/schemas/domain.BalanceResponse'
           description: OK
         "400":
           content:
@@ -807,7 +789,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/expense.ListExpensesResponse'
+                $ref: '#/components/schemas/http.ListExpensesResponse'
           description: OK
         "400":
           content:
@@ -840,7 +822,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/expense.createExpenseRequest'
+              - $ref: '#/components/schemas/http.CreateExpenseRequest'
                 description: Expense details and splits structure
                 summary: request
         description: Expense details and splits structure
@@ -850,7 +832,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/expense.CreateExpenseResponse'
+                $ref: '#/components/schemas/http.CreateExpenseResponse'
           description: Created
         "400":
           content:
@@ -925,7 +907,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/expense.GetExpenseDetailsResponse'
+                $ref: '#/components/schemas/http.GetExpenseDetailsResponse'
           description: OK
         "400":
           content:
@@ -959,7 +941,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/expense.settleExpenseRequest'
+              - $ref: '#/components/schemas/http.SettleExpenseRequest'
                 description: Settlement details
                 summary: request
         description: Settlement details
@@ -969,7 +951,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/expense.SettleExpenseResponse'
+                $ref: '#/components/schemas/http.SettleExpenseResponse'
           description: Created
         "400":
           content:
@@ -1013,7 +995,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/user.ListFriendsResponse'
+                $ref: '#/components/schemas/http.ListFriendsResponse'
           description: OK
         "401":
           content:
@@ -1040,7 +1022,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/user.addFriendRequest'
+              - $ref: '#/components/schemas/http.AddFriendRequest'
                 description: Friend email or phone
                 summary: request
         description: Friend email or phone
@@ -1050,7 +1032,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/user.User'
+                $ref: '#/components/schemas/domain.User'
           description: OK
         "400":
           content:
@@ -1131,7 +1113,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/group.ListGroupsResponse'
+                $ref: '#/components/schemas/http.ListGroupsResponse'
           description: OK
         "401":
           content:
@@ -1159,7 +1141,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/group.createGroupRequest'
+              - $ref: '#/components/schemas/http.CreateGroupRequest'
                 description: Group creation data
                 summary: request
         description: Group creation data
@@ -1169,7 +1151,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/group.Group'
+                $ref: '#/components/schemas/domain.Group'
           description: Created
         "400":
           content:
@@ -1248,7 +1230,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/group.DetailsResponse'
+                $ref: '#/components/schemas/http.DetailsResponse'
           description: OK
         "400":
           content:
@@ -1339,7 +1321,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/group.Group'
+                $ref: '#/components/schemas/domain.Group'
           description: OK
         "401":
           content:
@@ -1386,7 +1368,7 @@ paths:
             application/json:
               schema:
                 items:
-                  $ref: '#/components/schemas/group.Member'
+                  $ref: '#/components/schemas/domain.Member'
                 type: array
           description: OK
         "401":
@@ -1427,7 +1409,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/group.addMemberRequest'
+              - $ref: '#/components/schemas/http.AddMemberRequest'
                 description: User ID of the member to add
                 summary: request
         description: User ID of the member to add
@@ -1527,7 +1509,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/group.DecideJoinRequestPayload'
+              - $ref: '#/components/schemas/domain.DecideJoinRequestPayload'
                 description: Action (APPROVE or REJECT)
                 summary: request
         description: Action (APPROVE or REJECT)
@@ -1590,7 +1572,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/group.updateRoleRequest'
+              - $ref: '#/components/schemas/http.UpdateRoleRequest'
                 description: New role value
                 summary: request
         description: New role value
@@ -1634,7 +1616,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/group.joinGroupRequest'
+              - $ref: '#/components/schemas/http.JoinGroupRequest'
                 description: Group join data
                 summary: request
         description: Group join data
@@ -1644,7 +1626,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/group.JoinResponse'
+                $ref: '#/components/schemas/domain.JoinResponse'
           description: OK
         "400":
           content:
@@ -1696,7 +1678,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/group.Preview'
+                $ref: '#/components/schemas/domain.Preview'
           description: OK
         "400":
           content:
@@ -1740,7 +1722,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/notification.ListNotificationsResponse'
+                $ref: '#/components/schemas/http.ListNotificationsResponse'
           description: OK
         "401":
           content:
@@ -1835,7 +1817,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/user.registerRequest'
+              - $ref: '#/components/schemas/http.RegisterRequest'
                 description: Registration data
                 summary: request
         description: Registration data
@@ -1845,7 +1827,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/user.User'
+                $ref: '#/components/schemas/domain.User'
           description: Created
         "400":
           content:
@@ -1878,7 +1860,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/user.User'
+                $ref: '#/components/schemas/domain.User'
           description: OK
         "401":
           content:
@@ -1905,7 +1887,7 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/user.updateProfileRequest'
+              - $ref: '#/components/schemas/http.UpdateProfileRequest'
                 description: Profile details to update
                 summary: request
         description: Profile details to update
@@ -1915,7 +1897,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/user.User'
+                $ref: '#/components/schemas/domain.User'
           description: OK
         "400":
           content:

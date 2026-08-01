@@ -50,8 +50,8 @@ func TestHandler_CreateExpense_Success(t *testing.T) {
 
 	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
 
-	mockRepo.On("CreateExpense", mock.Anything, mock.AnythingOfType("*expense.Expense")).Return(nil)
-	mockRepo.On("CreateExpenseSplit", mock.Anything, mock.AnythingOfType("*expense.Split")).Return(nil)
+	mockRepo.On("CreateExpense", mock.Anything, mock.AnythingOfType("*domain.Expense")).Return(nil)
+	mockRepo.On("CreateExpenseSplit", mock.Anything, mock.AnythingOfType("*domain.Split")).Return(nil)
 	mockRepo.On("ListExpenseSplits", mock.Anything, mock.AnythingOfType("string")).Return([]expense.Split{
 		{ExpenseID: "exp-1", UserID: currentUser.ID, Amount: 100.0},
 	}, nil)
@@ -140,8 +140,8 @@ func TestHandler_SettleUp_Success(t *testing.T) {
 
 	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
 
-	mockRepo.On("CreateExpense", mock.Anything, mock.AnythingOfType("*expense.Expense")).Return(nil)
-	mockRepo.On("CreateExpenseSplit", mock.Anything, mock.AnythingOfType("*expense.Split")).Return(nil)
+	mockRepo.On("CreateExpense", mock.Anything, mock.AnythingOfType("*domain.Expense")).Return(nil)
+	mockRepo.On("CreateExpenseSplit", mock.Anything, mock.AnythingOfType("*domain.Split")).Return(nil)
 	mockRepo.On("ListExpenseSplits", mock.Anything, mock.AnythingOfType("string")).Return([]expense.Split{
 		{ExpenseID: "exp-1", UserID: "usr-2", Amount: 50.0},
 	}, nil)
