@@ -99,6 +99,23 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "AlertType": {
+                "enum": [
+                    "EXPENSE_ADDED",
+                    "PAYMENT_RECEIVED",
+                    "JOIN_REQUEST_PENDING",
+                    "JOIN_REQUEST_APPROVED",
+                    "JOIN_REQUEST_REJECTED"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "AlertTypeExpenseAdded",
+                    "AlertTypePaymentReceived",
+                    "AlertTypeJoinRequestPending",
+                    "AlertTypeJoinRequestApproved",
+                    "AlertTypeJoinRequestRejected"
+                ]
+            },
             "AppConfigData": {
                 "properties": {
                     "domain": {
@@ -671,6 +688,9 @@ const docTemplate = `{
                     },
                     "title": {
                         "type": "string"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/AlertType"
                     },
                     "userId": {
                         "type": "string"
