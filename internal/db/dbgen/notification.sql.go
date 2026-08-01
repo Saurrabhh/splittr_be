@@ -13,9 +13,9 @@ import (
 )
 
 const createNotification = `-- name: CreateNotification :one
-INSERT INTO notifications (id, user_id, actor_id, activity_id, title, content, is_read, created_at)
-VALUES ($1, $2, $3, $4, $5, $6, FALSE, NOW())
-RETURNING id, user_id, actor_id, activity_id, title, content, is_read, created_at
+INSERT INTO notifications (id, user_id, actor_id, activity_id, type, title, content, is_read, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, FALSE, NOW())
+RETURNING id, user_id, actor_id, activity_id, type, title, content, is_read, created_at
 `
 
 type CreateNotificationParams struct {
@@ -23,25 +23,40 @@ type CreateNotificationParams struct {
 	UserID     uuid.UUID
 	ActorID    pgtype.UUID
 	ActivityID pgtype.UUID
+	Type       string
 	Title      string
 	Content    string
 }
 
-func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotificationParams) (Notification, error) {
+type CreateNotificationRow struct {
+	ID         uuid.UUID
+	UserID     uuid.UUID
+	ActorID    pgtype.UUID
+	ActivityID pgtype.UUID
+	Type       string
+	Title      string
+	Content    string
+	IsRead     bool
+	CreatedAt  pgtype.Timestamptz
+}
+
+func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotificationParams) (CreateNotificationRow, error) {
 	row := q.db.QueryRow(ctx, createNotification,
 		arg.ID,
 		arg.UserID,
 		arg.ActorID,
 		arg.ActivityID,
+		arg.Type,
 		arg.Title,
 		arg.Content,
 	)
-	var i Notification
+	var i CreateNotificationRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.ActorID,
 		&i.ActivityID,
+		&i.Type,
 		&i.Title,
 		&i.Content,
 		&i.IsRead,
@@ -51,7 +66,7 @@ func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotification
 }
 
 const listUserNotificationsPaginated = `-- name: ListUserNotificationsPaginated :many
-SELECT n.id, n.user_id, n.actor_id, n.activity_id, n.title, n.content, n.is_read, n.created_at, u.name as actor_name
+SELECT n.id, n.user_id, n.actor_id, n.activity_id, n.type, n.title, n.content, n.is_read, n.created_at, u.name as actor_name
 FROM notifications n
 LEFT JOIN users u ON n.actor_id = u.id
 WHERE n.user_id = $1
@@ -76,6 +91,7 @@ type ListUserNotificationsPaginatedRow struct {
 	UserID     uuid.UUID
 	ActorID    pgtype.UUID
 	ActivityID pgtype.UUID
+	Type       string
 	Title      string
 	Content    string
 	IsRead     bool
@@ -102,6 +118,7 @@ func (q *Queries) ListUserNotificationsPaginated(ctx context.Context, arg ListUs
 			&i.UserID,
 			&i.ActorID,
 			&i.ActivityID,
+			&i.Type,
 			&i.Title,
 			&i.Content,
 			&i.IsRead,

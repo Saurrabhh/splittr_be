@@ -73,6 +73,7 @@ func TestRepository_CreateNotification_And_InvalidUUIDs(t *testing.T) {
 		UserID:     u1.ID,
 		ActorID:    &actor.ID,
 		ActivityID: &act.ID,
+		Type:       domain.AlertTypeExpenseAdded,
 		Title:      "New Expense Added",
 		Content:    "Actor added dinner expense",
 	}
@@ -81,6 +82,7 @@ func TestRepository_CreateNotification_And_InvalidUUIDs(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, n.CreatedAt.IsZero())
 	assert.False(t, n.IsRead)
+	assert.Equal(t, domain.AlertTypeExpenseAdded, n.Type)
 
 	// Test Invalid Notification ID
 	invalidNotif := &domain.Notification{
@@ -139,10 +141,10 @@ func TestRepository_ListUserNotifications_And_Pagination(t *testing.T) {
 	u1 := createTestUser(t, userRepo, "User One")
 	u2 := createTestUser(t, userRepo, "User Two")
 
-	n1 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "N1", Content: "C1"}
-	n2 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "N2", Content: "C2"}
-	n3 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "N3", Content: "C3"}
-	nUser2 := &domain.Notification{ID: uuid.New().String(), UserID: u2.ID, Title: "N_Other", Content: "C_Other"}
+	n1 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Type: domain.AlertTypeExpenseAdded, Title: "N1", Content: "C1"}
+	n2 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Type: domain.AlertTypeExpenseAdded, Title: "N2", Content: "C2"}
+	n3 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Type: domain.AlertTypeExpenseAdded, Title: "N3", Content: "C3"}
+	nUser2 := &domain.Notification{ID: uuid.New().String(), UserID: u2.ID, Type: domain.AlertTypePaymentReceived, Title: "N_Other", Content: "C_Other"}
 
 	require.NoError(t, notifRepo.CreateNotification(ctx, n1))
 	require.NoError(t, notifRepo.CreateNotification(ctx, n2))
@@ -157,6 +159,7 @@ func TestRepository_ListUserNotifications_And_Pagination(t *testing.T) {
 	// Ensure User 2's notification is not returned
 	for _, notif := range list1 {
 		assert.Equal(t, u1.ID, notif.UserID)
+		assert.Equal(t, domain.AlertTypeExpenseAdded, notif.Type)
 	}
 
 	// Fetch 2nd page using cursor from 2nd item of list1
@@ -179,7 +182,7 @@ func TestRepository_MarkNotificationAsRead(t *testing.T) {
 	u1 := createTestUser(t, userRepo, "User One")
 	u2 := createTestUser(t, userRepo, "User Two")
 
-	n1 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "Alert", Content: "Details"}
+	n1 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Type: domain.AlertTypeJoinRequestPending, Title: "Alert", Content: "Details"}
 	require.NoError(t, notifRepo.CreateNotification(ctx, n1))
 
 	// User Two attempts to mark User One's notification as read (User ownership check)
@@ -222,9 +225,9 @@ func TestRepository_MarkAllNotificationsAsRead(t *testing.T) {
 	u1 := createTestUser(t, userRepo, "User One")
 	u2 := createTestUser(t, userRepo, "User Two")
 
-	n1 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "Alert 1", Content: "A1"}
-	n2 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Title: "Alert 2", Content: "A2"}
-	nOther := &domain.Notification{ID: uuid.New().String(), UserID: u2.ID, Title: "Alert Other", Content: "AO"}
+	n1 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Type: domain.AlertTypeExpenseAdded, Title: "Alert 1", Content: "A1"}
+	n2 := &domain.Notification{ID: uuid.New().String(), UserID: u1.ID, Type: domain.AlertTypeExpenseAdded, Title: "Alert 2", Content: "A2"}
+	nOther := &domain.Notification{ID: uuid.New().String(), UserID: u2.ID, Type: domain.AlertTypeJoinRequestRejected, Title: "Alert Other", Content: "AO"}
 
 	require.NoError(t, notifRepo.CreateNotification(ctx, n1))
 	require.NoError(t, notifRepo.CreateNotification(ctx, n2))
