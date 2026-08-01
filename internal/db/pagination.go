@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -8,7 +9,8 @@ import (
 )
 
 // ParseCursor converts optional time and string ID pointers into database pagination types.
-func ParseCursor(lastTime *time.Time, lastID *string) (pgtype.Timestamptz, uuid.UUID) {
+// It returns an error when a non-nil lastID is not a valid UUID.
+func ParseCursor(lastTime *time.Time, lastID *string) (pgtype.Timestamptz, uuid.UUID, error) {
 	var pgLastTime pgtype.Timestamptz
 	if lastTime != nil {
 		pgLastTime = pgtype.Timestamptz{Time: *lastTime, Valid: true}
@@ -16,10 +18,12 @@ func ParseCursor(lastTime *time.Time, lastID *string) (pgtype.Timestamptz, uuid.
 
 	var lastIDUUID uuid.UUID
 	if lastID != nil {
-		if parsed, err := uuid.Parse(*lastID); err == nil {
-			lastIDUUID = parsed
+		parsed, err := uuid.Parse(*lastID)
+		if err != nil {
+			return pgtype.Timestamptz{}, uuid.UUID{}, fmt.Errorf("invalid cursor id: %w", err)
 		}
+		lastIDUUID = parsed
 	}
 
-	return pgLastTime, lastIDUUID
+	return pgLastTime, lastIDUUID, nil
 }

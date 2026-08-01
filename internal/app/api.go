@@ -47,8 +47,12 @@ func (app *Application) Run(ctx context.Context) error {
 	}
 
 	server := &http.Server{
-		Addr:    ":" + app.Config.Port,
-		Handler: handler,
+		Addr:              ":" + app.Config.Port,
+		Handler:           handler,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 
 	// Channel to listen for errors from ListenAndServe

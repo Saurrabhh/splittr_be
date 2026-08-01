@@ -89,9 +89,9 @@ type AppConfigData struct {
 type AppConfigMeta struct {
 	ConfigVersion string    `json:"configVersion"`
 	ServerTime    time.Time `json:"serverTime"`
-}
+} // @name AppConfigMeta
 
 type AppConfigResponse struct {
 	Data AppConfigData `json:"data"`
 	Meta AppConfigMeta `json:"meta"`
-}
+} // @name AppConfigResponse

@@ -213,7 +213,10 @@ func (r *DBRepository) ListFriends(ctx context.Context, userID string, limit int
 		return nil, fmt.Errorf("invalid uuid: %w", err)
 	}
 
-	pgLastTime, lastIDUUID := db.ParseCursor(lastTime, lastID)
+	pgLastTime, lastIDUUID, err := db.ParseCursor(lastTime, lastID)
+	if err != nil {
+		return nil, err
+	}
 
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)

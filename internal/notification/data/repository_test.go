@@ -183,8 +183,9 @@ func TestRepository_MarkNotificationAsRead(t *testing.T) {
 	require.NoError(t, notifRepo.CreateNotification(ctx, n1))
 
 	// User Two attempts to mark User One's notification as read (User ownership check)
-	err := notifRepo.MarkNotificationAsRead(ctx, n1.ID, u2.ID)
-	require.NoError(t, err) // SQL UPDATE query matches 0 rows without error
+	read, err := notifRepo.MarkNotificationAsRead(ctx, n1.ID, u2.ID)
+	require.NoError(t, err)
+	assert.False(t, read) // SQL UPDATE query matches 0 rows
 
 	// Verify n1 is still unread for User One
 	list, err := notifRepo.ListUserNotifications(ctx, u1.ID, 10, nil, nil)
@@ -193,8 +194,9 @@ func TestRepository_MarkNotificationAsRead(t *testing.T) {
 	assert.False(t, list[0].IsRead)
 
 	// User One marks their own notification as read
-	err = notifRepo.MarkNotificationAsRead(ctx, n1.ID, u1.ID)
+	read, err = notifRepo.MarkNotificationAsRead(ctx, n1.ID, u1.ID)
 	require.NoError(t, err)
+	assert.True(t, read)
 
 	// Verify n1 is now read
 	list, err = notifRepo.ListUserNotifications(ctx, u1.ID, 10, nil, nil)
@@ -203,11 +205,11 @@ func TestRepository_MarkNotificationAsRead(t *testing.T) {
 	assert.True(t, list[0].IsRead)
 
 	// Test Invalid UUID errors
-	err = notifRepo.MarkNotificationAsRead(ctx, "invalid-uuid", u1.ID)
+	_, err = notifRepo.MarkNotificationAsRead(ctx, "invalid-uuid", u1.ID)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid uuid")
 
-	err = notifRepo.MarkNotificationAsRead(ctx, n1.ID, "invalid-uuid")
+	_, err = notifRepo.MarkNotificationAsRead(ctx, n1.ID, "invalid-uuid")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid user uuid")
 }

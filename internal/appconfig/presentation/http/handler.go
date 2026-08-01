@@ -28,7 +28,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, optionalAuth func(http.Handler) h
 // @Accept json
 // @Produce json
 // @Param If-None-Match header string false "ETag hash for cache validation"
-// @Success 200 {object} domain.AppConfigData
+// @Success 200 {object} domain.AppConfigResponse
 // @Failure 304 "Not Modified"
 // @Failure 500 {object} response.ErrorResponse
 // @Router /app-config [get]

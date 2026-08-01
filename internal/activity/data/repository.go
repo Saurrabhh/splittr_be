@@ -108,7 +108,10 @@ func (r *DBRepository) ListUserActivities(ctx context.Context, userID string, li
 		return nil, fmt.Errorf("invalid uuid: %w", err)
 	}
 
-	pgLastTime, lastIDUUID := db.ParseCursor(lastTime, lastID)
+	pgLastTime, lastIDUUID, err := db.ParseCursor(lastTime, lastID)
+	if err != nil {
+		return nil, err
+	}
 
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)
@@ -125,7 +128,11 @@ func (r *DBRepository) ListUserActivities(ctx context.Context, userID string, li
 
 	activities := make([]domain.Activity, 0, len(rows))
 	for _, row := range rows {
-		activities = append(activities, mapUserActivityRowToActivity(row))
+		act, err := mapUserActivityRowToActivity(row)
+		if err != nil {
+			return nil, err
+		}
+		activities = append(activities, act)
 	}
 
 	return activities, nil
@@ -142,7 +149,10 @@ func (r *DBRepository) ListGroupFeed(ctx context.Context, groupID string, userID
 		return nil, fmt.Errorf("invalid user uuid: %w", err)
 	}
 
-	pgLastTime, lastIDUUID := db.ParseCursor(lastTime, lastID)
+	pgLastTime, lastIDUUID, err := db.ParseCursor(lastTime, lastID)
+	if err != nil {
+		return nil, err
+	}
 
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)
@@ -160,7 +170,11 @@ func (r *DBRepository) ListGroupFeed(ctx context.Context, groupID string, userID
 
 	activities := make([]domain.Activity, 0, len(rows))
 	for _, row := range rows {
-		activities = append(activities, mapGroupFeedRowToActivity(row))
+		act, err := mapGroupFeedRowToActivity(row)
+		if err != nil {
+			return nil, err
+		}
+		activities = append(activities, act)
 	}
 	return activities, nil
 }

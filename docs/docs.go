@@ -122,6 +122,28 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "AppConfigMeta": {
+                "properties": {
+                    "configVersion": {
+                        "type": "string"
+                    },
+                    "serverTime": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "AppConfigResponse": {
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/AppConfigData"
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/AppConfigMeta"
+                    }
+                },
+                "type": "object"
+            },
             "AppVersion": {
                 "properties": {
                     "forceUpdate": {
@@ -1066,7 +1088,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/AppConfigData"
+                                    "$ref": "#/components/schemas/AppConfigResponse"
                                 }
                             }
                         },

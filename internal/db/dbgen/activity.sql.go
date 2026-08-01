@@ -167,59 +167,6 @@ func (q *Queries) ListGroupFeedPaginated(ctx context.Context, arg ListGroupFeedP
 	return items, nil
 }
 
-const listUserActivities = `-- name: ListUserActivities :many
-SELECT a.id, a.group_id, a.actor_id, a.action_type, a.description, a.created_at, u.name as actor_name
-FROM activities a
-LEFT JOIN users u ON a.actor_id = u.id
-WHERE 
-    a.group_id IN (
-        SELECT gm.group_id FROM group_members gm WHERE gm.user_id = $1
-    )
-    OR
-    (a.group_id IS NULL AND EXISTS (
-        SELECT 1 FROM activity_visibility av WHERE av.activity_id = a.id AND av.user_id = $1
-    ))
-ORDER BY a.created_at DESC
-`
-
-type ListUserActivitiesRow struct {
-	ID          uuid.UUID
-	GroupID     pgtype.UUID
-	ActorID     pgtype.UUID
-	ActionType  string
-	Description string
-	CreatedAt   pgtype.Timestamptz
-	ActorName   pgtype.Text
-}
-
-func (q *Queries) ListUserActivities(ctx context.Context, userID uuid.UUID) ([]ListUserActivitiesRow, error) {
-	rows, err := q.db.Query(ctx, listUserActivities, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListUserActivitiesRow
-	for rows.Next() {
-		var i ListUserActivitiesRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.GroupID,
-			&i.ActorID,
-			&i.ActionType,
-			&i.Description,
-			&i.CreatedAt,
-			&i.ActorName,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listUserActivitiesPaginated = `-- name: ListUserActivitiesPaginated :many
 SELECT 
     a.id, 

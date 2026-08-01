@@ -1,15 +1,18 @@
 package data
 
 import (
+	"fmt"
+
 	"github.com/Saurrabhh/splittr_be/internal/activity/domain"
 	"github.com/Saurrabhh/splittr_be/internal/db/dbgen"
 	"github.com/google/uuid"
 )
 
-func mapGroupFeedRowToActivity(row dbgen.ListGroupFeedPaginatedRow) domain.Activity {
+func mapGroupFeedRowToActivity(row dbgen.ListGroupFeedPaginatedRow) (domain.Activity, error) {
 	var groupID *string
 	if row.GroupID.Valid {
-		groupID = new(uuid.UUID(row.GroupID.Bytes).String())
+		s := uuid.UUID(row.GroupID.Bytes).String()
+		groupID = &s
 	}
 	var actorID string
 	if row.ActorID.Valid {
@@ -17,9 +20,13 @@ func mapGroupFeedRowToActivity(row dbgen.ListGroupFeedPaginatedRow) domain.Activ
 	}
 	var entityID *string
 	if row.EntityID.Valid {
-		entityID = new(uuid.UUID(row.EntityID.Bytes).String())
+		s := uuid.UUID(row.EntityID.Bytes).String()
+		entityID = &s
 	}
-	payload, _ := domain.UnmarshalPayload(domain.EntityType(row.EntityType), row.Metadata)
+	payload, err := domain.UnmarshalPayload(domain.EntityType(row.EntityType), row.Metadata)
+	if err != nil {
+		return domain.Activity{}, fmt.Errorf("unmarshal activity payload: %w", err)
+	}
 
 	return domain.Activity{
 		ID:          row.ID.String(),
@@ -31,13 +38,14 @@ func mapGroupFeedRowToActivity(row dbgen.ListGroupFeedPaginatedRow) domain.Activ
 		Description: row.Description,
 		Payload:     payload,
 		CreatedAt:   row.CreatedAt.Time,
-	}
+	}, nil
 }
 
-func mapUserActivityRowToActivity(row dbgen.ListUserActivitiesPaginatedRow) domain.Activity {
+func mapUserActivityRowToActivity(row dbgen.ListUserActivitiesPaginatedRow) (domain.Activity, error) {
 	var groupID *string
 	if row.GroupID.Valid {
-		groupID = new(uuid.UUID(row.GroupID.Bytes).String())
+		s := uuid.UUID(row.GroupID.Bytes).String()
+		groupID = &s
 	}
 	var actorID string
 	if row.ActorID.Valid {
@@ -45,9 +53,13 @@ func mapUserActivityRowToActivity(row dbgen.ListUserActivitiesPaginatedRow) doma
 	}
 	var entityID *string
 	if row.EntityID.Valid {
-		entityID = new(uuid.UUID(row.EntityID.Bytes).String())
+		s := uuid.UUID(row.EntityID.Bytes).String()
+		entityID = &s
 	}
-	payload, _ := domain.UnmarshalPayload(domain.EntityType(row.EntityType), row.Metadata)
+	payload, err := domain.UnmarshalPayload(domain.EntityType(row.EntityType), row.Metadata)
+	if err != nil {
+		return domain.Activity{}, fmt.Errorf("unmarshal activity payload: %w", err)
+	}
 
 	return domain.Activity{
 		ID:          row.ID.String(),
@@ -59,5 +71,5 @@ func mapUserActivityRowToActivity(row dbgen.ListUserActivitiesPaginatedRow) doma
 		Description: row.Description,
 		Payload:     payload,
 		CreatedAt:   row.CreatedAt.Time,
-	}
+	}, nil
 }

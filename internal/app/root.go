@@ -3,7 +3,6 @@ package app
 import (
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/Saurrabhh/splittr_be/internal/response"
 )
@@ -28,7 +27,7 @@ func (app *Application) rootHandler(w http.ResponseWriter, r *http.Request) {
 	res := rootResponse{
 		Name:        "Splittr API",
 		Version:     "1.0.0",
-		Environment: os.Getenv("APP_ENV"),
+		Environment: app.Config.Environment,
 		Status:      "healthy",
 		Docs:        docsURL,
 		Health:      healthURL,

@@ -215,23 +215,6 @@ func (r *DBRepository) ListExpenseSplitsByIDs(ctx context.Context, expenseIDs []
 	return splits, nil
 }
 
-// parseCursorArgs converts optional cursor fields to pg types for paginated queries.
-func parseCursorArgs(lastTime *time.Time, lastID *string) (pgtype.Timestamptz, uuid.UUID, error) {
-	var pgLastTime pgtype.Timestamptz
-	if lastTime != nil {
-		pgLastTime = pgtype.Timestamptz{Time: *lastTime, Valid: true}
-	}
-	var lastIDUUID uuid.UUID
-	if lastID != nil {
-		parsed, err := uuid.Parse(*lastID)
-		if err != nil {
-			return pgtype.Timestamptz{}, uuid.UUID{}, fmt.Errorf("invalid cursor id: %w", err)
-		}
-		lastIDUUID = parsed
-	}
-	return pgLastTime, lastIDUUID, nil
-}
-
 // ListExpensesByGroup lists expenses for a group with cursor-based pagination.
 func (r *DBRepository) ListExpensesByGroup(ctx context.Context, groupID string, limit int32, lastTime *time.Time, lastID *string) ([]domain.Expense, error) {
 	parsedGroupID, err := uuid.Parse(groupID)
@@ -239,7 +222,7 @@ func (r *DBRepository) ListExpensesByGroup(ctx context.Context, groupID string, 
 		return nil, fmt.Errorf("invalid uuid: %w", err)
 	}
 
-	pgLastTime, lastIDUUID, err := parseCursorArgs(lastTime, lastID)
+	pgLastTime, lastIDUUID, err := db.ParseCursor(lastTime, lastID)
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +249,7 @@ func (r *DBRepository) ListUserPersonalExpenses(ctx context.Context, userID stri
 		return nil, fmt.Errorf("invalid uuid: %w", err)
 	}
 
-	pgLastTime, lastIDUUID, err := parseCursorArgs(lastTime, lastID)
+	pgLastTime, lastIDUUID, err := db.ParseCursor(lastTime, lastID)
 	if err != nil {
 		return nil, err
 	}
@@ -293,7 +276,7 @@ func (r *DBRepository) ListUserFriendExpenses(ctx context.Context, userID string
 		return nil, fmt.Errorf("invalid uuid: %w", err)
 	}
 
-	pgLastTime, lastIDUUID, err := parseCursorArgs(lastTime, lastID)
+	pgLastTime, lastIDUUID, err := db.ParseCursor(lastTime, lastID)
 	if err != nil {
 		return nil, err
 	}
