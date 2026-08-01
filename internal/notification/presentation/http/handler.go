@@ -62,6 +62,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 // @Success      200  {object}  response.MessageResponse "Success message"
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
+// @Failure      404  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /notifications/{id}/read [post]
 // @Security     BearerAuth

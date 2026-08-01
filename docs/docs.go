@@ -2949,6 +2949,16 @@ const docTemplate = `{
                         },
                         "description": "Unauthorized"
                     },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_response.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
                     "500": {
                         "content": {
                             "application/json": {

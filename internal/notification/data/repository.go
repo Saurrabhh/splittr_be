@@ -102,12 +102,14 @@ func (r *DBRepository) ListUserNotifications(ctx context.Context, userID string,
 	for _, row := range rows {
 		var actorIDStr *string
 		if row.ActorID.Valid {
-			actorIDStr = new(uuid.UUID(row.ActorID.Bytes).String())
+			actorID := uuid.UUID(row.ActorID.Bytes).String()
+			actorIDStr = &actorID
 		}
 
 		var activityIDStr *string
 		if row.ActivityID.Valid {
-			activityIDStr = new(uuid.UUID(row.ActivityID.Bytes).String())
+			activityID := uuid.UUID(row.ActivityID.Bytes).String()
+			activityIDStr = &activityID
 		}
 
 		var actorName *string
@@ -131,24 +133,30 @@ func (r *DBRepository) ListUserNotifications(ctx context.Context, userID string,
 	return notifications, nil
 }
 
-// MarkNotificationAsRead marks one alert as read.
-func (r *DBRepository) MarkNotificationAsRead(ctx context.Context, id, userID string) error {
+// MarkNotificationAsRead marks one alert as read and reports whether a
+// matching notification existed for the user.
+func (r *DBRepository) MarkNotificationAsRead(ctx context.Context, id, userID string) (bool, error) {
 	parsedID, err := uuid.Parse(id)
 	if err != nil {
-		return fmt.Errorf("invalid uuid: %w", err)
+		return false, fmt.Errorf("invalid uuid: %w", err)
 	}
 	parsedUserID, err := uuid.Parse(userID)
 	if err != nil {
-		return fmt.Errorf("invalid user uuid: %w", err)
+		return false, fmt.Errorf("invalid user uuid: %w", err)
 	}
 
 	client := r.tm.GetTxOrPool(ctx)
 	q := dbgen.New(client)
 
-	return q.MarkNotificationAsRead(ctx, dbgen.MarkNotificationAsReadParams{
+	rowsAffected, err := q.MarkNotificationAsRead(ctx, dbgen.MarkNotificationAsReadParams{
 		ID:     parsedID,
 		UserID: parsedUserID,
 	})
+	if err != nil {
+		return false, err
+	}
+
+	return rowsAffected > 0, nil
 }
 
 // MarkAllNotificationsAsRead marks all alerts for a user as read.

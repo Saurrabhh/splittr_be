@@ -50,56 +50,6 @@ func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotification
 	return i, err
 }
 
-const listUserNotifications = `-- name: ListUserNotifications :many
-SELECT n.id, n.user_id, n.actor_id, n.activity_id, n.title, n.content, n.is_read, n.created_at, u.name as actor_name
-FROM notifications n
-LEFT JOIN users u ON n.actor_id = u.id
-WHERE n.user_id = $1
-ORDER BY n.created_at DESC
-`
-
-type ListUserNotificationsRow struct {
-	ID         uuid.UUID
-	UserID     uuid.UUID
-	ActorID    pgtype.UUID
-	ActivityID pgtype.UUID
-	Title      string
-	Content    string
-	IsRead     bool
-	CreatedAt  pgtype.Timestamptz
-	ActorName  pgtype.Text
-}
-
-func (q *Queries) ListUserNotifications(ctx context.Context, userID uuid.UUID) ([]ListUserNotificationsRow, error) {
-	rows, err := q.db.Query(ctx, listUserNotifications, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListUserNotificationsRow
-	for rows.Next() {
-		var i ListUserNotificationsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.ActorID,
-			&i.ActivityID,
-			&i.Title,
-			&i.Content,
-			&i.IsRead,
-			&i.CreatedAt,
-			&i.ActorName,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listUserNotificationsPaginated = `-- name: ListUserNotificationsPaginated :many
 SELECT n.id, n.user_id, n.actor_id, n.activity_id, n.title, n.content, n.is_read, n.created_at, u.name as actor_name
 FROM notifications n
@@ -179,7 +129,7 @@ func (q *Queries) MarkAllNotificationsAsRead(ctx context.Context, userID uuid.UU
 	return err
 }
 
-const markNotificationAsRead = `-- name: MarkNotificationAsRead :exec
+const markNotificationAsRead = `-- name: MarkNotificationAsRead :execrows
 UPDATE notifications
 SET is_read = TRUE
 WHERE id = $1 AND user_id = $2
@@ -190,7 +140,10 @@ type MarkNotificationAsReadParams struct {
 	UserID uuid.UUID
 }
 
-func (q *Queries) MarkNotificationAsRead(ctx context.Context, arg MarkNotificationAsReadParams) error {
-	_, err := q.db.Exec(ctx, markNotificationAsRead, arg.ID, arg.UserID)
-	return err
+func (q *Queries) MarkNotificationAsRead(ctx context.Context, arg MarkNotificationAsReadParams) (int64, error) {
+	result, err := q.db.Exec(ctx, markNotificationAsRead, arg.ID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

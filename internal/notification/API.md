@@ -13,6 +13,7 @@ The Notification module manages in-app alerts and notifications generated for us
 - **POST** `/notifications/{id}/read`
 - **Description**: Mark a specific notification as read by ID.
 - **Response** (`200 OK`): `MessageResponse`.
+- **Response** (`404 Not Found`): `ErrorResponse` — if the notification does not exist or belongs to another user.
 
 ### 3. Mark All Notifications as Read
 - **POST** `/notifications/read-all`

@@ -30,8 +30,9 @@ func (m *mockNotificationRepository) ListUserNotifications(ctx context.Context, 
 	return args.Get(0).([]domain.Notification), args.Error(1)
 }
 
-func (m *mockNotificationRepository) MarkNotificationAsRead(ctx context.Context, id, userID string) error {
-	return m.Called(ctx, id, userID).Error(0)
+func (m *mockNotificationRepository) MarkNotificationAsRead(ctx context.Context, id, userID string) (bool, error) {
+	args := m.Called(ctx, id, userID)
+	return args.Bool(0), args.Error(1)
 }
 
 func (m *mockNotificationRepository) MarkAllNotificationsAsRead(ctx context.Context, userID string) error {
@@ -75,7 +76,11 @@ func TestCreateAlert_RepoError(t *testing.T) {
 	uc := domain.NewUseCase(mockRepo)
 	_, err := uc.CreateAlert(ctx, "user-1", nil, nil, "Title", "Content")
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "create notification: db insert failure")
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeInternal, appErr.Type)
+	assert.Contains(t, appErr.Message, "failed to create notification")
 	mockRepo.AssertExpectations(t)
 }
 
@@ -129,7 +134,7 @@ func TestMarkAsRead_Success(t *testing.T) {
 	notifID := "notif-1"
 
 	// Verifies user ownership check passed to repository
-	mockRepo.On("MarkNotificationAsRead", ctx, notifID, userID).Return(nil)
+	mockRepo.On("MarkNotificationAsRead", ctx, notifID, userID).Return(true, nil)
 
 	uc := domain.NewUseCase(mockRepo)
 	err := uc.MarkAsRead(ctx, notifID, userID)
@@ -155,7 +160,7 @@ func TestMarkAsRead_RepoError(t *testing.T) {
 	mockRepo := new(mockNotificationRepository)
 	ctx := context.Background()
 
-	mockRepo.On("MarkNotificationAsRead", ctx, "notif-1", "user-1").Return(errors.New("db error"))
+	mockRepo.On("MarkNotificationAsRead", ctx, "notif-1", "user-1").Return(false, errors.New("db error"))
 
 	uc := domain.NewUseCase(mockRepo)
 	err := uc.MarkAsRead(ctx, "notif-1", "user-1")
@@ -165,6 +170,23 @@ func TestMarkAsRead_RepoError(t *testing.T) {
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeInternal, appErr.Type)
 	assert.Contains(t, appErr.Message, "failed to mark notification as read")
+	mockRepo.AssertExpectations(t)
+}
+
+func TestMarkAsRead_NotFound(t *testing.T) {
+	mockRepo := new(mockNotificationRepository)
+	ctx := context.Background()
+
+	mockRepo.On("MarkNotificationAsRead", ctx, "notif-1", "user-1").Return(false, nil)
+
+	uc := domain.NewUseCase(mockRepo)
+	err := uc.MarkAsRead(ctx, "notif-1", "user-1")
+	require.Error(t, err)
+
+	var appErr *response.AppError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, response.TypeNotFound, appErr.Type)
+	assert.Contains(t, appErr.Message, "notification not found")
 	mockRepo.AssertExpectations(t)
 }
 

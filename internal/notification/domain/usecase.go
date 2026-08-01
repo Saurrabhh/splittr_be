@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
@@ -33,7 +32,11 @@ func (u *UseCase) CreateAlert(ctx context.Context, userID string, actorID *strin
 	}
 
 	if err := u.repo.CreateNotification(ctx, newNotif); err != nil {
-		return nil, fmt.Errorf("create notification: %w", err)
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to create notification",
+			Err:     err,
+		}
 	}
 
 	return newNotif, nil
@@ -63,12 +66,18 @@ func (u *UseCase) MarkAsRead(ctx context.Context, id, userID string) error {
 			Message: "notification id is required",
 		}
 	}
-	err := u.repo.MarkNotificationAsRead(ctx, id, userID)
+	found, err := u.repo.MarkNotificationAsRead(ctx, id, userID)
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
 			Message: "failed to mark notification as read",
 			Err:     err,
+		}
+	}
+	if !found {
+		return &response.AppError{
+			Type:    response.TypeNotFound,
+			Message: "notification not found",
 		}
 	}
 	return nil

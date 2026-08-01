@@ -36,8 +36,9 @@ func (m *mockNotificationRepository) ListUserNotifications(ctx context.Context, 
 	return args.Get(0).([]domain.Notification), args.Error(1)
 }
 
-func (m *mockNotificationRepository) MarkNotificationAsRead(ctx context.Context, id, userID string) error {
-	return m.Called(ctx, id, userID).Error(0)
+func (m *mockNotificationRepository) MarkNotificationAsRead(ctx context.Context, id, userID string) (bool, error) {
+	args := m.Called(ctx, id, userID)
+	return args.Bool(0), args.Error(1)
 }
 
 func (m *mockNotificationRepository) MarkAllNotificationsAsRead(ctx context.Context, userID string) error {
@@ -129,7 +130,7 @@ func TestHandler_MarkAsRead_Success(t *testing.T) {
 	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
 	notifID := "notif-123"
 
-	mockRepo.On("MarkNotificationAsRead", mock.Anything, notifID, currentUser.ID).Return(nil)
+	mockRepo.On("MarkNotificationAsRead", mock.Anything, notifID, currentUser.ID).Return(true, nil)
 
 	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, currentUser)
@@ -203,7 +204,7 @@ func TestHandler_MarkAsRead_InternalServerError(t *testing.T) {
 	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
 	notifID := "notif-123"
 
-	mockRepo.On("MarkNotificationAsRead", mock.Anything, notifID, currentUser.ID).Return(errors.New("db error"))
+	mockRepo.On("MarkNotificationAsRead", mock.Anything, notifID, currentUser.ID).Return(false, errors.New("db error"))
 
 	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, currentUser)
@@ -214,6 +215,24 @@ func TestHandler_MarkAsRead_InternalServerError(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+}
+
+func TestHandler_MarkAsRead_NotFound(t *testing.T) {
+	mockRepo := new(mockNotificationRepository)
+	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
+	notifID := "notif-123"
+
+	mockRepo.On("MarkNotificationAsRead", mock.Anything, notifID, currentUser.ID).Return(false, nil)
+
+	uc := domain.NewUseCase(mockRepo)
+	router := setupHandlerTestRouter(uc, currentUser)
+
+	req := httptest.NewRequest(http.MethodPost, "/notifications/"+notifID+"/read", nil)
+	rr := httptest.NewRecorder()
+
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusNotFound, rr.Code)
 }
 
 // --- POST /notifications/read-all Tests ---
