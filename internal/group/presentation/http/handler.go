@@ -97,7 +97,7 @@ func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 		if req.InviteCode == "" {
 			return nil, &response.AppError{
 				Type:    response.TypeValidation,
-				Message: "inviteCode is required",
+				Message: response.MsgInvalidInviteCode,
 			}
 		}
 		return h.uc.JoinGroup(ctx, req.InviteCode, currUser.ID)
@@ -241,7 +241,7 @@ func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
 		if req.UserID == "" {
 			return response.MessageResponse{}, &response.AppError{
 				Type:    response.TypeValidation,
-				Message: "userId is required",
+				Message: response.MsgInvalidParam,
 			}
 		}
 
@@ -250,7 +250,7 @@ func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
 			return response.MessageResponse{}, err
 		}
 
-		return response.MessageResponse{Message: "member added successfully"}, nil
+		return response.MessageResponse{Message: response.MsgGroupMemberAdded}, nil
 	})
 }
 
@@ -320,7 +320,7 @@ func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 			return response.MessageResponse{}, err
 		}
 
-		return response.MessageResponse{Message: "role updated successfully"}, nil
+		return response.MessageResponse{Message: response.MsgRoleUpdated}, nil
 	})
 }
 
@@ -356,7 +356,7 @@ func (h *Handler) DecideJoinRequest(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return response.MessageResponse{}, err
 		}
-		return response.MessageResponse{Message: "join request decision recorded"}, nil
+		return response.MessageResponse{Message: response.MsgJoinDecisionRecorded}, nil
 	})
 }
 

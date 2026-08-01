@@ -1,6 +1,6 @@
 package response
 
-// System & HTTP Errors
+// System & HTTP Errors (User-Facing)
 const (
 	MsgInternalError = "Something went wrong on our end. Please try again in a moment."
 	MsgInvalidBody   = "The information provided is incomplete or invalid. Please check your input."
@@ -10,7 +10,7 @@ const (
 	MsgInvalidParam  = "A required field or parameter is invalid. Please try again."
 )
 
-// Validation & Input Errors
+// Validation & Input Errors (User-Facing)
 const (
 	MsgMissingName           = "Please enter a valid name."
 	MsgMissingEmailOrPhone   = "Please provide either an email address or phone number."
@@ -31,9 +31,23 @@ const (
 	MsgCannotRemoveCreator   = "The group creator cannot be removed."
 	MsgAlertRequired         = "Alert payload is required."
 	MsgMissingFilterParam    = "Please specify a valid expense filter."
+	MsgOnlyAdminAddMembers   = "Only admins can add members to the group."
+	MsgOnlyAdminRemoveMembers= "Only admins can remove other members from the group."
+	MsgSoleAdminRemovalError = "Cannot remove the sole admin of a group."
+	MsgInvalidMemberRole     = "Member role must be 'ADMIN' or 'MEMBER'."
+	MsgOnlyAdminRoleUpdate   = "Only admins can update member roles."
+	MsgOnlyAdminGroupUpdate  = "Only admins can update group details."
+	MsgOnlyAdminArchiveGroup = "Only admins can archive the group."
+	MsgJoinRequestRejected   = "Your join request was rejected by an admin."
+	MsgInvalidAction         = "Please select a valid action."
+	MsgOnlyAdminDecideJoin   = "Only admins can decide join requests."
+	MsgOnlyAdminResetCode    = "Only admins can reset the group invite code."
+	MsgMissingDescription    = "Please enter a description for the expense."
+	MsgPayerPayeeGroupMember = "Both the payer and recipient must be members of the group."
+	MsgNotExpenseParticipant = "You do not have access to view this expense."
 )
 
-// Domain Specific Errors
+// Domain Specific Errors (User-Facing)
 const (
 	MsgUserNotFound         = "We couldn't find that user."
 	MsgGroupNotFound        = "We couldn't find that group."
@@ -48,10 +62,61 @@ const (
 	MsgNotGroupAdmin        = "Admin permissions are required for this action."
 )
 
-// Mutation Success Messages
+// Internal Log Tracing Messages (Server-Side Logging Only)
+const (
+	ErrLogCheckUser          = "failed to check existing user"
+	ErrLogRegisterUser       = "failed to register user"
+	ErrLogRetrieveUserProfile= "failed to retrieve user profile"
+	ErrLogUpdateUserProfile  = "failed to update user profile"
+	ErrLogLookupUser         = "failed to lookup user"
+	ErrLogVerifyFriendship   = "failed to verify friendship status"
+	ErrLogAddFriend          = "failed to add friend"
+	ErrLogRemoveFriend       = "failed to remove friend"
+	ErrLogRetrieveFriends    = "failed to retrieve friends list"
+	ErrLogCreateGroup        = "failed to create group"
+	ErrLogVerifyMembership   = "failed to verify group membership status"
+	ErrLogRetrieveGroup      = "failed to retrieve group details"
+	ErrLogRetrieveMembers    = "failed to retrieve group members"
+	ErrLogRetrieveUserGroups = "failed to retrieve user groups"
+	ErrLogVerifyMemberRole   = "failed to verify member role"
+	ErrLogAddMember          = "failed to add member"
+	ErrLogVerifyMemberDetails= "failed to verify member details"
+	ErrLogListGroupMembers   = "failed to list group members"
+	ErrLogRemoveMember       = "failed to remove member"
+	ErrLogUpdateMemberRole   = "failed to update member role"
+	ErrLogUpdateGroup        = "failed to update group"
+	ErrLogArchiveGroup       = "failed to archive group"
+	ErrLogLookupInviteCode   = "failed to look up group by invite code"
+	ErrLogJoinGroup          = "failed to join group"
+	ErrLogDecideJoinRequest  = "failed to decide join request"
+	ErrLogResetInviteCode    = "failed to reset invite code"
+	ErrLogRetrievePreview    = "failed to retrieve group preview"
+	ErrLogCreateExpenseTx    = "create expense transaction failed"
+	ErrLogLoadSplits         = "failed to load expense splits"
+	ErrLogSettleUpTx         = "settle up transaction failed"
+	ErrLogRetrieveExpense    = "failed to retrieve expense details"
+	ErrLogRetrieveSplits     = "failed to retrieve expense splits"
+	ErrLogListGroupExpenses  = "failed to list group expenses"
+	ErrLogListPersonalExp    = "failed to list personal expenses"
+	ErrLogListFriendExp      = "failed to list friend expenses"
+	ErrLogDeleteExpense      = "failed to delete expense"
+	ErrLogCalcGroupBalances  = "failed to calculate group balances"
+	ErrLogCalcPairwiseDebts   = "failed to calculate pairwise debts"
+	ErrLogCalcFriendBalances = "failed to calculate friend balances"
+	ErrLogCreateNotif        = "failed to create notification"
+	ErrLogRetrieveNotif      = "failed to retrieve notifications"
+	ErrLogMarkNotifRead      = "failed to mark notification as read"
+	ErrLogMarkAllNotifRead   = "failed to mark all notifications as read"
+	ErrLogFetchActivityFeed  = "failed to fetch group activity feed"
+)
+
+// Mutation Success Messages (User-Facing)
 const (
 	MsgGroupMemberAdded     = "Member added successfully."
 	MsgGroupMemberRemoved   = "Member removed successfully."
+	MsgRoleUpdated          = "Role updated successfully."
+	MsgJoinDecisionRecorded = "Join request decision recorded."
 	MsgNotificationRead     = "Notification marked as read."
 	MsgAllNotificationsRead = "All notifications marked as read."
+	MsgJoinRequestSubmitted = "Join request submitted for admin approval."
 )

@@ -121,7 +121,7 @@ func (u *UseCase) CreateGroup(ctx context.Context, name, description string, req
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to create group",
+			Message: response.ErrLogCreateGroup,
 			Err:     err,
 		}
 	}
@@ -142,7 +142,7 @@ func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 	if err != nil {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to verify group membership status",
+			Message: response.ErrLogVerifyMembership,
 			Err:     err,
 		}
 	}
@@ -157,7 +157,7 @@ func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 	if err != nil {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve group details",
+			Message: response.ErrLogRetrieveGroup,
 			Err:     err,
 		}
 	}
@@ -172,7 +172,7 @@ func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 	if err != nil {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve group members",
+			Message: response.ErrLogRetrieveMembers,
 			Err:     err,
 		}
 	}
@@ -190,7 +190,7 @@ func (u *UseCase) ListUserGroups(ctx context.Context, userID string, p paginatio
 	if err != nil {
 		return pagination.Response[DetailsResponse]{}, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve user groups",
+			Message: response.ErrLogRetrieveUserGroups,
 			Err:     err,
 		}
 	}
@@ -238,7 +238,7 @@ func (u *UseCase) ListMembers(ctx context.Context, groupID, statusFilter, action
 	} else {
 		member, err := u.repo.GetGroupMember(ctx, groupID, actionByUserID)
 		if err != nil {
-			return nil, &response.AppError{Type: response.TypeInternal, Message: "failed to verify member role", Err: err}
+			return nil, &response.AppError{Type: response.TypeInternal, Message: response.ErrLogVerifyMemberRole, Err: err}
 		}
 		if member == nil || member.Status != MemberStatusActive {
 			return nil, &response.AppError{Type: response.TypeForbidden, Message: response.MsgNotGroupMember}
@@ -254,7 +254,7 @@ func (u *UseCase) ListMembers(ctx context.Context, groupID, statusFilter, action
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve group members",
+			Message: response.ErrLogRetrieveMembers,
 			Err:     err,
 		}
 	}
@@ -266,7 +266,7 @@ func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 	if groupID == "" || targetUserID == "" || actionByUserID == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "group id, target user id, and action user id are required",
+			Message: response.MsgInvalidParam,
 		}
 	}
 
@@ -274,14 +274,14 @@ func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve group details",
+			Message: response.ErrLogRetrieveGroup,
 			Err:     err,
 		}
 	}
 	if g == nil {
 		return &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "group not found",
+			Message: response.MsgGroupNotFound,
 		}
 	}
 
@@ -292,7 +292,7 @@ func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 	if !isAdmin {
 		return &response.AppError{
 			Type:    response.TypeForbidden,
-			Message: "only admins can add members to the group",
+			Message: response.MsgOnlyAdminAddMembers,
 		}
 	}
 
@@ -325,7 +325,7 @@ func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to add member",
+			Message: response.ErrLogAddMember,
 			Err:     err,
 		}
 	}
@@ -338,7 +338,7 @@ func (u *UseCase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 	if groupID == "" || targetUserID == "" || actionByUserID == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "group id, target user id, and action user id are required",
+			Message: response.MsgInvalidParam,
 		}
 	}
 
@@ -346,14 +346,14 @@ func (u *UseCase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve group details",
+			Message: response.ErrLogRetrieveGroup,
 			Err:     err,
 		}
 	}
 	if g == nil {
 		return &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "group not found",
+			Message: response.MsgGroupNotFound,
 		}
 	}
 
@@ -365,7 +365,7 @@ func (u *UseCase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 		if !isAdmin {
 			return &response.AppError{
 				Type:    response.TypeForbidden,
-				Message: "only admins can remove other members from the group",
+				Message: response.MsgOnlyAdminRemoveMembers,
 			}
 		}
 	}
@@ -374,14 +374,14 @@ func (u *UseCase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to verify member details",
+			Message: response.ErrLogVerifyMemberDetails,
 			Err:     err,
 		}
 	}
 	if targetMember == nil {
 		return &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "member not found in group",
+			Message: response.MsgMemberNotFound,
 		}
 	}
 
@@ -390,7 +390,7 @@ func (u *UseCase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 		if err != nil {
 			return &response.AppError{
 				Type:    response.TypeInternal,
-				Message: "failed to list group members",
+				Message: response.ErrLogListGroupMembers,
 				Err:     err,
 			}
 		}
@@ -403,7 +403,7 @@ func (u *UseCase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 		if adminCount <= 1 {
 			return &response.AppError{
 				Type:    response.TypeValidation,
-				Message: "cannot remove the sole admin of a group",
+				Message: response.MsgSoleAdminRemovalError,
 			}
 		}
 	}
@@ -431,7 +431,7 @@ func (u *UseCase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to remove member",
+			Message: response.ErrLogRemoveMember,
 			Err:     err,
 		}
 	}
@@ -444,14 +444,14 @@ func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID st
 	if groupID == "" || targetUserID == "" || newRole == "" || actionByUserID == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "group id, target user id, role, and action user id are required",
+			Message: response.MsgInvalidParam,
 		}
 	}
 
 	if newRole != MemberRoleAdmin && newRole != MemberRoleMember {
 		return &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "role must be 'ADMIN' or 'MEMBER'",
+			Message: response.MsgInvalidMemberRole,
 		}
 	}
 
@@ -459,14 +459,14 @@ func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID st
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve group details",
+			Message: response.ErrLogRetrieveGroup,
 			Err:     err,
 		}
 	}
 	if g == nil {
 		return &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "group not found",
+			Message: response.MsgGroupNotFound,
 		}
 	}
 
@@ -477,21 +477,21 @@ func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID st
 	if !isAdmin {
 		return &response.AppError{
 			Type:    response.TypeForbidden,
-			Message: "only admins can update member roles",
+			Message: response.MsgOnlyAdminRoleUpdate,
 		}
 	}
 	targetMember, err := u.repo.GetGroupMember(ctx, groupID, targetUserID)
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to verify member details",
+			Message: response.ErrLogVerifyMemberDetails,
 			Err:     err,
 		}
 	}
 	if targetMember == nil {
 		return &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "member not found in group",
+			Message: response.MsgMemberNotFound,
 		}
 	}
 
@@ -516,7 +516,7 @@ func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID st
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to update member role",
+			Message: response.ErrLogUpdateMemberRole,
 			Err:     err,
 		}
 	}
@@ -529,7 +529,7 @@ func (u *UseCase) UpdateGroup(ctx context.Context, groupID, name, description st
 	if groupID == "" || name == "" || actionByUserID == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "group id, name, and action user id are required",
+			Message: response.MsgInvalidParam,
 		}
 	}
 
@@ -537,14 +537,14 @@ func (u *UseCase) UpdateGroup(ctx context.Context, groupID, name, description st
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve group details",
+			Message: response.ErrLogRetrieveGroup,
 			Err:     err,
 		}
 	}
 	if g == nil {
 		return nil, &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "group not found",
+			Message: response.MsgGroupNotFound,
 		}
 	}
 
@@ -555,7 +555,7 @@ func (u *UseCase) UpdateGroup(ctx context.Context, groupID, name, description st
 	if !isAdmin {
 		return nil, &response.AppError{
 			Type:    response.TypeForbidden,
-			Message: "only admins can update group details",
+			Message: response.MsgOnlyAdminGroupUpdate,
 		}
 	}
 
@@ -584,7 +584,7 @@ func (u *UseCase) UpdateGroup(ctx context.Context, groupID, name, description st
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to update group",
+			Message: response.ErrLogUpdateGroup,
 			Err:     err,
 		}
 	}
@@ -597,7 +597,7 @@ func (u *UseCase) ArchiveGroup(ctx context.Context, groupID, actionByUserID stri
 	if groupID == "" || actionByUserID == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "group id and action user id are required",
+			Message: response.MsgInvalidParam,
 		}
 	}
 
@@ -605,14 +605,14 @@ func (u *UseCase) ArchiveGroup(ctx context.Context, groupID, actionByUserID stri
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve group details",
+			Message: response.ErrLogRetrieveGroup,
 			Err:     err,
 		}
 	}
 	if g == nil {
 		return &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "group not found",
+			Message: response.MsgGroupNotFound,
 		}
 	}
 
@@ -623,7 +623,7 @@ func (u *UseCase) ArchiveGroup(ctx context.Context, groupID, actionByUserID stri
 	if !isAdmin {
 		return &response.AppError{
 			Type:    response.TypeForbidden,
-			Message: "only admins can archive the group",
+			Message: response.MsgOnlyAdminArchiveGroup,
 		}
 	}
 
@@ -644,7 +644,7 @@ func (u *UseCase) ArchiveGroup(ctx context.Context, groupID, actionByUserID stri
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to archive group",
+			Message: response.ErrLogArchiveGroup,
 			Err:     err,
 		}
 	}
@@ -656,7 +656,7 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 	if inviteCode == "" || userID == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "invite code and user id are required",
+			Message: response.MsgInvalidParam,
 		}
 	}
 
@@ -664,21 +664,21 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to look up group by invite code",
+			Message: response.ErrLogLookupInviteCode,
 			Err:     err,
 		}
 	}
 	if g == nil {
 		return nil, &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "invalid or expired invite code",
+			Message: response.MsgInvalidInviteCode,
 		}
 	}
 
 	if g.InviteCodeExpiresAt != nil && g.InviteCodeExpiresAt.Before(time.Now()) {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "invite code has expired",
+			Message: response.MsgInvalidInviteCode,
 		}
 	}
 
@@ -686,7 +686,7 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to verify membership status",
+			Message: response.ErrLogVerifyMembership,
 			Err:     err,
 		}
 	}
@@ -695,12 +695,12 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 			return &JoinResponse{Status: MemberStatusActive, Group: g}, nil
 		}
 		if existing.Status == MemberStatusPending {
-			return &JoinResponse{Status: MemberStatusPending, Message: "Join request submitted for admin approval"}, nil
+			return &JoinResponse{Status: MemberStatusPending, Message: response.MsgJoinRequestSubmitted}, nil
 		}
 		if existing.Status == MemberStatusRejected {
 			return nil, &response.AppError{
 				Type:    response.TypeForbidden,
-				Message: "your join request was rejected by an admin",
+				Message: response.MsgJoinRequestRejected,
 			}
 		}
 	}
@@ -754,13 +754,13 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to join group",
+			Message: response.ErrLogJoinGroup,
 			Err:     err,
 		}
 	}
 
 	if targetStatus == MemberStatusPending {
-		return &JoinResponse{Status: MemberStatusPending, Message: "Join request submitted for admin approval"}, nil
+		return &JoinResponse{Status: MemberStatusPending, Message: response.MsgJoinRequestSubmitted}, nil
 	}
 	return &JoinResponse{Status: MemberStatusActive, Group: g}, nil
 }
@@ -770,7 +770,7 @@ func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID s
 	if groupID == "" || targetUserID == "" || action == "" || adminUserID == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "group id, target user id, action, and admin user id are required",
+			Message: response.MsgInvalidParam,
 		}
 	}
 
@@ -778,14 +778,14 @@ func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID s
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve group details",
+			Message: response.ErrLogRetrieveGroup,
 			Err:     err,
 		}
 	}
 	if g == nil {
 		return &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "group not found",
+			Message: response.MsgGroupNotFound,
 		}
 	}
 
@@ -796,7 +796,7 @@ func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID s
 	if !isAdmin {
 		return &response.AppError{
 			Type:    response.TypeForbidden,
-			Message: "only admins can decide join requests",
+			Message: response.MsgOnlyAdminDecideJoin,
 		}
 	}
 
@@ -809,7 +809,7 @@ func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID s
 	default:
 		return &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "action must be 'APPROVE' or 'REJECT'",
+			Message: response.MsgInvalidAction,
 		}
 	}
 
@@ -844,7 +844,7 @@ func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID s
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to decide join request",
+			Message: response.ErrLogDecideJoinRequest,
 			Err:     err,
 		}
 	}
@@ -857,7 +857,7 @@ func (u *UseCase) ResetInviteCode(ctx context.Context, groupID, adminUserID stri
 	if groupID == "" || adminUserID == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "group id and admin user id are required",
+			Message: response.MsgInvalidParam,
 		}
 	}
 
@@ -865,14 +865,14 @@ func (u *UseCase) ResetInviteCode(ctx context.Context, groupID, adminUserID stri
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve group details",
+			Message: response.ErrLogRetrieveGroup,
 			Err:     err,
 		}
 	}
 	if g == nil {
 		return nil, &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "group not found",
+			Message: response.MsgGroupNotFound,
 		}
 	}
 
@@ -883,7 +883,7 @@ func (u *UseCase) ResetInviteCode(ctx context.Context, groupID, adminUserID stri
 	if !isAdmin {
 		return nil, &response.AppError{
 			Type:    response.TypeForbidden,
-			Message: "only admins can reset group invite code",
+			Message: response.MsgOnlyAdminResetCode,
 		}
 	}
 
@@ -899,7 +899,7 @@ func (u *UseCase) ResetInviteCode(ctx context.Context, groupID, adminUserID stri
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to reset invite code",
+			Message: response.ErrLogResetInviteCode,
 			Err:     err,
 		}
 	}
@@ -912,7 +912,7 @@ func (u *UseCase) GetGroupPreview(ctx context.Context, inviteCode string) (*Prev
 	if inviteCode == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "invite code is required",
+			Message: response.MsgInvalidParam,
 		}
 	}
 
@@ -920,14 +920,14 @@ func (u *UseCase) GetGroupPreview(ctx context.Context, inviteCode string) (*Prev
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve group preview",
+			Message: response.ErrLogRetrievePreview,
 			Err:     err,
 		}
 	}
 	if preview == nil {
 		return nil, &response.AppError{
 			Type:    response.TypeNotFound,
-			Message: "invalid or expired invite code",
+			Message: response.MsgInvalidInviteCode,
 		}
 	}
 
@@ -939,7 +939,7 @@ func (u *UseCase) checkIsAdmin(ctx context.Context, groupID, userID string) (boo
 	if err != nil {
 		return false, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to verify member role",
+			Message: response.ErrLogVerifyMemberRole,
 			Err:     err,
 		}
 	}

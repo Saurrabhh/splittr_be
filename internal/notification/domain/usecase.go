@@ -42,7 +42,7 @@ func (u *UseCase) CreateAlert(ctx context.Context, userID string, actorID *strin
 	if err := u.repo.CreateNotification(ctx, newNotif); err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to create notification",
+			Message: response.ErrLogCreateNotif,
 			Err:     err,
 		}
 	}
@@ -57,7 +57,7 @@ func (u *UseCase) ListNotifications(ctx context.Context, userID string, p pagina
 	if err != nil {
 		return pagination.Response[Notification]{}, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve notifications",
+			Message: response.ErrLogRetrieveNotif,
 			Err:     err,
 		}
 	}
@@ -71,14 +71,14 @@ func (u *UseCase) MarkAsRead(ctx context.Context, id, userID string) error {
 	if id == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "notification id is required",
+			Message: response.MsgInvalidParam,
 		}
 	}
 	found, err := u.repo.MarkNotificationAsRead(ctx, id, userID)
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to mark notification as read",
+			Message: response.ErrLogMarkNotifRead,
 			Err:     err,
 		}
 	}
@@ -97,7 +97,7 @@ func (u *UseCase) MarkAllAsRead(ctx context.Context, userID string) error {
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to mark all notifications as read",
+			Message: response.ErrLogMarkAllNotifRead,
 			Err:     err,
 		}
 	}

@@ -66,7 +66,7 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 	if desc == "" {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeValidation,
-			Message: "description is required",
+			Message: response.MsgMissingDescription,
 		}
 	}
 	if amount <= 0 {
@@ -202,7 +202,7 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 	if err != nil {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "create expense transaction failed",
+			Message: response.ErrLogCreateExpenseTx,
 			Err:     err,
 		}
 	}
@@ -211,7 +211,7 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 	if err != nil {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to load expense splits",
+			Message: response.ErrLogLoadSplits,
 			Err:     err,
 		}
 	}
@@ -257,7 +257,7 @@ func (u *UseCase) SettleUp(ctx context.Context, amount float64, currency string,
 		if !memberMap[paidBy] || !memberMap[receivedBy] {
 			return nil, nil, &response.AppError{
 				Type:    response.TypeValidation,
-				Message: "both payer and payee must be members of the group",
+				Message: response.MsgPayerPayeeGroupMember,
 			}
 		}
 	}
@@ -333,7 +333,7 @@ func (u *UseCase) SettleUp(ctx context.Context, amount float64, currency string,
 	if err != nil {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "settle up transaction failed",
+			Message: response.ErrLogSettleUpTx,
 			Err:     err,
 		}
 	}
@@ -347,7 +347,7 @@ func (u *UseCase) GetExpenseDetails(ctx context.Context, expenseID, userID strin
 	if err != nil {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve expense details",
+			Message: response.ErrLogRetrieveExpense,
 			Err:     err,
 		}
 	}
@@ -362,7 +362,7 @@ func (u *UseCase) GetExpenseDetails(ctx context.Context, expenseID, userID strin
 	if err != nil {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve expense splits",
+			Message: response.ErrLogRetrieveSplits,
 			Err:     err,
 		}
 	}
@@ -380,7 +380,7 @@ func (u *UseCase) GetExpenseDetails(ctx context.Context, expenseID, userID strin
 	if !hasAccess {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeForbidden,
-			Message: "access denied: not a participant of this expense",
+			Message: response.MsgNotExpenseParticipant,
 		}
 	}
 
@@ -403,17 +403,17 @@ func (u *UseCase) ListExpenses(ctx context.Context, filterType, filterID, userID
 		}
 		expenses, err = u.repo.ListExpensesByGroup(ctx, filterID, p.Limit+1, cursor.LastTime, cursor.LastID)
 		if err != nil {
-			return pagination.Response[ExpenseWithSplits]{}, &response.AppError{Type: response.TypeInternal, Message: "failed to list group expenses", Err: err}
+			return pagination.Response[ExpenseWithSplits]{}, &response.AppError{Type: response.TypeInternal, Message: response.ErrLogListGroupExpenses, Err: err}
 		}
 	case "personal":
 		expenses, err = u.repo.ListUserPersonalExpenses(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
 		if err != nil {
-			return pagination.Response[ExpenseWithSplits]{}, &response.AppError{Type: response.TypeInternal, Message: "failed to list personal expenses", Err: err}
+			return pagination.Response[ExpenseWithSplits]{}, &response.AppError{Type: response.TypeInternal, Message: response.ErrLogListPersonalExp, Err: err}
 		}
 	case "friend":
 		expenses, err = u.repo.ListUserFriendExpenses(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
 		if err != nil {
-			return pagination.Response[ExpenseWithSplits]{}, &response.AppError{Type: response.TypeInternal, Message: "failed to list friend expenses", Err: err}
+			return pagination.Response[ExpenseWithSplits]{}, &response.AppError{Type: response.TypeInternal, Message: response.ErrLogListFriendExp, Err: err}
 		}
 	default:
 		return pagination.Response[ExpenseWithSplits]{}, &response.AppError{Type: response.TypeValidation, Message: response.MsgInvalidExpenseFilter}
@@ -426,7 +426,7 @@ func (u *UseCase) ListExpenses(ctx context.Context, filterType, filterID, userID
 	}
 	allSplits, err := u.repo.ListExpenseSplitsByIDs(ctx, ids)
 	if err != nil {
-		return pagination.Response[ExpenseWithSplits]{}, &response.AppError{Type: response.TypeInternal, Message: "failed to load expense splits", Err: err}
+		return pagination.Response[ExpenseWithSplits]{}, &response.AppError{Type: response.TypeInternal, Message: response.ErrLogLoadSplits, Err: err}
 	}
 
 	// Group splits by expense ID.
@@ -458,7 +458,7 @@ func (u *UseCase) GetBalances(ctx context.Context, groupID *string, userID strin
 		if err != nil {
 			return nil, &response.AppError{
 				Type:    response.TypeInternal,
-				Message: "failed to calculate group balances",
+				Message: response.ErrLogCalcGroupBalances,
 				Err:     err,
 			}
 		}
@@ -471,7 +471,7 @@ func (u *UseCase) GetBalances(ctx context.Context, groupID *string, userID strin
 			if err != nil {
 				return nil, &response.AppError{
 					Type:    response.TypeInternal,
-					Message: "failed to calculate pairwise debts",
+					Message: response.ErrLogCalcPairwiseDebts,
 					Err:     err,
 				}
 			}
@@ -488,7 +488,7 @@ func (u *UseCase) GetBalances(ctx context.Context, groupID *string, userID strin
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to calculate friend balances",
+			Message: response.ErrLogCalcFriendBalances,
 			Err:     err,
 		}
 	}
@@ -527,7 +527,7 @@ func (u *UseCase) DeleteExpense(ctx context.Context, expenseID, userID string) e
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve expense details",
+			Message: response.ErrLogRetrieveExpense,
 			Err:     err,
 		}
 	}
@@ -548,7 +548,7 @@ func (u *UseCase) DeleteExpense(ctx context.Context, expenseID, userID string) e
 	if err := u.repo.DeleteExpense(ctx, expenseID); err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to delete expense",
+			Message: response.ErrLogDeleteExpense,
 			Err:     err,
 		}
 	}

@@ -76,7 +76,7 @@ func (u *UseCase) ListActivities(ctx context.Context, userID string, p paginatio
 	if err != nil {
 		return pagination.Response[Activity]{}, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve activities",
+			Message: response.ErrLogFetchActivityFeed,
 			Err:     err,
 		}
 	}
@@ -92,7 +92,7 @@ func (u *UseCase) GetGroupFeed(ctx context.Context, userID, groupID string, p pa
 	if err != nil {
 		return pagination.Response[Activity]{}, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve activity feed",
+			Message: response.ErrLogFetchActivityFeed,
 			Err:     err,
 		}
 	}

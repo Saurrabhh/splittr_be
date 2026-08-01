@@ -39,7 +39,7 @@ func (u *UseCase) RegisterUser(ctx context.Context, firebaseUID string, email, p
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to check existing user",
+			Message: response.ErrLogCheckUser,
 			Err:     err,
 		}
 	}
@@ -58,7 +58,7 @@ func (u *UseCase) RegisterUser(ctx context.Context, firebaseUID string, email, p
 	if err := u.repo.Create(ctx, newUser); err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to register user",
+			Message: response.ErrLogRegisterUser,
 			Err:     err,
 		}
 	}
@@ -78,7 +78,7 @@ func (u *UseCase) GetUserProfile(ctx context.Context, id string) (*User, error) 
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve user profile",
+			Message: response.ErrLogRetrieveUserProfile,
 			Err:     err,
 		}
 	}
@@ -103,7 +103,7 @@ func (u *UseCase) GetUserByFirebaseUID(ctx context.Context, firebaseUID string) 
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve user profile",
+			Message: response.ErrLogRetrieveUserProfile,
 			Err:     err,
 		}
 	}
@@ -122,7 +122,7 @@ func (u *UseCase) UpdateProfile(ctx context.Context, userID string, name string,
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve user profile",
+			Message: response.ErrLogRetrieveUserProfile,
 			Err:     err,
 		}
 	}
@@ -149,7 +149,7 @@ func (u *UseCase) UpdateProfile(ctx context.Context, userID string, name string,
 	if err := u.repo.UpdateUser(ctx, usr); err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to update user profile",
+			Message: response.ErrLogUpdateUserProfile,
 			Err:     err,
 		}
 	}
@@ -170,7 +170,7 @@ func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, em
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to lookup user",
+			Message: response.ErrLogLookupUser,
 			Err:     err,
 		}
 	}
@@ -192,7 +192,7 @@ func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, em
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to verify friendship status",
+			Message: response.ErrLogVerifyFriendship,
 			Err:     err,
 		}
 	}
@@ -203,7 +203,7 @@ func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, em
 	if err := u.repo.CreateFriendship(ctx, userID, friend.ID); err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to add friend",
+			Message: response.ErrLogAddFriend,
 			Err:     err,
 		}
 	}
@@ -224,7 +224,7 @@ func (u *UseCase) RemoveFriend(ctx context.Context, userID string, friendID stri
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to verify friendship status",
+			Message: response.ErrLogVerifyFriendship,
 			Err:     err,
 		}
 	}
@@ -238,7 +238,7 @@ func (u *UseCase) RemoveFriend(ctx context.Context, userID string, friendID stri
 	if err := u.repo.DeleteFriendship(ctx, userID, friendID); err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to remove friend",
+			Message: response.ErrLogRemoveFriend,
 			Err:     err,
 		}
 	}
@@ -255,7 +255,7 @@ func (u *UseCase) ListFriends(ctx context.Context, userID string, p pagination.P
 	if err != nil {
 		return pagination.Response[User]{}, &response.AppError{
 			Type:    response.TypeInternal,
-			Message: "failed to retrieve friends list",
+			Message: response.ErrLogRetrieveFriends,
 			Err:     err,
 		}
 	}
