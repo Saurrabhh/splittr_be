@@ -312,9 +312,9 @@ func (u *UseCase) ListMembers(ctx context.Context, groupID, statusFilter, action
 }
 
 // AddMember adds a new user to the group. Requires requester to be an admin.
-func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionByUserID string) error {
+func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionByUserID string) (*Member, error) {
 	if groupID == "" || targetUserID == "" || actionByUserID == "" {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgInvalidParam,
 		}
@@ -322,14 +322,14 @@ func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 
 	g, err := u.repo.GetByID(ctx, groupID)
 	if err != nil {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogRetrieveGroup,
 			Err:     err,
 		}
 	}
 	if g == nil {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeNotFound,
 			Message: response.MsgGroupNotFound,
 		}
@@ -337,15 +337,16 @@ func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 
 	isAdmin, err := u.checkIsAdmin(ctx, groupID, actionByUserID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !isAdmin {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeForbidden,
 			Message: response.MsgOnlyAdminAddMembers,
 		}
 	}
 
+	var addedMember Member
 	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
 		if err := u.repo.AddGroupMember(txCtx, groupID, targetUserID, MemberRoleMember, MemberStatusActive); err != nil {
 			return err
@@ -355,32 +356,30 @@ func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 		if err != nil {
 			return err
 		}
-		var targetMember Member
 		for _, m := range members {
 			if m.UserID == targetUserID {
-				targetMember = m
+				addedMember = m
 				break
 			}
 		}
 
 		payload := activity.MemberPayload{
-			Member: targetMember,
+			Member: addedMember,
 		}
-		err = u.activity.LogEvent(
+		return u.activity.LogEvent(
 			txCtx, actionByUserID, &groupID, nil,
 			activity.NewMemberAddedEvent(targetUserID, payload),
 		)
-		return err
 	})
 	if err != nil {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogAddMember,
 			Err:     err,
 		}
 	}
 
-	return nil
+	return &addedMember, nil
 }
 
 // RemoveMember removes a member from the group.

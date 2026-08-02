@@ -216,7 +216,7 @@ func (h *Handler) ListMembers(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        id path string true "Group ID"
 // @Param        request body AddMemberRequest true "User ID of the member to add"
-// @Success      200  {object}  response.MessageResponse "Success message"
+// @Success      201  {object}  domain.Member
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -230,13 +230,8 @@ func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
 
 	currUser := user.MustFrom(r.Context())
 
-	request.Run(w, r, http.StatusOK, func(ctx context.Context, req AddMemberRequest) (response.MessageResponse, error) {
-		err := h.uc.AddMember(ctx, groupID, req.UserID, currUser.ID)
-		if err != nil {
-			return response.MessageResponse{}, err
-		}
-
-		return response.MessageResponse{Message: response.MsgGroupMemberAdded}, nil
+	request.Run(w, r, http.StatusCreated, func(ctx context.Context, req AddMemberRequest) (*domain.Member, error) {
+		return h.uc.AddMember(ctx, groupID, req.UserID, currUser.ID)
 	})
 }
 
