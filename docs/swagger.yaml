@@ -199,16 +199,6 @@ components:
         action:
           $ref: '#/components/schemas/JoinRequestAction'
       type: object
-    DetailsResponse:
-      properties:
-        group:
-          $ref: '#/components/schemas/Group'
-        members:
-          items:
-            $ref: '#/components/schemas/Member'
-          type: array
-          uniqueItems: false
-      type: object
     DomainConfig:
       properties:
         categories:
@@ -326,6 +316,11 @@ components:
           type: string
         inviteCodeExpiresAt:
           type: string
+        members:
+          items:
+            $ref: '#/components/schemas/Member'
+          type: array
+          uniqueItems: false
         name:
           type: string
         requireAdminApproval:
@@ -488,21 +483,21 @@ components:
         pagination:
           $ref: '#/components/schemas/Meta'
       type: object
-    Page-DetailsResponse:
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/DetailsResponse'
-          type: array
-          uniqueItems: false
-        pagination:
-          $ref: '#/components/schemas/Meta'
-      type: object
     Page-ExpenseWithSplits:
       properties:
         data:
           items:
             $ref: '#/components/schemas/ExpenseWithSplits'
+          type: array
+          uniqueItems: false
+        pagination:
+          $ref: '#/components/schemas/Meta'
+      type: object
+    Page-Group:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/Group'
           type: array
           uniqueItems: false
         pagination:
@@ -1189,7 +1184,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Page-DetailsResponse'
+                $ref: '#/components/schemas/Page-Group'
           description: OK
         "401":
           content:
@@ -1302,7 +1297,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DetailsResponse'
+                $ref: '#/components/schemas/Group'
           description: OK
         "400":
           content:

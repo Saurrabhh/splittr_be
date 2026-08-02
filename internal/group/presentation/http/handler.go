@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	_ "github.com/Saurrabhh/splittr_be/internal/activity/domain"
 	"github.com/Saurrabhh/splittr_be/internal/group/domain"
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/request"
@@ -394,7 +395,7 @@ func (h *Handler) Archive(w http.ResponseWriter, r *http.Request) {
 // @Param        id       path      string  true   "Group ID"
 // @Param        limit    query     int     false  "Items per page (max 100, default 20)"
 // @Param        cursor   query     string  false  "Opaque cursor token from previous response"
-// @Success      200      {object}  pagination.Response[activity.Activity]
+// @Success      200      {object}  pagination.Response[activitydomain.Activity]
 // @Failure      401      {object}  response.ErrorResponse
 // @Failure      403      {object}  response.ErrorResponse
 // @Failure      500      {object}  response.ErrorResponse

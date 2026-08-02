@@ -298,21 +298,6 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "DetailsResponse": {
-                "properties": {
-                    "group": {
-                        "$ref": "#/components/schemas/Group"
-                    },
-                    "members": {
-                        "items": {
-                            "$ref": "#/components/schemas/Member"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
             "DomainConfig": {
                 "properties": {
                     "categories": {
@@ -477,6 +462,13 @@ const docTemplate = `{
                     },
                     "inviteCodeExpiresAt": {
                         "type": "string"
+                    },
+                    "members": {
+                        "items": {
+                            "$ref": "#/components/schemas/Member"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
                     },
                     "name": {
                         "type": "string"
@@ -722,11 +714,11 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "Page-DetailsResponse": {
+            "Page-ExpenseWithSplits": {
                 "properties": {
                     "data": {
                         "items": {
-                            "$ref": "#/components/schemas/DetailsResponse"
+                            "$ref": "#/components/schemas/ExpenseWithSplits"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -737,11 +729,11 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "Page-ExpenseWithSplits": {
+            "Page-Group": {
                 "properties": {
                     "data": {
                         "items": {
-                            "$ref": "#/components/schemas/ExpenseWithSplits"
+                            "$ref": "#/components/schemas/Group"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -1854,7 +1846,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Page-DetailsResponse"
+                                    "$ref": "#/components/schemas/Page-Group"
                                 }
                             }
                         },
@@ -2206,7 +2198,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/DetailsResponse"
+                                    "$ref": "#/components/schemas/Group"
                                 }
                             }
                         },
