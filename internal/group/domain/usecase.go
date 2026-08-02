@@ -819,9 +819,9 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 }
 
 // DecideJoinRequest approves or rejects a pending join request. Admin only.
-func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID string, action JoinRequestAction, adminUserID string) error {
+func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID string, action JoinRequestAction, adminUserID string) (*Member, error) {
 	if groupID == "" || targetUserID == "" || action == "" || adminUserID == "" {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgInvalidParam,
 		}
@@ -829,14 +829,14 @@ func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID s
 
 	g, err := u.repo.GetByID(ctx, groupID)
 	if err != nil {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogRetrieveGroup,
 			Err:     err,
 		}
 	}
 	if g == nil {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeNotFound,
 			Message: response.MsgGroupNotFound,
 		}
@@ -844,10 +844,10 @@ func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID s
 
 	isAdmin, err := u.checkIsAdmin(ctx, groupID, adminUserID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !isAdmin {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeForbidden,
 			Message: response.MsgOnlyAdminDecideJoin,
 		}
@@ -860,28 +860,34 @@ func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID s
 	case JoinRequestActionReject:
 		newStatus = MemberStatusRejected
 	default:
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgInvalidAction,
 		}
 	}
 
+	var updatedMember Member
 	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
 		if err := u.repo.UpdateMemberStatus(txCtx, groupID, targetUserID, newStatus); err != nil {
 			return err
 		}
 
-		if newStatus == MemberStatusActive {
-			member, err := u.repo.GetGroupMember(txCtx, groupID, targetUserID)
-			if err == nil && member != nil {
-				payload := activity.MemberPayload{
-					Member: *member,
-				}
-				_ = u.activity.LogEvent(
-					txCtx, adminUserID, &groupID, nil,
-					activity.NewMemberJoinedEvent(targetUserID, payload),
-				)
+		member, err := u.repo.GetGroupMember(txCtx, groupID, targetUserID)
+		if err != nil {
+			return err
+		}
+		if member != nil {
+			updatedMember = *member
+		}
+
+		if newStatus == MemberStatusActive && member != nil {
+			payload := activity.MemberPayload{
+				Member: *member,
 			}
+			_ = u.activity.LogEvent(
+				txCtx, adminUserID, &groupID, nil,
+				activity.NewMemberJoinedEvent(targetUserID, payload),
+			)
 		}
 		if u.notification != nil {
 			var alert notification.Alert
@@ -895,14 +901,14 @@ func (u *UseCase) DecideJoinRequest(ctx context.Context, groupID, targetUserID s
 		return nil
 	})
 	if err != nil {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogDecideJoinRequest,
 			Err:     err,
 		}
 	}
 
-	return nil
+	return &updatedMember, nil
 }
 
 // ResetInviteCode generates a new invite code with a 7-day expiration. Admin only.

@@ -309,7 +309,7 @@ func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 // @Param        id path string true "Group ID"
 // @Param        userId path string true "Target User ID"
 // @Param        request body domain.DecideJoinRequestPayload true "Action (APPROVE or REJECT)"
-// @Success      200  {object}  response.MessageResponse "Success message"
+// @Success      200  {object}  domain.Member
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      403  {object}  response.ErrorResponse
@@ -327,12 +327,8 @@ func (h *Handler) DecideJoinRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	currUser := user.MustFrom(r.Context())
 
-	request.Run(w, r, http.StatusOK, func(ctx context.Context, req domain.DecideJoinRequestPayload) (response.MessageResponse, error) {
-		err := h.uc.DecideJoinRequest(ctx, groupID, targetUserID, req.Action, currUser.ID)
-		if err != nil {
-			return response.MessageResponse{}, err
-		}
-		return response.MessageResponse{Message: response.MsgJoinDecisionRecorded}, nil
+	request.Run(w, r, http.StatusOK, func(ctx context.Context, req domain.DecideJoinRequestPayload) (*domain.Member, error) {
+		return h.uc.DecideJoinRequest(ctx, groupID, targetUserID, req.Action, currUser.ID)
 	})
 }
 

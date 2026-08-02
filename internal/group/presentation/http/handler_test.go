@@ -1045,6 +1045,10 @@ func TestHandler_DecideJoinRequest_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
+	var resp domain.Member
+	err := json.Unmarshal(rr.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	assert.Equal(t, targetUserID, resp.UserID)
 }
 
 func TestHandler_ResetInviteCode_Success(t *testing.T) {

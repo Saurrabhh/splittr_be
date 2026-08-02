@@ -372,9 +372,10 @@ func TestDecideJoinRequest_Approve(t *testing.T) {
 	mockNotif.On("CreateAlert", ctx, targetUserID, &adminUserID, (*string)(nil), mock.Anything).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
-	err := uc.DecideJoinRequest(ctx, groupID, targetUserID, "APPROVE", adminUserID)
+	res, err := uc.DecideJoinRequest(ctx, groupID, targetUserID, "APPROVE", adminUserID)
 
 	require.NoError(t, err)
+	assert.NotNil(t, res)
 	mockRepo.AssertExpectations(t)
 }
 
