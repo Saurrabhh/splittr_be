@@ -97,6 +97,9 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "required": [
+                    "userId"
+                ],
                 "type": "object"
             },
             "AlertType": {
@@ -262,6 +265,9 @@ const docTemplate = `{
                         "type": "boolean"
                     }
                 },
+                "required": [
+                    "name"
+                ],
                 "type": "object"
             },
             "Currency": {
@@ -506,6 +512,9 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "required": [
+                    "inviteCode"
+                ],
                 "type": "object"
             },
             "JoinRequestAction": {
@@ -2506,15 +2515,15 @@ const docTemplate = `{
                     "required": true
                 },
                 "responses": {
-                    "200": {
+                    "201": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/MessageResponse"
+                                    "$ref": "#/components/schemas/Member"
                                 }
                             }
                         },
-                        "description": "Success message"
+                        "description": "Created"
                     },
                     "400": {
                         "content": {
@@ -2675,11 +2684,11 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/MessageResponse"
+                                    "$ref": "#/components/schemas/Member"
                                 }
                             }
                         },
-                        "description": "Success message"
+                        "description": "OK"
                     },
                     "400": {
                         "content": {
@@ -2781,11 +2790,11 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/MessageResponse"
+                                    "$ref": "#/components/schemas/Member"
                                 }
                             }
                         },
-                        "description": "Success message"
+                        "description": "OK"
                     },
                     "400": {
                         "content": {

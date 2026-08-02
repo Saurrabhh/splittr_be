@@ -90,6 +90,9 @@
                         "type": "string"
                     }
                 },
+                "required": [
+                    "userId"
+                ],
                 "type": "object"
             },
             "AlertType": {
@@ -255,6 +258,9 @@
                         "type": "boolean"
                     }
                 },
+                "required": [
+                    "name"
+                ],
                 "type": "object"
             },
             "Currency": {
@@ -499,6 +505,9 @@
                         "type": "string"
                     }
                 },
+                "required": [
+                    "inviteCode"
+                ],
                 "type": "object"
             },
             "JoinRequestAction": {
@@ -2499,15 +2508,15 @@
                     "required": true
                 },
                 "responses": {
-                    "200": {
+                    "201": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/MessageResponse"
+                                    "$ref": "#/components/schemas/Member"
                                 }
                             }
                         },
-                        "description": "Success message"
+                        "description": "Created"
                     },
                     "400": {
                         "content": {
@@ -2668,11 +2677,11 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/MessageResponse"
+                                    "$ref": "#/components/schemas/Member"
                                 }
                             }
                         },
-                        "description": "Success message"
+                        "description": "OK"
                     },
                     "400": {
                         "content": {
@@ -2774,11 +2783,11 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/MessageResponse"
+                                    "$ref": "#/components/schemas/Member"
                                 }
                             }
                         },
-                        "description": "Success message"
+                        "description": "OK"
                     },
                     "400": {
                         "content": {

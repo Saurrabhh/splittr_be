@@ -65,6 +65,8 @@ components:
       properties:
         userId:
           type: string
+      required:
+      - userId
       type: object
     AlertType:
       enum:
@@ -176,6 +178,8 @@ components:
           type: string
         requireAdminApproval:
           type: boolean
+      required:
+      - name
       type: object
     Currency:
       properties:
@@ -344,6 +348,8 @@ components:
       properties:
         inviteCode:
           type: string
+      required:
+      - inviteCode
       type: object
     JoinRequestAction:
       enum:
@@ -1481,12 +1487,12 @@ paths:
         description: User ID of the member to add
         required: true
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageResponse'
-          description: Success message
+                $ref: '#/components/schemas/Member'
+          description: Created
         "400":
           content:
             application/json:
@@ -1585,8 +1591,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageResponse'
-          description: Success message
+                $ref: '#/components/schemas/Member'
+          description: OK
         "400":
           content:
             application/json:
@@ -1648,8 +1654,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageResponse'
-          description: Success message
+                $ref: '#/components/schemas/Member'
+          description: OK
         "400":
           content:
             application/json:
