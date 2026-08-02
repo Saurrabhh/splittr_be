@@ -1,7 +1,6 @@
 package group
 
 import (
-	"github.com/Saurrabhh/splittr_be/internal/activity"
 	"github.com/Saurrabhh/splittr_be/internal/db"
 	"github.com/Saurrabhh/splittr_be/internal/group/data"
 	"github.com/Saurrabhh/splittr_be/internal/group/domain"
@@ -57,6 +56,6 @@ func NewUseCase(
 	return domain.NewUseCase(repo, tx, activitySvc, notificationSvc)
 }
 
-func NewHandler(uc *UseCase, activityUC *activity.UseCase) *Handler {
-	return http.NewHandler(uc, activityUC)
+func NewHandler(uc *UseCase) *Handler {
+	return http.NewHandler(uc)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/Saurrabhh/splittr_be/internal/activity"
 	"github.com/Saurrabhh/splittr_be/internal/group/domain"
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/request"
@@ -15,15 +14,13 @@ import (
 
 // Handler handles HTTP requests for group endpoints.
 type Handler struct {
-	uc         *domain.UseCase
-	activityUC *activity.UseCase
+	uc *domain.UseCase
 }
 
 // NewHandler creates a new Handler instance.
-func NewHandler(uc *domain.UseCase, activityUC *activity.UseCase) *Handler {
+func NewHandler(uc *domain.UseCase) *Handler {
 	return &Handler{
-		uc:         uc,
-		activityUC: activityUC,
+		uc: uc,
 	}
 }
 
@@ -441,7 +438,7 @@ func (h *Handler) GetFeed(w http.ResponseWriter, r *http.Request) {
 
 	p := pagination.ParseParams(r, 20, 100)
 
-	feed, err := h.activityUC.GetGroupFeed(r.Context(), currUser.ID, groupID, p)
+	feed, err := h.uc.GetGroupFeed(r.Context(), groupID, currUser.ID, p)
 	if err != nil {
 		response.HandleError(w, err)
 		return

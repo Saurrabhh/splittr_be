@@ -11,6 +11,7 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/expense"
 	"github.com/Saurrabhh/splittr_be/internal/group"
 	"github.com/Saurrabhh/splittr_be/internal/notification"
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 )
 
@@ -22,6 +23,10 @@ type activityLoggerAdapter struct {
 func (a activityLoggerAdapter) LogEvent(ctx context.Context, actorID string, groupID *string, visibleToUserIDs []string, event activity.Event) error {
 	_, err := a.uc.LogEvent(ctx, actorID, groupID, visibleToUserIDs, event)
 	return err
+}
+
+func (a activityLoggerAdapter) GetGroupFeed(ctx context.Context, userID, groupID string, p pagination.Params) (pagination.Response[activity.Activity], error) {
+	return a.uc.GetGroupFeed(ctx, userID, groupID, p)
 }
 
 // notificationSenderAdapter adapts the notification UseCase to the group/expense domain ports.
@@ -81,7 +86,7 @@ func initDependencies(ctx context.Context, app *Application) (*dependencies, err
 	// Group domain wiring
 	groupRepo := group.NewRepository(app.DB, tm)
 	groupUseCase := group.NewUseCase(groupRepo, tm, activityLoggerAdapter{activityUseCase}, notificationSenderAdapter{notificationUseCase})
-	groupHandler := group.NewHandler(groupUseCase, activityUseCase)
+	groupHandler := group.NewHandler(groupUseCase)
 
 	// Expense domain wiring
 	expenseRepo := expense.NewRepository(app.DB, tm)

@@ -9,6 +9,7 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/activity"
 	"github.com/Saurrabhh/splittr_be/internal/group/domain"
 	"github.com/Saurrabhh/splittr_be/internal/notification"
+	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -116,6 +117,14 @@ func (m *mockActivityLogger) LogEvent(
 ) error {
 	args := m.Called(ctx, actorID, groupID, visibleToUserIDs, event)
 	return args.Error(0)
+}
+
+func (m *mockActivityLogger) GetGroupFeed(ctx context.Context, userID, groupID string, p pagination.Params) (pagination.Response[activity.Activity], error) {
+	args := m.Called(ctx, userID, groupID, p)
+	if args.Get(0) == nil {
+		return pagination.Response[activity.Activity]{}, args.Error(1)
+	}
+	return args.Get(0).(pagination.Response[activity.Activity]), args.Error(1)
 }
 
 type mockNotificationSender struct {

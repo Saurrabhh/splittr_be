@@ -31,7 +31,7 @@ func newInviteCode() (string, error) {
 	return "INV-" + string(b), nil
 }
 
-// ActivityLogger records group activity events.
+// ActivityLogger records group activity events and fetches feed data.
 type ActivityLogger interface {
 	LogEvent(
 		ctx context.Context,
@@ -40,6 +40,11 @@ type ActivityLogger interface {
 		visibleToUserIDs []string,
 		event activity.Event,
 	) error
+	GetGroupFeed(
+		ctx context.Context,
+		userID, groupID string,
+		p pagination.Params,
+	) (pagination.Response[activity.Activity], error)
 }
 
 // NotificationSender delivers notifications to users.
@@ -198,6 +203,31 @@ func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 	}
 
 	return g, members, nil
+}
+
+// GetGroupFeed retrieves group activity feed verified for the requesting user.
+func (u *UseCase) GetGroupFeed(ctx context.Context, groupID, userID string, p pagination.Params) (pagination.Response[activity.Activity], error) {
+	if groupID == "" || userID == "" {
+		return pagination.Response[activity.Activity]{}, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: response.MsgInvalidParam,
+		}
+	}
+	member, err := u.repo.GetGroupMember(ctx, groupID, userID)
+	if err != nil {
+		return pagination.Response[activity.Activity]{}, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: response.ErrLogVerifyMembership,
+			Err:     err,
+		}
+	}
+	if member == nil || member.Status != MemberStatusActive {
+		return pagination.Response[activity.Activity]{}, &response.AppError{
+			Type:    response.TypeForbidden,
+			Message: response.MsgNotGroupMember,
+		}
+	}
+	return u.activity.GetGroupFeed(ctx, userID, groupID, p)
 }
 
 // ListUserGroups returns a cursor-paginated list of groups the user actively belongs to.
