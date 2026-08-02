@@ -242,7 +242,7 @@ func TestRepository_GroupMembers_CRUD(t *testing.T) {
 	require.Error(t, err)
 
 	// ListGroupMembers Success
-	members, err := groupRepo.ListGroupMembers(ctx, groupID, "")
+	members, err := groupRepo.ListGroupMembers(ctx, groupID, domain.MemberStatus(""))
 	require.NoError(t, err)
 	assert.Len(t, members, 2)
 
@@ -340,7 +340,7 @@ func TestRepository_ForeignKeys_And_ConstraintEdgeCases(t *testing.T) {
 	err = groupRepo.AddGroupMember(ctx, g1ID, u1.ID, domain.MemberRoleMember, domain.MemberStatusActive)
 	require.NoError(t, err, "ON CONFLICT DO NOTHING handles duplicate insertion silently")
 
-	members, err := groupRepo.ListGroupMembers(ctx, g1ID, "")
+	members, err := groupRepo.ListGroupMembers(ctx, g1ID, domain.MemberStatus(""))
 	require.NoError(t, err)
 	assert.Len(t, members, 1)
 }

@@ -346,7 +346,7 @@ func (r *DBRepository) GetGroupMember(ctx context.Context, groupID, userID strin
 }
 
 // ListGroupMembers lists members of a group with user details, optionally filtered by status.
-func (r *DBRepository) ListGroupMembers(ctx context.Context, groupID string, status string) ([]domain.Member, error) {
+func (r *DBRepository) ListGroupMembers(ctx context.Context, groupID string, status domain.MemberStatus) ([]domain.Member, error) {
 	parsedGroupID, err := uuid.Parse(groupID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid group uuid: %w", err)
@@ -357,7 +357,7 @@ func (r *DBRepository) ListGroupMembers(ctx context.Context, groupID string, sta
 
 	rows, err := q.ListGroupMembers(ctx, dbgen.ListGroupMembersParams{
 		GroupID: parsedGroupID,
-		Column2: status,
+		Column2: string(status),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list group members: %w", err)

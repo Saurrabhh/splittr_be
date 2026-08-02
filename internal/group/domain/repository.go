@@ -11,7 +11,7 @@ type Repository interface {
 	GetByInviteCode(ctx context.Context, inviteCode string) (*Group, error)
 	GetPreviewByInviteCode(ctx context.Context, inviteCode string) (*Preview, error)
 	GetGroupMember(ctx context.Context, groupID, userID string) (*Member, error)
-	ListGroupMembers(ctx context.Context, groupID string, status string) ([]Member, error)
+	ListGroupMembers(ctx context.Context, groupID string, status MemberStatus) ([]Member, error)
 	ListUserGroupsWithMembers(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]GroupWithMembers, error)
 	CreateGroup(ctx context.Context, g *Group) error
 	Update(ctx context.Context, g *Group) error

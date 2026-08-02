@@ -59,7 +59,7 @@ func (m *mockGroupRepository) GetGroupMember(ctx context.Context, groupID, userI
 	return args.Get(0).(*domain.Member), args.Error(1)
 }
 
-func (m *mockGroupRepository) ListGroupMembers(ctx context.Context, groupID string, status string) ([]domain.Member, error) {
+func (m *mockGroupRepository) ListGroupMembers(ctx context.Context, groupID string, status domain.MemberStatus) ([]domain.Member, error) {
 	args := m.Called(ctx, groupID, status)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)

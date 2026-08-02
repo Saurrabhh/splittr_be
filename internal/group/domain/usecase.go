@@ -128,7 +128,7 @@ func (u *UseCase) CreateGroup(ctx context.Context, name, description string, req
 			return err
 		}
 		var err error
-		members, err = u.repo.ListGroupMembers(txCtx, newGroup.ID, string(MemberStatusActive))
+		members, err = u.repo.ListGroupMembers(txCtx, newGroup.ID, MemberStatusActive)
 		return err
 	})
 	if err != nil {
@@ -193,7 +193,7 @@ func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 		}
 	}
 
-	members, err := u.repo.ListGroupMembers(ctx, groupID, string(MemberStatusActive))
+	members, err := u.repo.ListGroupMembers(ctx, groupID, MemberStatusActive)
 	if err != nil {
 		return nil, nil, &response.AppError{
 			Type:    response.TypeInternal,
@@ -300,7 +300,7 @@ func (u *UseCase) ListMembers(ctx context.Context, groupID, statusFilter, action
 		dbFilter = ""
 	}
 
-	members, err := u.repo.ListGroupMembers(ctx, groupID, dbFilter)
+	members, err := u.repo.ListGroupMembers(ctx, groupID, MemberStatus(dbFilter))
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
@@ -351,7 +351,7 @@ func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 			return err
 		}
 
-		members, err := u.repo.ListGroupMembers(txCtx, groupID, string(MemberStatusActive))
+		members, err := u.repo.ListGroupMembers(txCtx, groupID, MemberStatusActive)
 		if err != nil {
 			return err
 		}
@@ -436,7 +436,7 @@ func (u *UseCase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 	}
 
 	if targetMember.Role == MemberRoleAdmin {
-		members, err := u.repo.ListGroupMembers(ctx, groupID, string(MemberStatusActive))
+		members, err := u.repo.ListGroupMembers(ctx, groupID, MemberStatusActive)
 		if err != nil {
 			return &response.AppError{
 				Type:    response.TypeInternal,
@@ -766,7 +766,7 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 		}
 
 		if targetStatus == MemberStatusPending {
-			members, err := u.repo.ListGroupMembers(txCtx, g.ID, string(MemberStatusActive))
+			members, err := u.repo.ListGroupMembers(txCtx, g.ID, MemberStatusActive)
 			if err == nil {
 				for _, m := range members {
 					if m.Role == MemberRoleAdmin && u.notification != nil {
@@ -780,7 +780,7 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 			return nil
 		}
 
-		members, err := u.repo.ListGroupMembers(txCtx, g.ID, string(MemberStatusActive))
+		members, err := u.repo.ListGroupMembers(txCtx, g.ID, MemberStatusActive)
 		if err != nil {
 			return err
 		}
