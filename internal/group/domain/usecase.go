@@ -489,16 +489,16 @@ func (u *UseCase) RemoveMember(ctx context.Context, groupID, targetUserID, actio
 }
 
 // UpdateMemberRole updates a member's role (admin or member).
-func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID string, newRole MemberRole, actionByUserID string) error {
+func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID string, newRole MemberRole, actionByUserID string) (*Member, error) {
 	if groupID == "" || targetUserID == "" || newRole == "" || actionByUserID == "" {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgInvalidParam,
 		}
 	}
 
 	if newRole != MemberRoleAdmin && newRole != MemberRoleMember {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgInvalidMemberRole,
 		}
@@ -506,14 +506,14 @@ func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID st
 
 	g, err := u.repo.GetByID(ctx, groupID)
 	if err != nil {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogRetrieveGroup,
 			Err:     err,
 		}
 	}
 	if g == nil {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeNotFound,
 			Message: response.MsgGroupNotFound,
 		}
@@ -521,29 +521,30 @@ func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID st
 
 	isAdmin, err := u.checkIsAdmin(ctx, groupID, actionByUserID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !isAdmin {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeForbidden,
 			Message: response.MsgOnlyAdminRoleUpdate,
 		}
 	}
 	targetMember, err := u.repo.GetGroupMember(ctx, groupID, targetUserID)
 	if err != nil {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogVerifyMemberDetails,
 			Err:     err,
 		}
 	}
 	if targetMember == nil {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeNotFound,
 			Message: response.MsgMemberNotFound,
 		}
 	}
 
+	var updatedMember Member
 	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
 		if err := u.repo.UpdateGroupMemberRole(txCtx, groupID, targetUserID, newRole); err != nil {
 			return err
@@ -553,24 +554,27 @@ func (u *UseCase) UpdateMemberRole(ctx context.Context, groupID, targetUserID st
 		if err != nil {
 			return err
 		}
+		if member != nil {
+			updatedMember = *member
+		}
+
 		payload := activity.MemberPayload{
 			Member: member,
 		}
-		err = u.activity.LogEvent(
+		return u.activity.LogEvent(
 			txCtx, actionByUserID, &groupID, nil,
 			activity.NewMemberRoleUpdatedEvent(targetUserID, string(newRole), payload),
 		)
-		return err
 	})
 	if err != nil {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogUpdateMemberRole,
 			Err:     err,
 		}
 	}
 
-	return nil
+	return &updatedMember, nil
 }
 
 // UpdateGroup updates group name, description, and admin approval requirement.

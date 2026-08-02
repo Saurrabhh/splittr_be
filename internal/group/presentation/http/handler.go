@@ -277,7 +277,7 @@ func (h *Handler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 // @Param        id path string true "Group ID"
 // @Param        userId path string true "User ID of the member to update"
 // @Param        request body UpdateRoleRequest true "New role value"
-// @Success      200  {object}  response.MessageResponse "Success message"
+// @Success      200  {object}  domain.Member
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -295,13 +295,8 @@ func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 
 	currUser := user.MustFrom(r.Context())
 
-	request.Run(w, r, http.StatusOK, func(ctx context.Context, req UpdateRoleRequest) (response.MessageResponse, error) {
-		err := h.uc.UpdateMemberRole(ctx, groupID, targetUserID, req.Role, currUser.ID)
-		if err != nil {
-			return response.MessageResponse{}, err
-		}
-
-		return response.MessageResponse{Message: response.MsgRoleUpdated}, nil
+	request.Run(w, r, http.StatusOK, func(ctx context.Context, req UpdateRoleRequest) (*domain.Member, error) {
+		return h.uc.UpdateMemberRole(ctx, groupID, targetUserID, req.Role, currUser.ID)
 	})
 }
 
