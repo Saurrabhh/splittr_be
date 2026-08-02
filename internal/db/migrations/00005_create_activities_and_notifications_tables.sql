@@ -5,10 +5,14 @@ CREATE TABLE IF NOT EXISTS activities (
     actor_id UUID REFERENCES users(id) ON DELETE SET NULL,
     action_type VARCHAR(50) NOT NULL,
     description TEXT NOT NULL,
+    entity_type VARCHAR(50) NOT NULL DEFAULT 'SYSTEM',
+    entity_id UUID,
+    metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_activities_group_id ON activities(group_id) WHERE group_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_activities_feed_cursor ON activities (group_id, created_at DESC, id DESC) WHERE group_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS activity_visibility (
     activity_id UUID NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
@@ -25,6 +29,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     activity_id UUID REFERENCES activities(id) ON DELETE SET NULL,
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
+    type VARCHAR(50) NOT NULL,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
