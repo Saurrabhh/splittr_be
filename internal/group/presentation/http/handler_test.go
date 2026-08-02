@@ -385,7 +385,7 @@ func TestHandler_AddMember_Success(t *testing.T) {
 	var resp response.MessageResponse
 	err := json.Unmarshal(rr.Body.Bytes(), &resp)
 	require.NoError(t, err)
-	assert.Equal(t, "member added successfully", resp.Message)
+	assert.Equal(t, response.MsgGroupMemberAdded, resp.Message)
 }
 
 func TestHandler_AddMember_BadRequest_MissingUserID(t *testing.T) {
@@ -623,7 +623,7 @@ func TestHandler_UpdateMemberRole_Success(t *testing.T) {
 	var resp response.MessageResponse
 	err := json.Unmarshal(rr.Body.Bytes(), &resp)
 	require.NoError(t, err)
-	assert.Equal(t, "role updated successfully", resp.Message)
+	assert.Equal(t, response.MsgRoleUpdated, resp.Message)
 }
 
 func TestHandler_UpdateMemberRole_BadRequest_InvalidRole(t *testing.T) {

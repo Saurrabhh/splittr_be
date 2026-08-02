@@ -158,7 +158,7 @@ func TestCreateGroup_Success(t *testing.T) {
 	}, nil)
 
 	mockAct.On("LogEvent",
-		ctx, creatorID, mock.Anything, ([]string)(nil), mock.Anything,
+		mock.Anything, creatorID, mock.Anything, ([]string)(nil), mock.Anything,
 	).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
@@ -168,6 +168,8 @@ func TestCreateGroup_Success(t *testing.T) {
 	assert.NotNil(t, g)
 	assert.Equal(t, groupName, g.Name)
 	assert.Equal(t, &groupDesc, g.Description)
+
+	time.Sleep(10 * time.Millisecond)
 
 	mockRepo.AssertExpectations(t)
 	mockAct.AssertExpectations(t)

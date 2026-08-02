@@ -2,6 +2,8 @@ package domain
 
 import (
 	"context"
+	"crypto/rand"
+	"math/big"
 	"strings"
 	"time"
 
@@ -14,10 +16,19 @@ import (
 )
 
 const inviteTTL = 7 * 24 * time.Hour
+const inviteCodeCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-// newInviteCode generates a fresh invite code for a group.
-func newInviteCode() string {
-	return "invite-" + uuid.New().String()[:8]
+// newInviteCode generates a fresh, cryptographically secure invite code for a group.
+func newInviteCode() (string, error) {
+	b := make([]byte, 8)
+	for i := range b {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(inviteCodeCharset))))
+		if err != nil {
+			return "", err
+		}
+		b[i] = inviteCodeCharset[num.Int64()]
+	}
+	return "INV-" + string(b), nil
 }
 
 // ActivityLogger records group activity events.
@@ -83,7 +94,14 @@ func (u *UseCase) CreateGroup(ctx context.Context, name, description string, req
 	}
 
 	expiresAt := time.Now().Add(inviteTTL)
-	inviteCode := newInviteCode()
+	inviteCode, err := newInviteCode()
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to generate invite code",
+			Err:     err,
+		}
+	}
 	newGroup := &Group{
 		ID:                   uuid.New().String(),
 		Name:                 name,
@@ -96,26 +114,16 @@ func (u *UseCase) CreateGroup(ctx context.Context, name, description string, req
 		newGroup.Description = &description
 	}
 
-	err := u.tx.RunInTx(ctx, func(txCtx context.Context) error {
+	var members []Member
+	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
 		if err := u.repo.CreateGroup(txCtx, newGroup); err != nil {
 			return err
 		}
 		if err := u.repo.AddGroupMember(txCtx, newGroup.ID, creatorID, MemberRoleAdmin, MemberStatusActive); err != nil {
 			return err
 		}
-		members, err := u.repo.ListGroupMembers(txCtx, newGroup.ID, string(MemberStatusActive))
-		if err != nil {
-			return err
-		}
-
-		payload := activity.GroupPayload{
-			Group:   *newGroup,
-			Members: members,
-		}
-		err = u.activity.LogEvent(
-			txCtx, creatorID, &newGroup.ID, nil,
-			activity.NewGroupCreatedEvent(newGroup.ID, payload),
-		)
+		var err error
+		members, err = u.repo.ListGroupMembers(txCtx, newGroup.ID, string(MemberStatusActive))
 		return err
 	})
 	if err != nil {
@@ -125,6 +133,18 @@ func (u *UseCase) CreateGroup(ctx context.Context, name, description string, req
 			Err:     err,
 		}
 	}
+
+	// Dispatch side effect post-transaction asynchronously
+	go func() {
+		payload := activity.GroupPayload{
+			Group:   *newGroup,
+			Members: members,
+		}
+		_ = u.activity.LogEvent(
+			context.Background(), creatorID, &newGroup.ID, nil,
+			activity.NewGroupCreatedEvent(newGroup.ID, payload),
+		)
+	}()
 
 	return newGroup, nil
 }
@@ -887,7 +907,14 @@ func (u *UseCase) ResetInviteCode(ctx context.Context, groupID, adminUserID stri
 		}
 	}
 
-	code := newInviteCode()
+	code, err := newInviteCode()
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "failed to generate invite code",
+			Err:     err,
+		}
+	}
 	expiresAt := time.Now().Add(inviteTTL)
 
 	var updatedGroup *Group
