@@ -143,7 +143,9 @@ func (h *Handler) Preview(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 	p := pagination.ParseParams(r, 20, 100)
+
 	result, err := h.uc.ListUserGroups(r.Context(), currUser.ID, p)
+
 	if err != nil {
 		response.HandleError(w, err)
 		return

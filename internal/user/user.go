@@ -16,26 +16,22 @@ type (
 	UseCase    = domain.UseCase
 )
 
-// Data Type Aliases
+// DBRepository Data Type Aliases
 type DBRepository = data.DBRepository
 
-// Presentation Type Aliases
+// Handler Presentation Type Aliases
 type Handler = http.Handler
 
-// Middleware Helper Functions
+// WithUser Middleware Helper Functions
 func WithUser(ctx context.Context, u *User) context.Context {
 	return http.WithUser(ctx, u)
-}
-
-func From(ctx context.Context) *User {
-	return http.From(ctx)
 }
 
 func MustFrom(ctx context.Context) *User {
 	return http.MustFrom(ctx)
 }
 
-// Constructors
+// NewRepository Constructors
 func NewRepository(database *db.DB, tm *db.TransactionManager) *DBRepository {
 	return data.NewRepository(database, tm)
 }

@@ -24,10 +24,10 @@ type (
 	UseCase                  = domain.UseCase
 )
 
-// Data Type Aliases
+// DBRepository Data Type Aliases
 type DBRepository = data.DBRepository
 
-// Presentation Type Aliases
+// Handler Presentation Type Aliases
 type Handler = http.Handler
 
 // Constants
@@ -42,7 +42,7 @@ const (
 	MemberRoleMember = domain.MemberRoleMember
 )
 
-// Constructors
+// NewRepository Constructors
 func NewRepository(database *db.DB, tm *db.TransactionManager) *DBRepository {
 	return data.NewRepository(database, tm)
 }
