@@ -159,7 +159,7 @@ func TestListActivities_RepoError(t *testing.T) {
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeInternal, appErr.Type)
-	assert.Contains(t, appErr.Message, "failed to retrieve activities")
+	assert.Contains(t, appErr.Message, response.ErrLogFetchActivityFeed)
 	mockRepo.AssertExpectations(t)
 }
 
@@ -235,6 +235,6 @@ func TestGetGroupFeed_RepoError(t *testing.T) {
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeInternal, appErr.Type)
-	assert.Contains(t, appErr.Message, "failed to retrieve activity feed")
+	assert.Contains(t, appErr.Message, response.ErrLogFetchActivityFeed)
 	mockRepo.AssertExpectations(t)
 }

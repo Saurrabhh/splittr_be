@@ -115,16 +115,12 @@ type mockGroupService struct {
 	mock.Mock
 }
 
-func (m *mockGroupService) GetGroupDetails(ctx context.Context, groupID, userID string) (*group.Group, []group.Member, error) {
+func (m *mockGroupService) GetGroupDetails(ctx context.Context, groupID, userID string) (*group.Group, error) {
 	args := m.Called(ctx, groupID, userID)
 	if args.Get(0) == nil {
-		return nil, nil, args.Error(2)
+		return nil, args.Error(1)
 	}
-	var members []group.Member
-	if args.Get(1) != nil {
-		members = args.Get(1).([]group.Member)
-	}
-	return args.Get(0).(*group.Group), members, args.Error(2)
+	return args.Get(0).(*group.Group), args.Error(1)
 }
 
 type mockActivityLogger struct {
@@ -346,7 +342,7 @@ func TestHandler_ListExpenses_GroupSuccess(t *testing.T) {
 	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
 	groupID := "grp-1"
 
-	mockGroupSvc.On("GetGroupDetails", mock.Anything, groupID, currentUser.ID).Return(&group.Group{ID: groupID}, []group.Member{}, nil)
+	mockGroupSvc.On("GetGroupDetails", mock.Anything, groupID, currentUser.ID).Return(&group.Group{ID: groupID}, nil)
 	mockRepo.On("ListExpensesByGroup", mock.Anything, groupID, mock.Anything, mock.Anything, mock.Anything).Return([]domain.Expense{
 		{ID: "exp-1", Description: "Dinner"},
 	}, nil)
@@ -550,7 +546,7 @@ func TestHandler_GetBalances_Success(t *testing.T) {
 	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
 	groupID := "grp-1"
 
-	mockGroupSvc.On("GetGroupDetails", mock.Anything, groupID, currentUser.ID).Return(&group.Group{ID: groupID}, []group.Member{}, nil)
+	mockGroupSvc.On("GetGroupDetails", mock.Anything, groupID, currentUser.ID).Return(&group.Group{ID: groupID}, nil)
 	mockRepo.On("GetGroupBalances", mock.Anything, groupID).Return([]domain.UserBalance{
 		{UserID: "usr-1", UserName: "Alice", NetBalance: 50.0},
 	}, nil)

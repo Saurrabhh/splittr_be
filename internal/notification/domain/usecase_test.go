@@ -166,7 +166,7 @@ func TestMarkAsRead_EmptyID(t *testing.T) {
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
-	assert.Contains(t, appErr.Message, "notification id is required")
+	assert.Contains(t, appErr.Message, response.MsgInvalidParam)
 }
 
 func TestMarkAsRead_RepoError(t *testing.T) {

@@ -18,7 +18,7 @@ import (
 
 // GroupService defines the contract required to validate group membership.
 type GroupService interface {
-	GetGroupDetails(ctx context.Context, groupID, userID string) (*group.Group, []group.Member, error)
+	GetGroupDetails(ctx context.Context, groupID, userID string) (*group.Group, error)
 }
 
 type ActivityLogger interface {
@@ -85,16 +85,16 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 		currency = "INR"
 	}
 
-	var members []group.Member
+	var groupMembers []group.Member
 	if groupID != nil && *groupID != "" {
-		var err error
-		_, members, err = u.groupSvc.GetGroupDetails(ctx, *groupID, createdBy)
+		g, err := u.groupSvc.GetGroupDetails(ctx, *groupID, createdBy)
 		if err != nil {
 			return nil, nil, err
 		}
+		groupMembers = g.Members
 
 		memberMap := make(map[string]bool)
-		for _, m := range members {
+		for _, m := range groupMembers {
 			memberMap[m.UserID] = true
 		}
 
@@ -184,7 +184,7 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 		expenseAlert := notification.NewExpenseAddedAlert(desc, amount, currency)
 
 		if groupID != nil && *groupID != "" {
-			for _, m := range members {
+			for _, m := range groupMembers {
 				if m.UserID != createdBy {
 					_ = u.notification.CreateAlert(txCtx, m.UserID, &createdBy, &act.ID, expenseAlert)
 				}
@@ -244,13 +244,13 @@ func (u *UseCase) SettleUp(ctx context.Context, amount float64, currency string,
 	}
 
 	if groupID != nil && *groupID != "" {
-		_, members, err := u.groupSvc.GetGroupDetails(ctx, *groupID, createdBy)
+		g, err := u.groupSvc.GetGroupDetails(ctx, *groupID, createdBy)
 		if err != nil {
 			return nil, nil, err
 		}
 
 		memberMap := make(map[string]bool)
-		for _, m := range members {
+		for _, m := range g.Members {
 			memberMap[m.UserID] = true
 		}
 
@@ -397,7 +397,7 @@ func (u *UseCase) ListExpenses(ctx context.Context, filterType, filterID, userID
 
 	switch filterType {
 	case "group":
-		_, _, err = u.groupSvc.GetGroupDetails(ctx, filterID, userID)
+		_, err = u.groupSvc.GetGroupDetails(ctx, filterID, userID)
 		if err != nil {
 			return pagination.Response[ExpenseWithSplits]{}, err
 		}
@@ -449,7 +449,7 @@ func (u *UseCase) ListExpenses(ctx context.Context, filterType, filterID, userID
 // GetBalances returns direct or group balances and recommended settlements.
 func (u *UseCase) GetBalances(ctx context.Context, groupID *string, userID string, simplified bool) (*BalanceResponse, error) {
 	if groupID != nil && *groupID != "" {
-		_, _, err := u.groupSvc.GetGroupDetails(ctx, *groupID, userID)
+		_, err := u.groupSvc.GetGroupDetails(ctx, *groupID, userID)
 		if err != nil {
 			return nil, err
 		}

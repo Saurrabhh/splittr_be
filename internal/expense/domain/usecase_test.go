@@ -109,16 +109,12 @@ type mockGroupService struct {
 	mock.Mock
 }
 
-func (m *mockGroupService) GetGroupDetails(ctx context.Context, groupID, userID string) (*group.Group, []group.Member, error) {
+func (m *mockGroupService) GetGroupDetails(ctx context.Context, groupID, userID string) (*group.Group, error) {
 	args := m.Called(ctx, groupID, userID)
 	if args.Get(0) == nil {
-		return nil, nil, args.Error(2)
+		return nil, args.Error(1)
 	}
-	var members []group.Member
-	if args.Get(1) != nil {
-		members = args.Get(1).([]group.Member)
-	}
-	return args.Get(0).(*group.Group), members, args.Error(2)
+	return args.Get(0).(*group.Group), args.Error(1)
 }
 
 type mockActivityLogger struct {
@@ -226,8 +222,8 @@ func TestCreateExpense_Success_GroupExactSplit(t *testing.T) {
 		{GroupID: groupID, UserID: "usr-2", Role: group.MemberRoleMember},
 	}
 
-	mockGroupSvc.On("GetGroupDetails", ctx, groupID, creatorID).Return(&group.Group{ID: groupID}, members, nil)
-	mockGroupSvc.On("GetGroupDetails", mock.Anything, groupID, creatorID).Return(&group.Group{ID: groupID}, members, nil)
+	mockGroupSvc.On("GetGroupDetails", ctx, groupID, creatorID).Return(&group.Group{ID: groupID, Members: members}, nil)
+	mockGroupSvc.On("GetGroupDetails", mock.Anything, groupID, creatorID).Return(&group.Group{ID: groupID, Members: members}, nil)
 
 	mockRepo.On("CreateExpense", ctx, mock.AnythingOfType("*domain.Expense")).Return(nil)
 	mockRepo.On("CreateExpenseSplit", ctx, mock.AnythingOfType("*domain.Split")).Return(nil)
@@ -304,7 +300,7 @@ func TestCreateExpense_ValidationErrors(t *testing.T) {
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
-	assert.Contains(t, appErr.Message, "description is required")
+	assert.Contains(t, appErr.Message, response.MsgMissingDescription)
 
 	// Invalid total amount <= 0
 	_, _, err = uc.CreateExpense(ctx, "Desc", 0.0, "INR", "Cat", nil, "usr-1", domain.SplitTypeEqual, []domain.InputSplit{{UserID: "usr-1"}}, "usr-1")
@@ -356,7 +352,7 @@ func TestCreateExpense_ValidationErrors(t *testing.T) {
 	members := []group.Member{
 		{GroupID: groupID, UserID: "usr-2", Role: group.MemberRoleMember},
 	}
-	mockGroupSvc.On("GetGroupDetails", ctx, groupID, "usr-1").Return(&group.Group{ID: groupID}, members, nil).Once()
+	mockGroupSvc.On("GetGroupDetails", ctx, groupID, "usr-1").Return(&group.Group{ID: groupID, Members: members}, nil).Once()
 
 	_, _, err = uc.CreateExpense(ctx, "Desc", 100.0, "INR", "Cat", &groupID, "usr-1", domain.SplitTypeEqual, []domain.InputSplit{{UserID: "usr-2"}}, "usr-1")
 	require.ErrorAs(t, err, &appErr)
@@ -367,7 +363,7 @@ func TestCreateExpense_ValidationErrors(t *testing.T) {
 	membersWithPayer := []group.Member{
 		{GroupID: groupID, UserID: "usr-1", Role: group.MemberRoleAdmin},
 	}
-	mockGroupSvc.On("GetGroupDetails", ctx, groupID, "usr-1").Return(&group.Group{ID: groupID}, membersWithPayer, nil).Once()
+	mockGroupSvc.On("GetGroupDetails", ctx, groupID, "usr-1").Return(&group.Group{ID: groupID, Members: membersWithPayer}, nil).Once()
 
 	_, _, err = uc.CreateExpense(ctx, "Desc", 100.0, "INR", "Cat", &groupID, "usr-1", domain.SplitTypeEqual, []domain.InputSplit{{UserID: "usr-non-member"}}, "usr-1")
 	require.ErrorAs(t, err, &appErr)
@@ -540,7 +536,7 @@ func TestGetExpenseDetails_Forbidden(t *testing.T) {
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeForbidden, appErr.Type)
-	assert.Contains(t, appErr.Message, "access denied")
+	assert.Contains(t, appErr.Message, response.MsgNotExpenseParticipant)
 }
 
 // --- ListExpenses Tests ---
@@ -554,7 +550,7 @@ func TestListExpenses_Group(t *testing.T) {
 	userID := "usr-1"
 	p := pagination.Params{Limit: 10}
 
-	mockGroupSvc.On("GetGroupDetails", ctx, groupID, userID).Return(&group.Group{ID: groupID}, []group.Member{}, nil)
+	mockGroupSvc.On("GetGroupDetails", ctx, groupID, userID).Return(&group.Group{ID: groupID}, nil)
 	mockRepo.On("ListExpensesByGroup", ctx, groupID, int32(11), (*time.Time)(nil), (*string)(nil)).Return([]domain.Expense{
 		{ID: "exp-1", Description: "Trip dinner"},
 	}, nil)
