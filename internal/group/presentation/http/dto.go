@@ -5,17 +5,17 @@ import (
 )
 
 type CreateGroupRequest struct {
-	Name                 string `json:"name"`
+	Name                 string `json:"name" validate:"required"`
 	Description          string `json:"description"`
 	RequireAdminApproval bool   `json:"requireAdminApproval"`
 } // @name CreateGroupRequest
 
 type JoinGroupRequest struct {
-	InviteCode string `json:"inviteCode"`
+	InviteCode string `json:"inviteCode" validate:"required"`
 } // @name JoinGroupRequest
 
 type AddMemberRequest struct {
-	UserID string `json:"userId"`
+	UserID string `json:"userId" validate:"required"`
 } // @name AddMemberRequest
 
 type UpdateRoleRequest struct {

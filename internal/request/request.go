@@ -8,10 +8,13 @@ import (
 
 	"github.com/Saurrabhh/splittr_be/internal/response"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 )
 
-// DecodeBody decodes the JSON request body into the target type.
-// If decoding fails or the body contains trailing data, it writes a Bad Request response and returns false.
+var validate = validator.New(validator.WithRequiredStructEnabled())
+
+// DecodeBody decodes the JSON request body into the target type and runs struct validation.
+// If decoding fails, trailing data exists, or validation fails, it writes a Bad Request response and returns false.
 func DecodeBody[T any](w http.ResponseWriter, r *http.Request) (T, bool) {
 	var req T
 	dec := json.NewDecoder(r.Body)
@@ -21,6 +24,14 @@ func DecodeBody[T any](w http.ResponseWriter, r *http.Request) (T, bool) {
 	}
 	if dec.More() {
 		response.Error(w, http.StatusBadRequest, response.ErrInvalidBody, response.MsgInvalidBody)
+		return req, false
+	}
+	if err := validate.Struct(req); err != nil {
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: response.MsgInvalidParam,
+			Err:     err,
+		})
 		return req, false
 	}
 	return req, true

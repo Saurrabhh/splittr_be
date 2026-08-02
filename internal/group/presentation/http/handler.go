@@ -91,12 +91,6 @@ func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
 	request.Run(w, r, http.StatusOK, func(ctx context.Context, req JoinGroupRequest) (*domain.JoinResponse, error) {
-		if req.InviteCode == "" {
-			return nil, &response.AppError{
-				Type:    response.TypeValidation,
-				Message: response.MsgInvalidInviteCode,
-			}
-		}
 		return h.uc.JoinGroup(ctx, req.InviteCode, currUser.ID)
 	})
 }
@@ -237,13 +231,6 @@ func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
 	request.Run(w, r, http.StatusOK, func(ctx context.Context, req AddMemberRequest) (response.MessageResponse, error) {
-		if req.UserID == "" {
-			return response.MessageResponse{}, &response.AppError{
-				Type:    response.TypeValidation,
-				Message: response.MsgInvalidParam,
-			}
-		}
-
 		err := h.uc.AddMember(ctx, groupID, req.UserID, currUser.ID)
 		if err != nil {
 			return response.MessageResponse{}, err
