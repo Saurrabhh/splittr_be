@@ -221,11 +221,11 @@ func TestGetGroupDetails_Success(t *testing.T) {
 	mockRepo.On("ListGroupMembers", ctx, groupID, domain.MemberStatusActive).Return(expectedMembers, nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
-	g, members, err := uc.GetGroupDetails(ctx, groupID, userID)
+	g, err := uc.GetGroupDetails(ctx, groupID, userID)
 
 	require.NoError(t, err)
 	assert.Equal(t, expectedGroup, g)
-	assert.Equal(t, expectedMembers, members)
+	assert.Equal(t, expectedMembers, g.Members)
 
 	mockRepo.AssertExpectations(t)
 }
@@ -244,7 +244,7 @@ func TestGetGroupDetails_NotActiveMember_Forbidden(t *testing.T) {
 	mockRepo.On("GetGroupMember", ctx, groupID, userID).Return(pendingMember, nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
-	_, _, err := uc.GetGroupDetails(ctx, groupID, userID)
+	_, err := uc.GetGroupDetails(ctx, groupID, userID)
 
 	require.Error(t, err)
 	var appErr *response.AppError

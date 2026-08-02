@@ -295,11 +295,11 @@ func TestHandler_GetDetails_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var resp domain.DetailsResponse
+	var resp domain.Group
 	err := json.Unmarshal(rr.Body.Bytes(), &resp)
 	require.NoError(t, err)
-	assert.Equal(t, groupID, resp.Group.ID)
-	assert.Equal(t, "Trip", resp.Group.Name)
+	assert.Equal(t, groupID, resp.ID)
+	assert.Equal(t, "Trip", resp.Name)
 	assert.Len(t, resp.Members, 1)
 }
 
@@ -968,11 +968,11 @@ func TestHandler_List_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var resp pagination.Response[domain.DetailsResponse]
+	var resp pagination.Response[domain.Group]
 	err := json.Unmarshal(rr.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	assert.Len(t, resp.Data, 1)
-	assert.Equal(t, "grp-1", resp.Data[0].Group.ID)
+	assert.Equal(t, "grp-1", resp.Data[0].ID)
 }
 
 func TestHandler_List_Unauthorized(t *testing.T) {

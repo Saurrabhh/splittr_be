@@ -29,6 +29,7 @@ type Group struct {
 	CreatedAt            time.Time  `json:"createdAt"`
 	UpdatedAt            time.Time  `json:"updatedAt"`
 	ArchivedAt           *time.Time `json:"archivedAt,omitempty"`
+	Members              []Member   `json:"members,omitempty"`
 } // @name Group
 
 // Member represents a user's membership details in a group, enriched with basic user details.

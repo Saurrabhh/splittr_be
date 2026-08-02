@@ -15,7 +15,6 @@ type (
 	MemberStatus             = domain.MemberStatus
 	Preview                  = domain.Preview
 	DecideJoinRequestPayload = domain.DecideJoinRequestPayload
-	DetailsResponse          = domain.DetailsResponse
 	GroupWithMembers         = domain.GroupWithMembers
 	JoinResponse             = domain.JoinResponse
 	Repository               = domain.Repository

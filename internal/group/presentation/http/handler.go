@@ -129,7 +129,7 @@ func (h *Handler) Preview(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        limit   query  int     false  "Items per page (max 100, default 20)"
 // @Param        cursor  query  string  false  "Opaque cursor token from a previous response"
-// @Success      200  {object}  pagination.Response[domain.DetailsResponse]
+// @Success      200  {object}  pagination.Response[domain.Group]
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /groups [get]
@@ -153,7 +153,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 // @Tags         groups
 // @Produce      json
 // @Param        id path string true "Group ID"
-// @Success      200  {object}  domain.DetailsResponse
+// @Success      200  {object}  domain.Group
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -167,16 +167,13 @@ func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 
 	currUser := user.MustFrom(r.Context())
 
-	g, members, err := h.uc.GetGroupDetails(r.Context(), groupID, currUser.ID)
+	g, err := h.uc.GetGroupDetails(r.Context(), groupID, currUser.ID)
 	if err != nil {
 		response.HandleError(w, err)
 		return
 	}
 
-	response.JSON(w, http.StatusOK, domain.DetailsResponse{
-		Group:   *g,
-		Members: members,
-	})
+	response.JSON(w, http.StatusOK, g)
 }
 
 // ListMembers lists group members with optional status filter (PENDING, REJECTED restricted to admins).

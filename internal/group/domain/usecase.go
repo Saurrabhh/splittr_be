@@ -52,11 +52,6 @@ type NotificationSender interface {
 	CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, alert notification.Alert) error
 }
 
-// DetailsResponse is the canonical shape for any endpoint or feed payload that returns group data.
-type DetailsResponse struct {
-	Group   Group    `json:"group"`
-	Members []Member `json:"members"`
-} // @name DetailsResponse
 
 // JoinResponse is returned when joining a group, either as an active member or pending approval.
 type JoinResponse struct {
@@ -155,9 +150,9 @@ func (u *UseCase) CreateGroup(ctx context.Context, name, description string, req
 }
 
 // GetGroupDetails retrieves a group and its members, verifying the requester is an ACTIVE member.
-func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (*Group, []Member, error) {
+func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (*Group, error) {
 	if groupID == "" || userID == "" {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgInvalidParam,
 		}
@@ -165,14 +160,14 @@ func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 
 	member, err := u.repo.GetGroupMember(ctx, groupID, userID)
 	if err != nil {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogVerifyMembership,
 			Err:     err,
 		}
 	}
 	if member == nil || member.Status != MemberStatusActive {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeForbidden,
 			Message: response.MsgNotGroupMember,
 		}
@@ -180,14 +175,14 @@ func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 
 	g, err := u.repo.GetByID(ctx, groupID)
 	if err != nil {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogRetrieveGroup,
 			Err:     err,
 		}
 	}
 	if g == nil {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeNotFound,
 			Message: response.MsgGroupNotFound,
 		}
@@ -195,14 +190,15 @@ func (u *UseCase) GetGroupDetails(ctx context.Context, groupID, userID string) (
 
 	members, err := u.repo.ListGroupMembers(ctx, groupID, MemberStatusActive)
 	if err != nil {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogRetrieveMembers,
 			Err:     err,
 		}
 	}
 
-	return g, members, nil
+	g.Members = members
+	return g, nil
 }
 
 // GetGroupFeed retrieves group activity feed verified for the requesting user.
@@ -231,27 +227,29 @@ func (u *UseCase) GetGroupFeed(ctx context.Context, groupID, userID string, p pa
 }
 
 // ListUserGroups returns a cursor-paginated list of groups the user actively belongs to.
-func (u *UseCase) ListUserGroups(ctx context.Context, userID string, p pagination.Params) (pagination.Response[DetailsResponse], error) {
+func (u *UseCase) ListUserGroups(ctx context.Context, userID string, p pagination.Params) (pagination.Response[Group], error) {
 	if userID == "" {
-		return pagination.Response[DetailsResponse]{}, &response.AppError{Type: response.TypeValidation, Message: response.MsgInvalidParam}
+		return pagination.Response[Group]{}, &response.AppError{Type: response.TypeValidation, Message: response.MsgInvalidParam}
 	}
 	cursor := pagination.ParseCursor(p.Cursor)
 	rows, err := u.repo.ListUserGroupsWithMembers(ctx, userID, p.Limit+1, cursor.LastTime, cursor.LastID)
 	if err != nil {
-		return pagination.Response[DetailsResponse]{}, &response.AppError{
+		return pagination.Response[Group]{}, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogRetrieveUserGroups,
 			Err:     err,
 		}
 	}
 
-	detailsList := make([]DetailsResponse, 0, len(rows))
+	groups := make([]Group, 0, len(rows))
 	for _, row := range rows {
-		detailsList = append(detailsList, DetailsResponse(row))
+		g := row.Group
+		g.Members = row.Members
+		groups = append(groups, g)
 	}
 
-	return pagination.BuildResponse(detailsList, p.Limit, func(g DetailsResponse) string {
-		return pagination.EncodeCursor(g.Group.CreatedAt, g.Group.ID)
+	return pagination.BuildResponse(groups, p.Limit, func(g Group) string {
+		return pagination.EncodeCursor(g.CreatedAt, g.ID)
 	}), nil
 }
 
