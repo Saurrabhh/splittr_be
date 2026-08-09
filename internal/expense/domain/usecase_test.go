@@ -186,13 +186,13 @@ func TestCreateExpense_Success_EqualSplit(t *testing.T) {
 	mockNotif.On("CreateAlert", ctx, "usr-2", &creatorID, mock.Anything, mock.Anything).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockGroupSvc, mockAct, mockNotif)
-	exp, splits, err := uc.CreateExpense(ctx, "Dinner", 100.0, "INR", "Food", nil, paidBy, domain.SplitTypeEqual, inputs, creatorID)
+	res, err := uc.CreateExpense(ctx, "Dinner", 100.0, "INR", "Food", nil, paidBy, domain.SplitTypeEqual, inputs, creatorID)
 
 	require.NoError(t, err)
-	assert.NotNil(t, exp)
-	assert.Equal(t, "Dinner", exp.Description)
-	assert.Equal(t, 100.0, exp.Amount)
-	assert.Len(t, splits, 2)
+	assert.NotNil(t, res)
+	assert.Equal(t, "Dinner", res.Expense.Description)
+	assert.Equal(t, 100.0, res.Expense.Amount)
+	assert.Len(t, res.Splits, 2)
 
 	mockRepo.AssertExpectations(t)
 	mockAct.AssertExpectations(t)
@@ -239,12 +239,12 @@ func TestCreateExpense_Success_GroupExactSplit(t *testing.T) {
 	mockNotif.On("CreateAlert", ctx, "usr-2", &creatorID, mock.Anything, mock.Anything).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockGroupSvc, mockAct, mockNotif)
-	exp, splits, err := uc.CreateExpense(ctx, "Hotel", 100.0, "INR", "Travel", &groupID, paidBy, domain.SplitTypeExact, inputs, creatorID)
+	res, err := uc.CreateExpense(ctx, "Hotel", 100.0, "INR", "Travel", &groupID, paidBy, domain.SplitTypeExact, inputs, creatorID)
 
 	require.NoError(t, err)
-	assert.NotNil(t, exp)
-	assert.Equal(t, &groupID, exp.GroupID)
-	assert.Len(t, splits, 2)
+	assert.NotNil(t, res)
+	assert.Equal(t, &groupID, res.Expense.GroupID)
+	assert.Len(t, res.Splits, 2)
 }
 
 func TestCreateExpense_Success_PercentageSplit(t *testing.T) {
@@ -278,11 +278,11 @@ func TestCreateExpense_Success_PercentageSplit(t *testing.T) {
 	mockNotif.On("CreateAlert", ctx, "usr-2", &creatorID, mock.Anything, mock.Anything).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockGroupSvc, mockAct, mockNotif)
-	exp, splits, err := uc.CreateExpense(ctx, "Party", 200.0, "USD", "Entertainment", nil, paidBy, domain.SplitTypePercentage, inputs, creatorID)
+	res, err := uc.CreateExpense(ctx, "Party", 200.0, "USD", "Entertainment", nil, paidBy, domain.SplitTypePercentage, inputs, creatorID)
 
 	require.NoError(t, err)
-	assert.NotNil(t, exp)
-	assert.Len(t, splits, 2)
+	assert.NotNil(t, res)
+	assert.Len(t, res.Splits, 2)
 }
 
 func TestCreateExpense_ValidationErrors(t *testing.T) {
@@ -296,20 +296,20 @@ func TestCreateExpense_ValidationErrors(t *testing.T) {
 	uc := domain.NewUseCase(mockRepo, mockTx, mockGroupSvc, mockAct, mockNotif)
 
 	// Empty description
-	_, _, err := uc.CreateExpense(ctx, "", 100.0, "INR", "Cat", nil, "usr-1", domain.SplitTypeEqual, []domain.InputSplit{{UserID: "usr-1"}}, "usr-1")
+	_, err := uc.CreateExpense(ctx, "", 100.0, "INR", "Cat", nil, "usr-1", domain.SplitTypeEqual, []domain.InputSplit{{UserID: "usr-1"}}, "usr-1")
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
 	assert.Contains(t, appErr.Message, response.MsgMissingDescription)
 
 	// Invalid total amount <= 0
-	_, _, err = uc.CreateExpense(ctx, "Desc", 0.0, "INR", "Cat", nil, "usr-1", domain.SplitTypeEqual, []domain.InputSplit{{UserID: "usr-1"}}, "usr-1")
+	_, err = uc.CreateExpense(ctx, "Desc", 0.0, "INR", "Cat", nil, "usr-1", domain.SplitTypeEqual, []domain.InputSplit{{UserID: "usr-1"}}, "usr-1")
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
 	assert.Contains(t, appErr.Message, response.MsgInvalidAmount)
 
 	// Empty splits inputs
-	_, _, err = uc.CreateExpense(ctx, "Desc", 100.0, "INR", "Cat", nil, "usr-1", domain.SplitTypeEqual, nil, "usr-1")
+	_, err = uc.CreateExpense(ctx, "Desc", 100.0, "INR", "Cat", nil, "usr-1", domain.SplitTypeEqual, nil, "usr-1")
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
 	assert.Contains(t, appErr.Message, response.MsgInvalidSplit)
@@ -321,7 +321,7 @@ func TestCreateExpense_ValidationErrors(t *testing.T) {
 		{UserID: "usr-1", Amount: &amt1},
 		{UserID: "usr-2", Amount: &amt2},
 	}
-	_, _, err = uc.CreateExpense(ctx, "Desc", 100.0, "INR", "Cat", nil, "usr-1", domain.SplitTypeExact, inputsMismatch, "usr-1")
+	_, err = uc.CreateExpense(ctx, "Desc", 100.0, "INR", "Cat", nil, "usr-1", domain.SplitTypeExact, inputsMismatch, "usr-1")
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
 	assert.Contains(t, appErr.Message, "does not match total expense amount")
@@ -330,7 +330,7 @@ func TestCreateExpense_ValidationErrors(t *testing.T) {
 	inputsMissingAmt := []domain.InputSplit{
 		{UserID: "usr-1"},
 	}
-	_, _, err = uc.CreateExpense(ctx, "Desc", 100.0, "INR", "Cat", nil, "usr-1", domain.SplitTypeExact, inputsMissingAmt, "usr-1")
+	_, err = uc.CreateExpense(ctx, "Desc", 100.0, "INR", "Cat", nil, "usr-1", domain.SplitTypeExact, inputsMissingAmt, "usr-1")
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
 	assert.Contains(t, appErr.Message, "amount is required for each user")
@@ -342,7 +342,7 @@ func TestCreateExpense_ValidationErrors(t *testing.T) {
 		{UserID: "usr-1", Percentage: &p1},
 		{UserID: "usr-2", Percentage: &p2},
 	}
-	_, _, err = uc.CreateExpense(ctx, "Desc", 100.0, "INR", "Cat", nil, "usr-1", domain.SplitTypePercentage, inputsPctMismatch, "usr-1")
+	_, err = uc.CreateExpense(ctx, "Desc", 100.0, "INR", "Cat", nil, "usr-1", domain.SplitTypePercentage, inputsPctMismatch, "usr-1")
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
 	assert.Contains(t, appErr.Message, "must equal 100%")
@@ -354,7 +354,7 @@ func TestCreateExpense_ValidationErrors(t *testing.T) {
 	}
 	mockGroupSvc.On("GetGroupDetails", ctx, groupID, "usr-1").Return(&group.Group{ID: groupID, Members: members}, nil).Once()
 
-	_, _, err = uc.CreateExpense(ctx, "Desc", 100.0, "INR", "Cat", &groupID, "usr-1", domain.SplitTypeEqual, []domain.InputSplit{{UserID: "usr-2"}}, "usr-1")
+	_, err = uc.CreateExpense(ctx, "Desc", 100.0, "INR", "Cat", &groupID, "usr-1", domain.SplitTypeEqual, []domain.InputSplit{{UserID: "usr-2"}}, "usr-1")
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
 	assert.Contains(t, appErr.Message, "payer must be a member of the group")
@@ -365,7 +365,7 @@ func TestCreateExpense_ValidationErrors(t *testing.T) {
 	}
 	mockGroupSvc.On("GetGroupDetails", ctx, groupID, "usr-1").Return(&group.Group{ID: groupID, Members: membersWithPayer}, nil).Once()
 
-	_, _, err = uc.CreateExpense(ctx, "Desc", 100.0, "INR", "Cat", &groupID, "usr-1", domain.SplitTypeEqual, []domain.InputSplit{{UserID: "usr-non-member"}}, "usr-1")
+	_, err = uc.CreateExpense(ctx, "Desc", 100.0, "INR", "Cat", &groupID, "usr-1", domain.SplitTypeEqual, []domain.InputSplit{{UserID: "usr-non-member"}}, "usr-1")
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
 	assert.Contains(t, appErr.Message, response.MsgSplitUserNotMember)
@@ -380,7 +380,7 @@ func TestCreateExpense_TransactionFailure(t *testing.T) {
 	ctx := context.Background()
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockGroupSvc, mockAct, mockNotif)
-	_, _, err := uc.CreateExpense(ctx, "Dinner", 100.0, "INR", "Food", nil, "usr-1", domain.SplitTypeEqual, []domain.InputSplit{{UserID: "usr-1"}}, "usr-1")
+	_, err := uc.CreateExpense(ctx, "Dinner", 100.0, "INR", "Food", nil, "usr-1", domain.SplitTypeEqual, []domain.InputSplit{{UserID: "usr-1"}}, "usr-1")
 
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
@@ -410,7 +410,7 @@ func TestCreateExpense_RefetchSplitsError(t *testing.T) {
 	).Return(&activity.Activity{ID: "act-1"}, nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, nil, mockAct, mockNotif)
-	_, _, err := uc.CreateExpense(ctx, "Dinner", 100.0, "INR", "Food", nil, creatorID, domain.SplitTypeEqual, inputs, creatorID)
+	_, err := uc.CreateExpense(ctx, "Dinner", 100.0, "INR", "Food", nil, creatorID, domain.SplitTypeEqual, inputs, creatorID)
 
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
@@ -445,14 +445,14 @@ func TestSettleUp_Success(t *testing.T) {
 	mockNotif.On("CreateAlert", ctx, receivedBy, &paidBy, mock.Anything, mock.Anything).Return(nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, mockGroupSvc, mockAct, mockNotif)
-	exp, split, err := uc.SettleUp(ctx, 50.0, "INR", nil, paidBy, receivedBy, createdBy)
+	res, err := uc.SettleUp(ctx, 50.0, "INR", nil, paidBy, receivedBy, createdBy)
 
 	require.NoError(t, err)
-	assert.NotNil(t, exp)
-	assert.True(t, exp.IsPayment)
-	assert.Equal(t, 50.0, exp.Amount)
-	assert.NotNil(t, split)
-	assert.Equal(t, receivedBy, split.UserID)
+	assert.NotNil(t, res)
+	assert.True(t, res.Expense.IsPayment)
+	assert.Equal(t, 50.0, res.Expense.Amount)
+	assert.Len(t, res.Splits, 1)
+	assert.Equal(t, receivedBy, res.Splits[0].UserID)
 }
 
 func TestSettleUp_ValidationErrors(t *testing.T) {
@@ -464,19 +464,19 @@ func TestSettleUp_ValidationErrors(t *testing.T) {
 	uc := domain.NewUseCase(mockRepo, mockTx, mockGroupSvc, nil, nil)
 
 	// Amount <= 0
-	_, _, err := uc.SettleUp(ctx, 0.0, "INR", nil, "usr-1", "usr-2", "usr-1")
+	_, err := uc.SettleUp(ctx, 0.0, "INR", nil, "usr-1", "usr-2", "usr-1")
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
 
 	// paidBy == receivedBy
-	_, _, err = uc.SettleUp(ctx, 50.0, "INR", nil, "usr-1", "usr-1", "usr-1")
+	_, err = uc.SettleUp(ctx, 50.0, "INR", nil, "usr-1", "usr-1", "usr-1")
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
 	assert.Contains(t, appErr.Message, response.MsgSamePayerPayee)
 
 	// empty receivedBy
-	_, _, err = uc.SettleUp(ctx, 50.0, "INR", nil, "usr-1", "", "usr-1")
+	_, err = uc.SettleUp(ctx, 50.0, "INR", nil, "usr-1", "", "usr-1")
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeValidation, appErr.Type)
 	assert.Contains(t, appErr.Message, response.MsgMissingRecipient)
@@ -497,11 +497,11 @@ func TestGetExpenseDetails_Success(t *testing.T) {
 	mockRepo.On("ListExpenseSplits", ctx, expID).Return(expectedSplits, nil)
 
 	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
-	e, splits, err := uc.GetExpenseDetails(ctx, expID, userID)
+	res, err := uc.GetExpenseDetails(ctx, expID, userID)
 
 	require.NoError(t, err)
-	assert.Equal(t, expectedExp.ID, e.ID)
-	assert.Len(t, splits, 1)
+	assert.Equal(t, expectedExp.ID, res.Expense.ID)
+	assert.Len(t, res.Splits, 1)
 }
 
 func TestGetExpenseDetails_NotFound(t *testing.T) {
@@ -512,7 +512,7 @@ func TestGetExpenseDetails_NotFound(t *testing.T) {
 	mockRepo.On("GetExpenseByID", ctx, expID).Return((*domain.Expense)(nil), nil)
 
 	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
-	_, _, err := uc.GetExpenseDetails(ctx, expID, "usr-1")
+	_, err := uc.GetExpenseDetails(ctx, expID, "usr-1")
 
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)
@@ -531,7 +531,7 @@ func TestGetExpenseDetails_Forbidden(t *testing.T) {
 	mockRepo.On("ListExpenseSplits", ctx, expID).Return(expectedSplits, nil)
 
 	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
-	_, _, err := uc.GetExpenseDetails(ctx, expID, "usr-unrelated")
+	_, err := uc.GetExpenseDetails(ctx, expID, "usr-unrelated")
 
 	var appErr *response.AppError
 	require.ErrorAs(t, err, &appErr)

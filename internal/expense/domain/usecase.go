@@ -62,21 +62,21 @@ func NewUseCase(repo Repository, tx db.Transactor, groupSvc GroupService, activi
 }
 
 // CreateExpense calculates splits, validates constraints, and inserts the expense inside a transaction.
-func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64, currency string, category string, groupID *string, paidBy string, splitType SplitType, inputs []InputSplit, createdBy string) (*Expense, []Split, error) {
+func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64, currency string, category string, groupID *string, paidBy string, splitType SplitType, inputs []InputSplit, createdBy string) (*ExpenseWithSplits, error) {
 	if desc == "" {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgMissingDescription,
 		}
 	}
 	if amount <= 0 {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgInvalidAmount,
 		}
 	}
 	if len(inputs) == 0 {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgInvalidSplit,
 		}
@@ -89,7 +89,7 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 	if groupID != nil && *groupID != "" {
 		g, err := u.groupSvc.GetGroupDetails(ctx, *groupID, createdBy)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		groupMembers = g.Members
 
@@ -99,7 +99,7 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 		}
 
 		if !memberMap[paidBy] {
-			return nil, nil, &response.AppError{
+			return nil, &response.AppError{
 				Type:    response.TypeValidation,
 				Message: response.MsgPayerNotGroupMember,
 			}
@@ -107,7 +107,7 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 
 		for _, split := range inputs {
 			if !memberMap[split.UserID] {
-				return nil, nil, &response.AppError{
+				return nil, &response.AppError{
 					Type:    response.TypeValidation,
 					Message: response.MsgSplitUserNotMember,
 				}
@@ -117,7 +117,7 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 
 	calculatedSplits, err := calculateSplits(amount, splitType, inputs)
 	if err != nil {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: err.Error(),
 		}
@@ -200,7 +200,7 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 		return nil
 	})
 	if err != nil {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogCreateExpenseTx,
 			Err:     err,
@@ -209,32 +209,35 @@ func (u *UseCase) CreateExpense(ctx context.Context, desc string, amount float64
 
 	enrichedSplits, err := u.repo.ListExpenseSplits(ctx, newExpense.ID)
 	if err != nil {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogLoadSplits,
 			Err:     err,
 		}
 	}
 
-	return newExpense, enrichedSplits, nil
+	return &ExpenseWithSplits{
+		Expense: *newExpense,
+		Splits:  enrichedSplits,
+	}, nil
 }
 
 // SettleUp creates a payment record to clear or reduce debt between a payer and a payee.
-func (u *UseCase) SettleUp(ctx context.Context, amount float64, currency string, groupID *string, paidBy string, receivedBy string, createdBy string) (*Expense, *Split, error) {
+func (u *UseCase) SettleUp(ctx context.Context, amount float64, currency string, groupID *string, paidBy string, receivedBy string, createdBy string) (*ExpenseWithSplits, error) {
 	if amount <= 0 {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgInvalidAmount,
 		}
 	}
 	if receivedBy == "" {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgMissingRecipient,
 		}
 	}
 	if paidBy == receivedBy {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgSamePayerPayee,
 		}
@@ -246,7 +249,7 @@ func (u *UseCase) SettleUp(ctx context.Context, amount float64, currency string,
 	if groupID != nil && *groupID != "" {
 		g, err := u.groupSvc.GetGroupDetails(ctx, *groupID, createdBy)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		memberMap := make(map[string]bool)
@@ -255,7 +258,7 @@ func (u *UseCase) SettleUp(ctx context.Context, amount float64, currency string,
 		}
 
 		if !memberMap[paidBy] || !memberMap[receivedBy] {
-			return nil, nil, &response.AppError{
+			return nil, &response.AppError{
 				Type:    response.TypeValidation,
 				Message: response.MsgPayerPayeeGroupMember,
 			}
@@ -331,28 +334,36 @@ func (u *UseCase) SettleUp(ctx context.Context, amount float64, currency string,
 		return nil
 	})
 	if err != nil {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogSettleUpTx,
 			Err:     err,
 		}
 	}
 
-	return newExpense, finalSplit, nil
+	var splits []Split
+	if finalSplit != nil {
+		splits = []Split{*finalSplit}
+	}
+
+	return &ExpenseWithSplits{
+		Expense: *newExpense,
+		Splits:  splits,
+	}, nil
 }
 
 // GetExpenseDetails retrieves an expense and its splits, checking view permissions.
-func (u *UseCase) GetExpenseDetails(ctx context.Context, expenseID, userID string) (*Expense, []Split, error) {
+func (u *UseCase) GetExpenseDetails(ctx context.Context, expenseID, userID string) (*ExpenseWithSplits, error) {
 	e, err := u.repo.GetExpenseByID(ctx, expenseID)
 	if err != nil {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogRetrieveExpense,
 			Err:     err,
 		}
 	}
 	if e == nil {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeNotFound,
 			Message: response.MsgExpenseNotFound,
 		}
@@ -360,7 +371,7 @@ func (u *UseCase) GetExpenseDetails(ctx context.Context, expenseID, userID strin
 
 	splits, err := u.repo.ListExpenseSplits(ctx, expenseID)
 	if err != nil {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogRetrieveSplits,
 			Err:     err,
@@ -378,13 +389,16 @@ func (u *UseCase) GetExpenseDetails(ctx context.Context, expenseID, userID strin
 	}
 
 	if !hasAccess {
-		return nil, nil, &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeForbidden,
 			Message: response.MsgNotExpenseParticipant,
 		}
 	}
 
-	return e, splits, nil
+	return &ExpenseWithSplits{
+		Expense: *e,
+		Splits:  splits,
+	}, nil
 }
 
 // ListExpenses returns a cursor-paginated list of expenses filtered by group, personal, or friend type.

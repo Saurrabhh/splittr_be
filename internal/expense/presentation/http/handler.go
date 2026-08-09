@@ -53,7 +53,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
-	request.Run(w, r, http.StatusCreated, func(ctx context.Context, req CreateExpenseRequest) (ExpenseResponse, error) {
+	request.Run(w, r, http.StatusCreated, func(ctx context.Context, req CreateExpenseRequest) (*ExpenseResponse, error) {
 		paidBy := req.PaidBy
 		if paidBy == "" {
 			paidBy = currUser.ID
@@ -64,7 +64,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 			category = *req.Category
 		}
 
-		exp, splits, err := h.uc.CreateExpense(
+		return h.uc.CreateExpense(
 			ctx,
 			req.Description,
 			req.Amount,
@@ -76,14 +76,6 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 			req.Splits,
 			currUser.ID,
 		)
-		if err != nil {
-			return ExpenseResponse{}, err
-		}
-
-		return ExpenseResponse{
-			Expense: *exp,
-			Splits:  splits,
-		}, nil
 	})
 }
 
@@ -103,13 +95,13 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Settle(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
-	request.Run(w, r, http.StatusCreated, func(ctx context.Context, req SettleExpenseRequest) (ExpenseResponse, error) {
+	request.Run(w, r, http.StatusCreated, func(ctx context.Context, req SettleExpenseRequest) (*ExpenseResponse, error) {
 		paidBy := req.PaidBy
 		if paidBy == "" {
 			paidBy = currUser.ID
 		}
 
-		exp, split, err := h.uc.SettleUp(
+		return h.uc.SettleUp(
 			ctx,
 			req.Amount,
 			req.Currency,
@@ -118,18 +110,6 @@ func (h *Handler) Settle(w http.ResponseWriter, r *http.Request) {
 			req.ReceivedBy,
 			currUser.ID,
 		)
-		if err != nil {
-			return ExpenseResponse{}, err
-		}
-
-		var splits []domain.Split
-		if split != nil {
-			splits = []domain.Split{*split}
-		}
-		return ExpenseResponse{
-			Expense: *exp,
-			Splits:  splits,
-		}, nil
 	})
 }
 
@@ -208,16 +188,13 @@ func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 
 	currUser := user.MustFrom(r.Context())
 
-	exp, splits, err := h.uc.GetExpenseDetails(r.Context(), expenseID, currUser.ID)
+	res, err := h.uc.GetExpenseDetails(r.Context(), expenseID, currUser.ID)
 	if err != nil {
 		response.HandleError(w, err)
 		return
 	}
 
-	response.JSON(w, http.StatusOK, ExpenseResponse{
-		Expense: *exp,
-		Splits:  splits,
-	})
+	response.JSON(w, http.StatusOK, res)
 }
 
 // Delete soft deletes an expense.

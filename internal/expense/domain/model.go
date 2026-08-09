@@ -75,6 +75,6 @@ type PairwiseDebt struct {
 
 // ExpenseWithSplits is the unified response shape for create, get-by-ID, and list operations.
 type ExpenseWithSplits struct {
-	Expense Expense `json:"expense"`
-	Splits  []Split `json:"splits"`
+	Expense
+	Splits []Split `json:"splits"`
 } // @name ExpenseWithSplits

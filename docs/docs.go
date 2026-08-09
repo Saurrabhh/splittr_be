@@ -386,7 +386,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "Expense": {
+            "ExpenseWithSplits": {
                 "properties": {
                     "amount": {
                         "type": "number"
@@ -424,23 +424,15 @@ const docTemplate = `{
                     "spentAt": {
                         "type": "string"
                     },
-                    "updatedAt": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "ExpenseWithSplits": {
-                "properties": {
-                    "expense": {
-                        "$ref": "#/components/schemas/Expense"
-                    },
                     "splits": {
                         "items": {
                             "$ref": "#/components/schemas/Split"
                         },
                         "type": "array",
                         "uniqueItems": false
+                    },
+                    "updatedAt": {
+                        "type": "string"
                     }
                 },
                 "type": "object"

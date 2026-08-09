@@ -23,7 +23,7 @@ The Expense module manages shared group and individual expenses, splitting logic
     ]
   }
   ```
-- **Response** (`201 Created`): `ExpenseWithSplits` — unified response shape `{ "expense": {...}, "splits": [...] }`.
+- **Response** (`201 Created`): `ExpenseWithSplits` — unified response shape where expense fields are at root along with `splits`: `{ "id": "...", "description": "...", "amount": 120.00, ..., "splits": [...] }`.
 
 ### 2. Settle Up
 - **POST** `/expenses/settle`
@@ -38,7 +38,7 @@ The Expense module manages shared group and individual expenses, splitting logic
     "receivedBy": "usr_abc"
   }
   ```
-- **Response** (`201 Created`): `ExpenseWithSplits` — same unified shape `{ "expense": {...}, "splits": [...] }`. For settlements, `splits` contains a single split.
+- **Response** (`201 Created`): `ExpenseWithSplits` — flat response shape `{ "id": "...", "amount": 50.00, ..., "splits": [...] }`. For settlements, `splits` contains a single split.
 
 ### 3. List Expenses
 - **GET** `/expenses?groupId={id}&personal={bool}&friendId={id}&limit={int}&cursor={string}`
@@ -48,7 +48,7 @@ The Expense module manages shared group and individual expenses, splitting logic
 ### 4. Get Expense Details
 - **GET** `/expenses/{id}`
 - **Description**: Retrieve a specific expense record and its full split breakdown.
-- **Response** (`200 OK`): `ExpenseWithSplits` — same unified shape `{ "expense": {...}, "splits": [...] }`.
+- **Response** (`200 OK`): `ExpenseWithSplits` — flat response shape `{ "id": "...", "amount": ..., ..., "splits": [...] }`.
 
 ### 5. Delete Expense
 - **DELETE** `/expenses/{id}`
