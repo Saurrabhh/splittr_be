@@ -41,7 +41,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 
 			r.Route("/members", func(r chi.Router) {
 				r.Get("/", h.ListMembers)
-				r.Post("/", h.AddMember)
+				r.Post("/", h.AddMembers)
 				r.Route("/{userId}", func(r chi.Router) {
 					r.Delete("/", h.RemoveMember)
 					r.Put("/role", h.UpdateMemberRole)
@@ -206,21 +206,21 @@ func (h *Handler) ListMembers(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, members)
 }
 
-// AddMember adds a user to the group.
-// @Summary      Add group member
-// @Description  Add a user to a group by their User ID. Only admins can add members.
+// AddMembers adds multiple users to the group.
+// @Summary      Add group members
+// @Description  Add multiple users to a group by their User IDs. Only admins can add members.
 // @Tags         groups
 // @Accept       json
 // @Produce      json
 // @Param        id path string true "Group ID"
-// @Param        request body AddMemberRequest true "User ID of the member to add"
-// @Success      201  {object}  domain.Member
+// @Param        request body AddMembersRequest true "User IDs of members to add"
+// @Success      201  {array}   domain.Member
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /groups/{id}/members [post]
 // @Security     BearerAuth
-func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) AddMembers(w http.ResponseWriter, r *http.Request) {
 	groupID, ok := request.URLParam(w, r, "id")
 	if !ok {
 		return
@@ -228,8 +228,8 @@ func (h *Handler) AddMember(w http.ResponseWriter, r *http.Request) {
 
 	currUser := user.MustFrom(r.Context())
 
-	request.Run(w, r, http.StatusCreated, func(ctx context.Context, req AddMemberRequest) (*domain.Member, error) {
-		return h.uc.AddMember(ctx, groupID, req.UserID, currUser.ID)
+	request.Run(w, r, http.StatusCreated, func(ctx context.Context, req AddMembersRequest) ([]domain.Member, error) {
+		return h.uc.AddMembers(ctx, groupID, req.UserIDs, currUser.ID)
 	})
 }
 
