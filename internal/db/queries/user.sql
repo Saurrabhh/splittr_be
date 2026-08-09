@@ -62,4 +62,13 @@ AND (
 ORDER BY u.created_at DESC, u.id DESC
 LIMIT $2;
 
+-- name: SyncFriendsBySequence :many
+SELECT f.user_id, f.friend_id, f.created_at, f.sync_version
+FROM friendships f
+WHERE f.sync_version > $1
+  AND (f.user_id = $2 OR f.friend_id = $2)
+ORDER BY f.sync_version ASC
+LIMIT $3;
+
+
 

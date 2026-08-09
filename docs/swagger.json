@@ -465,6 +465,28 @@
                 },
                 "type": "object"
             },
+            "Expense.ExpenseSyncResponse": {
+                "properties": {
+                    "deletedIds": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "newVersion": {
+                        "type": "integer"
+                    },
+                    "updated": {
+                        "items": {
+                            "$ref": "#/components/schemas/Expense.ExpenseWithSplits"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
             "Expense.ExpenseWithSplits": {
                 "properties": {
                     "amount": {
@@ -509,6 +531,9 @@
                         },
                         "type": "array",
                         "uniqueItems": false
+                    },
+                    "syncVersion": {
+                        "type": "integer"
                     },
                     "updatedAt": {
                         "type": "string"
@@ -614,6 +639,33 @@
                     "SplitTypePercentage"
                 ]
             },
+            "Expense.UpdateRequest": {
+                "properties": {
+                    "amount": {
+                        "type": "number"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "splitType": {
+                        "$ref": "#/components/schemas/Expense.SplitType"
+                    },
+                    "splits": {
+                        "items": {
+                            "$ref": "#/components/schemas/Expense.InputSplit"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
             "Expense.UserBalance": {
                 "properties": {
                     "netBalance": {
@@ -705,8 +757,33 @@
                     "requireAdminApproval": {
                         "type": "boolean"
                     },
+                    "syncVersion": {
+                        "type": "integer"
+                    },
                     "updatedAt": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Group.GroupSyncResponse": {
+                "properties": {
+                    "newVersion": {
+                        "type": "integer"
+                    },
+                    "removedGroupIds": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "updated": {
+                        "items": {
+                            "$ref": "#/components/schemas/Group.Group"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
                     }
                 },
                 "type": "object"
@@ -992,6 +1069,21 @@
                 },
                 "type": "object"
             },
+            "User.FriendSyncResponse": {
+                "properties": {
+                    "friends": {
+                        "items": {
+                            "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_user_domain.FriendshipSyncRecord"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "newVersion": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
             "User.RegisterRequest": {
                 "properties": {
                     "name": {
@@ -1030,6 +1122,77 @@
                     },
                     "phone": {
                         "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "github_com_Saurrabhh_splittr_be_internal_user_domain.FriendshipSyncRecord": {
+                "properties": {
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "friendId": {
+                        "type": "string"
+                    },
+                    "syncVersion": {
+                        "type": "integer"
+                    },
+                    "userId": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "internal_expense_presentation_http.ExpenseResponse": {
+                "properties": {
+                    "amount": {
+                        "type": "number"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "createdBy": {
+                        "type": "string"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "deletedAt": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "groupId": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "isPayment": {
+                        "type": "boolean"
+                    },
+                    "paidBy": {
+                        "type": "string"
+                    },
+                    "spentAt": {
+                        "type": "string"
+                    },
+                    "splits": {
+                        "items": {
+                            "$ref": "#/components/schemas/Expense.Split"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "syncVersion": {
+                        "type": "integer"
                     },
                     "updatedAt": {
                         "type": "string"
@@ -1494,6 +1657,70 @@
                 ]
             }
         },
+        "/expenses/sync": {
+            "get": {
+                "description": "Retrieve active and deleted expenses modified after a given sequence version.",
+                "parameters": [
+                    {
+                        "description": "Last received sequence version",
+                        "in": "query",
+                        "name": "lastVersion",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Maximum items to return (default 100)",
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Expense.ExpenseSyncResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Sync expenses",
+                "tags": [
+                    "expenses"
+                ]
+            }
+        },
         "/expenses/{id}": {
             "delete": {
                 "description": "Soft-delete an expense by ID.",
@@ -1657,6 +1884,111 @@
                 "tags": [
                     "expenses"
                 ]
+            },
+            "patch": {
+                "description": "Partially update description, amount, currency, category, or splits for an expense.",
+                "parameters": [
+                    {
+                        "description": "Expense UUID",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/Expense.UpdateRequest",
+                                        "summary": "body",
+                                        "description": "Update Expense Payload"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Update Expense Payload",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/internal_expense_presentation_http.ExpenseResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Update expense",
+                "tags": [
+                    "expenses"
+                ]
             }
         },
         "/friends": {
@@ -1792,6 +2124,70 @@
                     }
                 ],
                 "summary": "Add friend",
+                "tags": [
+                    "friends"
+                ]
+            }
+        },
+        "/friends/sync": {
+            "get": {
+                "description": "Retrieve friendship changes modified after a given sequence version.",
+                "parameters": [
+                    {
+                        "description": "Last received sequence version",
+                        "in": "query",
+                        "name": "lastVersion",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Maximum items to return (default 100)",
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User.FriendSyncResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Sync friends",
                 "tags": [
                     "friends"
                 ]
@@ -2153,6 +2549,70 @@
                     }
                 ],
                 "summary": "Get group preview",
+                "tags": [
+                    "groups"
+                ]
+            }
+        },
+        "/groups/sync": {
+            "get": {
+                "description": "Retrieve active and archived groups modified after a given sequence version.",
+                "parameters": [
+                    {
+                        "description": "Last received sequence version",
+                        "in": "query",
+                        "name": "lastVersion",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Maximum items to return (default 100)",
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Group.GroupSyncResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Sync groups",
                 "tags": [
                     "groups"
                 ]

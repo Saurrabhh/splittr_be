@@ -53,3 +53,22 @@ The User module manages authentication identity mapping (Firebase UID to local u
 - **DELETE** `/friends/{friendId}`
 - **Description**: Remove a friendship link.
 - **Response** (`204 No Content`).
+
+### 7. Sync Friends
+- **GET** `/friends/sync?lastVersion={int64}&limit={int}`
+- **Description**: Retrieve friendship changes modified after a given sequence version for offline sync.
+- **Response** (`200 OK`): `FriendSyncResponse`
+  ```json
+  {
+    "newVersion": 150,
+    "friends": [
+      {
+        "userId": "usr-1",
+        "friendId": "usr-2",
+        "createdAt": "2026-08-09T20:00:00Z",
+        "syncVersion": 150
+      }
+    ]
+  }
+  ```
+

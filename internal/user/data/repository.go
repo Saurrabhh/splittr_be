@@ -248,3 +248,35 @@ func (r *DBRepository) ListFriends(ctx context.Context, userID string, limit int
 	}
 	return friends, nil
 }
+
+// SyncFriendsBySequence retrieves friendship changes updated or created after lastVersion for a user.
+func (r *DBRepository) SyncFriendsBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]domain.FriendshipSyncRecord, error) {
+	parsedUserID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid uuid: %w", err)
+	}
+
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+
+	rows, err := q.SyncFriendsBySequence(ctx, dbgen.SyncFriendsBySequenceParams{
+		SyncVersion: lastVersion,
+		UserID:      parsedUserID,
+		Limit:       limit,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("sync friends by sequence: %w", err)
+	}
+
+	records := make([]domain.FriendshipSyncRecord, 0, len(rows))
+	for _, row := range rows {
+		records = append(records, domain.FriendshipSyncRecord{
+			UserID:      row.UserID.String(),
+			FriendID:    row.FriendID.String(),
+			CreatedAt:   row.CreatedAt.Time,
+			SyncVersion: row.SyncVersion,
+		})
+	}
+	return records, nil
+}
+

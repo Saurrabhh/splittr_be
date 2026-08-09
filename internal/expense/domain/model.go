@@ -27,7 +27,9 @@ type Expense struct {
 	CreatedAt   time.Time  `json:"createdAt"`
 	UpdatedAt   time.Time  `json:"updatedAt"`
 	DeletedAt   *time.Time `json:"deletedAt,omitempty"`
+	SyncVersion int64      `json:"syncVersion"`
 } // @name Expense.Expense
+
 
 // Split represents an individual user's split share in an expense.
 type Split struct {

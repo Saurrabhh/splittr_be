@@ -1006,3 +1006,55 @@ func (u *UseCase) checkIsAdmin(ctx context.Context, groupID, userID string) (boo
 	}
 	return member.Role == MemberRoleAdmin, nil
 }
+
+// GroupSyncResponse contains updated groups and removed group IDs for offline sync.
+type GroupSyncResponse struct {
+	NewVersion      int64    `json:"newVersion"`
+	Updated         []Group  `json:"updated"`
+	RemovedGroupIDs []string `json:"removedGroupIds"`
+} // @name Group.GroupSyncResponse
+
+// SyncGroups retrieves groups updated after lastVersion for a user.
+func (u *UseCase) SyncGroups(ctx context.Context, lastVersion int64, userID string, limit int32) (*GroupSyncResponse, error) {
+	if limit <= 0 || limit > 500 {
+		limit = 100
+	}
+
+	groups, err := u.repo.SyncGroupsBySequence(ctx, lastVersion, userID, limit)
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "Failed to sync groups",
+			Err:     err,
+		}
+	}
+
+	var activeGroups []Group
+	var removedIDs []string
+	var maxVersion int64 = lastVersion
+
+	for _, g := range groups {
+		if g.SyncVersion > maxVersion {
+			maxVersion = g.SyncVersion
+		}
+		if g.ArchivedAt != nil {
+			removedIDs = append(removedIDs, g.ID)
+		} else {
+			activeGroups = append(activeGroups, g)
+		}
+	}
+
+	if activeGroups == nil {
+		activeGroups = []Group{}
+	}
+	if removedIDs == nil {
+		removedIDs = []string{}
+	}
+
+	return &GroupSyncResponse{
+		NewVersion:      maxVersion,
+		Updated:         activeGroups,
+		RemovedGroupIDs: removedIDs,
+	}, nil
+}
+

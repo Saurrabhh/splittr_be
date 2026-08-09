@@ -103,6 +103,24 @@ func (m *mockExpenseRepository) GetGroupPairwiseDebts(ctx context.Context, group
 	return args.Get(0).([]domain.PairwiseDebt), args.Error(1)
 }
 
+func (m *mockExpenseRepository) SyncExpensesBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]domain.Expense, error) {
+	args := m.Called(ctx, lastVersion, userID, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Expense), args.Error(1)
+}
+
+func (m *mockExpenseRepository) UpdateExpense(ctx context.Context, e *domain.Expense) error {
+	return m.Called(ctx, e).Error(0)
+}
+
+func (m *mockExpenseRepository) DeleteExpenseSplits(ctx context.Context, expenseID string) error {
+	return m.Called(ctx, expenseID).Error(0)
+}
+
+
+
 func (m *mockExpenseRepository) ListExpenseSplitsByIDs(ctx context.Context, expenseIDs []string) ([]domain.Split, error) {
 	args := m.Called(ctx, expenseIDs)
 	if args.Get(0) == nil {
@@ -413,6 +431,20 @@ func TestHandler_ListExpenses_MissingFilter(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
 }
 
+func TestHandler_ListExpenses_ConflictingFilters(t *testing.T) {
+	uc := domain.NewUseCase(new(mockExpenseRepository), &mockTransactor{}, nil, nil, nil)
+	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
+	router := setupHandlerTestRouter(uc, currentUser)
+
+	req := httptest.NewRequest(http.MethodGet, "/expenses?groupId=grp-1&personal=true", nil)
+	rr := httptest.NewRecorder()
+
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+}
+
+
 // --- GET /expenses/{id} ---
 
 func TestHandler_GetDetails_Success(t *testing.T) {
@@ -561,3 +593,74 @@ func TestHandler_GetBalances_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, rr.Code)
 }
+
+func TestHandler_SyncExpenses_Success(t *testing.T) {
+	mockRepo := new(mockExpenseRepository)
+	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
+
+	now := time.Now()
+	mockRepo.On("SyncExpensesBySequence", mock.Anything, int64(10), currentUser.ID, int32(100)).Return([]domain.Expense{
+		{ID: "exp-1", Description: "Coffee", Amount: 50.0, SyncVersion: 11, UpdatedAt: now},
+		{ID: "exp-2", Description: "Lunch", Amount: 100.0, SyncVersion: 12, UpdatedAt: now, DeletedAt: &now},
+	}, nil)
+	mockRepo.On("ListExpenseSplitsByIDs", mock.Anything, []string{"exp-1"}).Return([]domain.Split{}, nil)
+
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
+	router := setupHandlerTestRouter(uc, currentUser)
+
+	req := httptest.NewRequest(http.MethodGet, "/expenses/sync?lastVersion=10", nil)
+	rr := httptest.NewRecorder()
+
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	var resp domain.ExpenseSyncResponse
+	err := json.Unmarshal(rr.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	assert.Equal(t, int64(12), resp.NewVersion)
+	assert.Len(t, resp.Updated, 1)
+	assert.Equal(t, "exp-1", resp.Updated[0].ID)
+	assert.Equal(t, []string{"exp-2"}, resp.DeletedIDs)
+}
+
+func TestHandler_UpdateExpense_Success(t *testing.T) {
+	mockRepo := new(mockExpenseRepository)
+	currentUser := &user.User{ID: "usr-creator"}
+	expenseID := "exp-100"
+
+	existingExp := &domain.Expense{
+		ID:          expenseID,
+		Description: "Old Title",
+		Amount:      100.0,
+		Currency:    "USD",
+		Category:    "General",
+		CreatedBy:   currentUser.ID,
+		PaidBy:      currentUser.ID,
+	}
+
+	mockRepo.On("GetExpenseByID", mock.Anything, expenseID).Return(existingExp, nil)
+	mockRepo.On("UpdateExpense", mock.Anything, mock.Anything).Return(nil)
+	mockRepo.On("ListExpenseSplits", mock.Anything, expenseID).Return([]domain.Split{}, nil)
+
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
+	router := setupHandlerTestRouter(uc, currentUser)
+
+	newDesc := "New Title"
+	body, _ := json.Marshal(map[string]interface{}{
+		"description": newDesc,
+	})
+
+	req := httptest.NewRequest(http.MethodPatch, "/expenses/"+expenseID, bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	var resp domain.ExpenseWithSplits
+	err := json.Unmarshal(rr.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	assert.Equal(t, "New Title", resp.Description)
+}
+
+

@@ -4,7 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"strconv"
+
 	_ "github.com/Saurrabhh/splittr_be/internal/activity"
+
 	"github.com/Saurrabhh/splittr_be/internal/group/domain"
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/request"
@@ -32,8 +35,10 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Get("/preview", h.Preview)
 		r.Post("/join", h.Join)
 		r.Get("/", h.List)
+		r.Get("/sync", h.Sync)
 
 		r.Route("/{id}", func(r chi.Router) {
+
 			r.Get("/", h.GetDetails)
 			r.Delete("/", h.Archive)
 			r.Get("/feed", h.GetFeed)
@@ -419,3 +424,44 @@ func (h *Handler) GetFeed(w http.ResponseWriter, r *http.Request) {
 
 	response.JSON(w, http.StatusOK, feed)
 }
+
+// Sync retrieves delta group updates using a monotonic sequence counter.
+// @Summary      Sync groups
+// @Description  Retrieve active and archived groups modified after a given sequence version.
+// @Tags         groups
+// @Produce      json
+// @Param        lastVersion query int64 false "Last received sequence version"
+// @Param        limit       query int   false "Maximum items to return (default 100)"
+// @Success      200  {object}  domain.GroupSyncResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /groups/sync [get]
+// @Security     BearerAuth
+func (h *Handler) Sync(w http.ResponseWriter, r *http.Request) {
+	currUser := user.MustFrom(r.Context())
+
+	lastVersionStr := r.URL.Query().Get("lastVersion")
+	var lastVersion int64
+	if lastVersionStr != "" {
+		if v, err := strconv.ParseInt(lastVersionStr, 10, 64); err == nil {
+			lastVersion = v
+		}
+	}
+
+	limitStr := r.URL.Query().Get("limit")
+	var limit int32 = 100
+	if limitStr != "" {
+		if l, err := strconv.ParseInt(limitStr, 10, 32); err == nil && l > 0 {
+			limit = int32(l)
+		}
+	}
+
+	res, err := h.uc.SyncGroups(r.Context(), lastVersion, currUser.ID, limit)
+	if err != nil {
+		response.HandleError(w, err)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, res)
+}
+

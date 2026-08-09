@@ -62,7 +62,20 @@ type CreateGroupParams struct {
 	CreatedBy            pgtype.UUID
 }
 
-func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error) {
+type CreateGroupRow struct {
+	ID                   uuid.UUID
+	Name                 string
+	Description          pgtype.Text
+	InviteCode           pgtype.Text
+	InviteCodeExpiresAt  pgtype.Timestamptz
+	RequireAdminApproval bool
+	CreatedBy            pgtype.UUID
+	CreatedAt            pgtype.Timestamptz
+	UpdatedAt            pgtype.Timestamptz
+	ArchivedAt           pgtype.Timestamptz
+}
+
+func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (CreateGroupRow, error) {
 	row := q.db.QueryRow(ctx, createGroup,
 		arg.ID,
 		arg.Name,
@@ -72,7 +85,7 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 		arg.RequireAdminApproval,
 		arg.CreatedBy,
 	)
-	var i Group
+	var i CreateGroupRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
@@ -94,9 +107,22 @@ FROM groups
 WHERE id = $1 AND archived_at IS NULL
 `
 
-func (q *Queries) GetGroupByID(ctx context.Context, id uuid.UUID) (Group, error) {
+type GetGroupByIDRow struct {
+	ID                   uuid.UUID
+	Name                 string
+	Description          pgtype.Text
+	InviteCode           pgtype.Text
+	InviteCodeExpiresAt  pgtype.Timestamptz
+	RequireAdminApproval bool
+	CreatedBy            pgtype.UUID
+	CreatedAt            pgtype.Timestamptz
+	UpdatedAt            pgtype.Timestamptz
+	ArchivedAt           pgtype.Timestamptz
+}
+
+func (q *Queries) GetGroupByID(ctx context.Context, id uuid.UUID) (GetGroupByIDRow, error) {
 	row := q.db.QueryRow(ctx, getGroupByID, id)
-	var i Group
+	var i GetGroupByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
@@ -118,9 +144,22 @@ FROM groups
 WHERE invite_code = $1 AND archived_at IS NULL
 `
 
-func (q *Queries) GetGroupByInviteCode(ctx context.Context, inviteCode pgtype.Text) (Group, error) {
+type GetGroupByInviteCodeRow struct {
+	ID                   uuid.UUID
+	Name                 string
+	Description          pgtype.Text
+	InviteCode           pgtype.Text
+	InviteCodeExpiresAt  pgtype.Timestamptz
+	RequireAdminApproval bool
+	CreatedBy            pgtype.UUID
+	CreatedAt            pgtype.Timestamptz
+	UpdatedAt            pgtype.Timestamptz
+	ArchivedAt           pgtype.Timestamptz
+}
+
+func (q *Queries) GetGroupByInviteCode(ctx context.Context, inviteCode pgtype.Text) (GetGroupByInviteCodeRow, error) {
 	row := q.db.QueryRow(ctx, getGroupByInviteCode, inviteCode)
-	var i Group
+	var i GetGroupByInviteCodeRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
@@ -251,15 +290,28 @@ JOIN group_members gm ON g.id = gm.group_id
 WHERE gm.user_id = $1 AND gm.status = 'ACTIVE' AND g.archived_at IS NULL
 `
 
-func (q *Queries) ListUserGroups(ctx context.Context, userID uuid.UUID) ([]Group, error) {
+type ListUserGroupsRow struct {
+	ID                   uuid.UUID
+	Name                 string
+	Description          pgtype.Text
+	InviteCode           pgtype.Text
+	InviteCodeExpiresAt  pgtype.Timestamptz
+	RequireAdminApproval bool
+	CreatedBy            pgtype.UUID
+	CreatedAt            pgtype.Timestamptz
+	UpdatedAt            pgtype.Timestamptz
+	ArchivedAt           pgtype.Timestamptz
+}
+
+func (q *Queries) ListUserGroups(ctx context.Context, userID uuid.UUID) ([]ListUserGroupsRow, error) {
 	rows, err := q.db.Query(ctx, listUserGroups, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Group
+	var items []ListUserGroupsRow
 	for rows.Next() {
-		var i Group
+		var i ListUserGroupsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
@@ -476,9 +528,22 @@ type ResetGroupInviteCodeParams struct {
 	InviteCodeExpiresAt pgtype.Timestamptz
 }
 
-func (q *Queries) ResetGroupInviteCode(ctx context.Context, arg ResetGroupInviteCodeParams) (Group, error) {
+type ResetGroupInviteCodeRow struct {
+	ID                   uuid.UUID
+	Name                 string
+	Description          pgtype.Text
+	InviteCode           pgtype.Text
+	InviteCodeExpiresAt  pgtype.Timestamptz
+	RequireAdminApproval bool
+	CreatedBy            pgtype.UUID
+	CreatedAt            pgtype.Timestamptz
+	UpdatedAt            pgtype.Timestamptz
+	ArchivedAt           pgtype.Timestamptz
+}
+
+func (q *Queries) ResetGroupInviteCode(ctx context.Context, arg ResetGroupInviteCodeParams) (ResetGroupInviteCodeRow, error) {
 	row := q.db.QueryRow(ctx, resetGroupInviteCode, arg.ID, arg.InviteCode, arg.InviteCodeExpiresAt)
-	var i Group
+	var i ResetGroupInviteCodeRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
@@ -492,6 +557,54 @@ func (q *Queries) ResetGroupInviteCode(ctx context.Context, arg ResetGroupInvite
 		&i.ArchivedAt,
 	)
 	return i, err
+}
+
+const syncGroupsBySequence = `-- name: SyncGroupsBySequence :many
+SELECT g.id, g.name, g.description, g.invite_code, g.invite_code_expires_at, g.require_admin_approval, g.created_by, g.created_at, g.updated_at, g.archived_at, g.sync_version
+FROM groups g
+JOIN group_members gm ON g.id = gm.group_id
+WHERE g.sync_version > $1
+  AND gm.user_id = $2
+ORDER BY g.sync_version ASC
+LIMIT $3
+`
+
+type SyncGroupsBySequenceParams struct {
+	SyncVersion int64
+	UserID      uuid.UUID
+	Limit       int32
+}
+
+func (q *Queries) SyncGroupsBySequence(ctx context.Context, arg SyncGroupsBySequenceParams) ([]Group, error) {
+	rows, err := q.db.Query(ctx, syncGroupsBySequence, arg.SyncVersion, arg.UserID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Group
+	for rows.Next() {
+		var i Group
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.InviteCode,
+			&i.InviteCodeExpiresAt,
+			&i.RequireAdminApproval,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ArchivedAt,
+			&i.SyncVersion,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateGroup = `-- name: UpdateGroup :one
@@ -508,14 +621,27 @@ type UpdateGroupParams struct {
 	RequireAdminApproval bool
 }
 
-func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error) {
+type UpdateGroupRow struct {
+	ID                   uuid.UUID
+	Name                 string
+	Description          pgtype.Text
+	InviteCode           pgtype.Text
+	InviteCodeExpiresAt  pgtype.Timestamptz
+	RequireAdminApproval bool
+	CreatedBy            pgtype.UUID
+	CreatedAt            pgtype.Timestamptz
+	UpdatedAt            pgtype.Timestamptz
+	ArchivedAt           pgtype.Timestamptz
+}
+
+func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) (UpdateGroupRow, error) {
 	row := q.db.QueryRow(ctx, updateGroup,
 		arg.ID,
 		arg.Name,
 		arg.Description,
 		arg.RequireAdminApproval,
 	)
-	var i Group
+	var i UpdateGroupRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,

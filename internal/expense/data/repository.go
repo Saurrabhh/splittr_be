@@ -391,3 +391,69 @@ func (r *DBRepository) GetGroupPairwiseDebts(ctx context.Context, groupID string
 	}
 	return debts, nil
 }
+
+// SyncExpensesBySequence retrieves expenses updated or created after lastVersion.
+func (r *DBRepository) SyncExpensesBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]domain.Expense, error) {
+	parsedUserID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid uuid: %w", err)
+	}
+
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+
+	rows, err := q.SyncExpensesBySequence(ctx, dbgen.SyncExpensesBySequenceParams{
+		SyncVersion: lastVersion,
+		PaidBy:      parsedUserID,
+		Limit:       limit,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("sync expenses by sequence: %w", err)
+	}
+
+	return toExpensesFromSyncBySequence(rows), nil
+}
+
+// UpdateExpense updates description, amount, currency, category for an expense.
+func (r *DBRepository) UpdateExpense(ctx context.Context, e *domain.Expense) error {
+	parsedID, err := uuid.Parse(e.ID)
+	if err != nil {
+		return fmt.Errorf("invalid uuid: %w", err)
+	}
+
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+
+	updatedRow, err := q.UpdateExpense(ctx, dbgen.UpdateExpenseParams{
+		ID:          parsedID,
+		Description: e.Description,
+		Amount:      floatToNumeric(e.Amount),
+		Currency:    e.Currency,
+		Category:    e.Category,
+	})
+	if err != nil {
+		return fmt.Errorf("update expense: %w", err)
+	}
+
+	e.UpdatedAt = updatedRow.UpdatedAt.Time
+	e.SyncVersion = updatedRow.SyncVersion
+	return nil
+}
+
+// DeleteExpenseSplits removes all splits for an expense.
+func (r *DBRepository) DeleteExpenseSplits(ctx context.Context, expenseID string) error {
+	parsedID, err := uuid.Parse(expenseID)
+	if err != nil {
+		return fmt.Errorf("invalid uuid: %w", err)
+	}
+
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+
+	if err := q.DeleteExpenseSplits(ctx, parsedID); err != nil {
+		return fmt.Errorf("delete expense splits: %w", err)
+	}
+	return nil
+}
+
+

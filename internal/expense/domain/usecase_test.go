@@ -97,7 +97,25 @@ func (m *mockExpenseRepository) GetGroupPairwiseDebts(ctx context.Context, group
 	return args.Get(0).([]domain.PairwiseDebt), args.Error(1)
 }
 
+func (m *mockExpenseRepository) SyncExpensesBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]domain.Expense, error) {
+	args := m.Called(ctx, lastVersion, userID, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Expense), args.Error(1)
+}
+
+func (m *mockExpenseRepository) UpdateExpense(ctx context.Context, e *domain.Expense) error {
+	return m.Called(ctx, e).Error(0)
+}
+
+func (m *mockExpenseRepository) DeleteExpenseSplits(ctx context.Context, expenseID string) error {
+	return m.Called(ctx, expenseID).Error(0)
+}
+
+
 func (m *mockExpenseRepository) ListExpenseSplitsByIDs(ctx context.Context, expenseIDs []string) ([]domain.Split, error) {
+
 	args := m.Called(ctx, expenseIDs)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)

@@ -134,3 +134,29 @@ SELECT es.expense_id, es.user_id, es.amount, es.split_type, es.split_value,
 FROM expense_splits es
 JOIN users u ON es.user_id = u.id
 WHERE es.expense_id = ANY($1::uuid[]);
+
+-- name: SyncExpensesBySequence :many
+SELECT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at, e.deleted_at, e.sync_version
+FROM expenses e
+LEFT JOIN expense_splits es ON e.id = es.expense_id
+WHERE e.sync_version > $1
+  AND (
+    e.paid_by = $2 
+    OR es.user_id = $2 
+    OR e.group_id IN (SELECT group_id FROM group_members WHERE user_id = $2 AND status = 'ACTIVE')
+  )
+GROUP BY e.id
+ORDER BY e.sync_version ASC
+LIMIT $3;
+
+-- name: UpdateExpense :one
+UPDATE expenses
+SET description = $2, amount = $3, currency = $4, category = $5, updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+RETURNING id, description, amount, currency, category, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at, deleted_at, sync_version;
+
+-- name: DeleteExpenseSplits :exec
+DELETE FROM expense_splits
+WHERE expense_id = $1;
+
+

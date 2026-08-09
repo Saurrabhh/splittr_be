@@ -452,3 +452,26 @@ func (r *DBRepository) ListUserGroupsWithMembers(ctx context.Context, userID str
 	}
 	return result, nil
 }
+
+// SyncGroupsBySequence retrieves groups updated or created after lastVersion for a user.
+func (r *DBRepository) SyncGroupsBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]domain.Group, error) {
+	parsedUserID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid uuid: %w", err)
+	}
+
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+
+	rows, err := q.SyncGroupsBySequence(ctx, dbgen.SyncGroupsBySequenceParams{
+		SyncVersion: lastVersion,
+		UserID:      parsedUserID,
+		Limit:       limit,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("sync groups by sequence: %w", err)
+	}
+
+	return toGroupsFromSyncBySequence(rows), nil
+}
+

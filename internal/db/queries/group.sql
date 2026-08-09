@@ -137,3 +137,13 @@ LEFT JOIN group_members gm ON g.id = gm.group_id AND gm.status = 'ACTIVE'
 LEFT JOIN users u ON g.created_by = u.id
 WHERE g.invite_code = $1 AND g.archived_at IS NULL
 GROUP BY g.id, g.name, g.description, u.name;
+
+-- name: SyncGroupsBySequence :many
+SELECT g.id, g.name, g.description, g.invite_code, g.invite_code_expires_at, g.require_admin_approval, g.created_by, g.created_at, g.updated_at, g.archived_at, g.sync_version
+FROM groups g
+JOIN group_members gm ON g.id = gm.group_id
+WHERE g.sync_version > $1
+  AND gm.user_id = $2
+ORDER BY g.sync_version ASC
+LIMIT $3;
+

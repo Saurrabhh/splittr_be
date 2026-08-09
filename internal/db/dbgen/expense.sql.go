@@ -31,7 +31,23 @@ type CreateExpenseParams struct {
 	SpentAt     pgtype.Timestamptz
 }
 
-func (q *Queries) CreateExpense(ctx context.Context, arg CreateExpenseParams) (Expense, error) {
+type CreateExpenseRow struct {
+	ID          uuid.UUID
+	Description string
+	Amount      pgtype.Numeric
+	Currency    string
+	Category    string
+	GroupID     pgtype.UUID
+	PaidBy      uuid.UUID
+	CreatedBy   uuid.UUID
+	IsPayment   bool
+	SpentAt     pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	DeletedAt   pgtype.Timestamptz
+}
+
+func (q *Queries) CreateExpense(ctx context.Context, arg CreateExpenseParams) (CreateExpenseRow, error) {
 	row := q.db.QueryRow(ctx, createExpense,
 		arg.ID,
 		arg.Description,
@@ -44,7 +60,7 @@ func (q *Queries) CreateExpense(ctx context.Context, arg CreateExpenseParams) (E
 		arg.IsPayment,
 		arg.SpentAt,
 	)
-	var i Expense
+	var i CreateExpenseRow
 	err := row.Scan(
 		&i.ID,
 		&i.Description,
@@ -98,15 +114,41 @@ func (q *Queries) DeleteExpense(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const deleteExpenseSplits = `-- name: DeleteExpenseSplits :exec
+DELETE FROM expense_splits
+WHERE expense_id = $1
+`
+
+func (q *Queries) DeleteExpenseSplits(ctx context.Context, expenseID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteExpenseSplits, expenseID)
+	return err
+}
+
 const getExpenseByID = `-- name: GetExpenseByID :one
 SELECT id, description, amount, currency, category, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at, deleted_at
 FROM expenses
 WHERE id = $1 AND deleted_at IS NULL
 `
 
-func (q *Queries) GetExpenseByID(ctx context.Context, id uuid.UUID) (Expense, error) {
+type GetExpenseByIDRow struct {
+	ID          uuid.UUID
+	Description string
+	Amount      pgtype.Numeric
+	Currency    string
+	Category    string
+	GroupID     pgtype.UUID
+	PaidBy      uuid.UUID
+	CreatedBy   uuid.UUID
+	IsPayment   bool
+	SpentAt     pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	DeletedAt   pgtype.Timestamptz
+}
+
+func (q *Queries) GetExpenseByID(ctx context.Context, id uuid.UUID) (GetExpenseByIDRow, error) {
 	row := q.db.QueryRow(ctx, getExpenseByID, id)
-	var i Expense
+	var i GetExpenseByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Description,
@@ -595,4 +637,103 @@ func (q *Queries) ListUserPersonalExpensesPaginated(ctx context.Context, arg Lis
 		return nil, err
 	}
 	return items, nil
+}
+
+const syncExpensesBySequence = `-- name: SyncExpensesBySequence :many
+SELECT e.id, e.description, e.amount, e.currency, e.category, e.group_id, e.paid_by, e.created_by, e.is_payment, e.spent_at, e.created_at, e.updated_at, e.deleted_at, e.sync_version
+FROM expenses e
+LEFT JOIN expense_splits es ON e.id = es.expense_id
+WHERE e.sync_version > $1
+  AND (
+    e.paid_by = $2 
+    OR es.user_id = $2 
+    OR e.group_id IN (SELECT group_id FROM group_members WHERE user_id = $2 AND status = 'ACTIVE')
+  )
+GROUP BY e.id
+ORDER BY e.sync_version ASC
+LIMIT $3
+`
+
+type SyncExpensesBySequenceParams struct {
+	SyncVersion int64
+	PaidBy      uuid.UUID
+	Limit       int32
+}
+
+func (q *Queries) SyncExpensesBySequence(ctx context.Context, arg SyncExpensesBySequenceParams) ([]Expense, error) {
+	rows, err := q.db.Query(ctx, syncExpensesBySequence, arg.SyncVersion, arg.PaidBy, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Expense
+	for rows.Next() {
+		var i Expense
+		if err := rows.Scan(
+			&i.ID,
+			&i.Description,
+			&i.Amount,
+			&i.Currency,
+			&i.Category,
+			&i.GroupID,
+			&i.PaidBy,
+			&i.CreatedBy,
+			&i.IsPayment,
+			&i.SpentAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.SyncVersion,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateExpense = `-- name: UpdateExpense :one
+UPDATE expenses
+SET description = $2, amount = $3, currency = $4, category = $5, updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+RETURNING id, description, amount, currency, category, group_id, paid_by, created_by, is_payment, spent_at, created_at, updated_at, deleted_at, sync_version
+`
+
+type UpdateExpenseParams struct {
+	ID          uuid.UUID
+	Description string
+	Amount      pgtype.Numeric
+	Currency    string
+	Category    string
+}
+
+func (q *Queries) UpdateExpense(ctx context.Context, arg UpdateExpenseParams) (Expense, error) {
+	row := q.db.QueryRow(ctx, updateExpense,
+		arg.ID,
+		arg.Description,
+		arg.Amount,
+		arg.Currency,
+		arg.Category,
+	)
+	var i Expense
+	err := row.Scan(
+		&i.ID,
+		&i.Description,
+		&i.Amount,
+		&i.Currency,
+		&i.Category,
+		&i.GroupID,
+		&i.PaidBy,
+		&i.CreatedBy,
+		&i.IsPayment,
+		&i.SpentAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.SyncVersion,
+	)
+	return i, err
 }

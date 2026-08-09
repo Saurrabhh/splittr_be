@@ -3,10 +3,12 @@ package data
 import (
 	"time"
 
+	"github.com/Saurrabhh/splittr_be/internal/db/dbgen"
 	"github.com/Saurrabhh/splittr_be/internal/group/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
 
 func mapGroupFields(id uuid.UUID, name string, description pgtype.Text, inviteCode pgtype.Text, inviteCodeExpiresAt pgtype.Timestamptz, requireAdminApproval bool, createdBy pgtype.UUID, createdAt pgtype.Timestamptz, updatedAt pgtype.Timestamptz, archivedAt pgtype.Timestamptz) *domain.Group {
 	var createdByStr *string
@@ -59,3 +61,15 @@ func uuidToPg(s *string, u uuid.UUID) pgtype.UUID {
 	}
 	return pgtype.UUID{Bytes: u, Valid: true}
 }
+
+func toGroupsFromSyncBySequence(rows []dbgen.Group) []domain.Group {
+	groups := make([]domain.Group, 0, len(rows))
+	for _, r := range rows {
+		g := mapGroupFields(r.ID, r.Name, r.Description, r.InviteCode, r.InviteCodeExpiresAt, r.RequireAdminApproval, r.CreatedBy, r.CreatedAt, r.UpdatedAt, r.ArchivedAt)
+		g.SyncVersion = r.SyncVersion
+		groups = append(groups, *g)
+	}
+	return groups
+}
+
+

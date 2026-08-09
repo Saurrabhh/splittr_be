@@ -782,3 +782,158 @@ func directDebts(pairwise []PairwiseDebt) []Settlement {
 
 	return settlements
 }
+
+// ExpenseSyncResponse contains updated expenses and deleted IDs for offline sync.
+type ExpenseSyncResponse struct {
+	NewVersion int64               `json:"newVersion"`
+	Updated    []ExpenseWithSplits `json:"updated"`
+	DeletedIDs []string            `json:"deletedIds"`
+} // @name Expense.ExpenseSyncResponse
+
+// SyncExpenses retrieves expenses updated after lastVersion and categorizes them into active and soft-deleted.
+func (u *UseCase) SyncExpenses(ctx context.Context, lastVersion int64, userID string, limit int32) (*ExpenseSyncResponse, error) {
+	if limit <= 0 || limit > 500 {
+		limit = 100
+	}
+
+	expenses, err := u.repo.SyncExpensesBySequence(ctx, lastVersion, userID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("sync expenses: %w", err)
+	}
+
+	var activeExpenses []Expense
+	var deletedIDs []string
+	var maxVersion int64 = lastVersion
+
+	for _, e := range expenses {
+		if e.SyncVersion > maxVersion {
+			maxVersion = e.SyncVersion
+		}
+		if e.DeletedAt != nil {
+			deletedIDs = append(deletedIDs, e.ID)
+		} else {
+			activeExpenses = append(activeExpenses, e)
+		}
+	}
+
+	updated := make([]ExpenseWithSplits, 0, len(activeExpenses))
+	if len(activeExpenses) > 0 {
+		expenseIDs := make([]string, 0, len(activeExpenses))
+		for _, e := range activeExpenses {
+			expenseIDs = append(expenseIDs, e.ID)
+		}
+
+		splits, err := u.repo.ListExpenseSplitsByIDs(ctx, expenseIDs)
+		if err != nil {
+			return nil, fmt.Errorf("list splits for sync: %w", err)
+		}
+
+		splitsByExpense := make(map[string][]Split)
+		for _, s := range splits {
+			splitsByExpense[s.ExpenseID] = append(splitsByExpense[s.ExpenseID], s)
+		}
+
+		for _, e := range activeExpenses {
+			s := splitsByExpense[e.ID]
+			if s == nil {
+				s = []Split{}
+			}
+			updated = append(updated, ExpenseWithSplits{
+				Expense: e,
+				Splits:  s,
+			})
+		}
+	}
+
+	return &ExpenseSyncResponse{
+		NewVersion: maxVersion,
+		Updated:    updated,
+		DeletedIDs: deletedIDs,
+	}, nil
+}
+
+// UpdateExpense handles partial updates to an existing expense inside a transaction.
+func (u *UseCase) UpdateExpense(ctx context.Context, expenseID string, desc *string, amount *float64, currency *string, category *string, splitType *SplitType, inputs []InputSplit, actionByUserID string) (*ExpenseWithSplits, error) {
+	if expenseID == "" || actionByUserID == "" {
+		return nil, &response.AppError{Type: response.TypeValidation, Message: response.MsgInvalidParam}
+	}
+
+	existing, err := u.repo.GetExpenseByID(ctx, expenseID)
+	if err != nil {
+		return nil, &response.AppError{Type: response.TypeInternal, Message: "Failed to retrieve expense", Err: err}
+	}
+	if existing == nil {
+		return nil, &response.AppError{Type: response.TypeNotFound, Message: response.MsgExpenseNotFound}
+	}
+
+	if existing.CreatedBy != actionByUserID && existing.PaidBy != actionByUserID {
+		return nil, &response.AppError{Type: response.TypeForbidden, Message: response.MsgForbidden}
+	}
+
+	var updatedExpense *ExpenseWithSplits
+
+	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
+
+		if desc != nil && *desc != "" {
+			existing.Description = *desc
+		}
+		if amount != nil && *amount > 0 {
+			existing.Amount = *amount
+		}
+		if currency != nil && *currency != "" {
+			existing.Currency = *currency
+		}
+		if category != nil && *category != "" {
+			existing.Category = *category
+		}
+
+		if err := u.repo.UpdateExpense(txCtx, existing); err != nil {
+			return err
+		}
+
+		if len(inputs) > 0 {
+			st := SplitTypeEqual
+			if splitType != nil {
+				st = *splitType
+			}
+
+			calculatedSplits, err := calculateSplits(existing.Amount, st, inputs)
+			if err != nil {
+				return err
+			}
+
+			if err := u.repo.DeleteExpenseSplits(txCtx, existing.ID); err != nil {
+				return err
+			}
+
+			for _, s := range calculatedSplits {
+				s.ExpenseID = existing.ID
+				if err := u.repo.CreateExpenseSplit(txCtx, &s); err != nil {
+					return err
+				}
+			}
+		}
+
+		splits, err := u.repo.ListExpenseSplits(txCtx, existing.ID)
+		if err != nil {
+			return err
+		}
+
+		updatedExpense = &ExpenseWithSplits{
+			Expense: *existing,
+			Splits:  splits,
+		}
+		return nil
+	})
+
+	if err != nil {
+		if appErr, ok := err.(*response.AppError); ok {
+			return nil, appErr
+		}
+		return nil, &response.AppError{Type: response.TypeInternal, Message: "Failed to update expense", Err: err}
+	}
+
+	return updatedExpense, nil
+}
+
+

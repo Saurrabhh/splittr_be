@@ -91,9 +91,15 @@ type GetFriendshipParams struct {
 	FriendID uuid.UUID
 }
 
-func (q *Queries) GetFriendship(ctx context.Context, arg GetFriendshipParams) (Friendship, error) {
+type GetFriendshipRow struct {
+	UserID    uuid.UUID
+	FriendID  uuid.UUID
+	CreatedAt pgtype.Timestamptz
+}
+
+func (q *Queries) GetFriendship(ctx context.Context, arg GetFriendshipParams) (GetFriendshipRow, error) {
 	row := q.db.QueryRow(ctx, getFriendship, arg.UserID, arg.FriendID)
-	var i Friendship
+	var i GetFriendshipRow
 	err := row.Scan(&i.UserID, &i.FriendID, &i.CreatedAt)
 	return i, err
 }
@@ -255,6 +261,46 @@ func (q *Queries) ListFriendsPaginated(ctx context.Context, arg ListFriendsPagin
 			&i.DefaultCurrency,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const syncFriendsBySequence = `-- name: SyncFriendsBySequence :many
+SELECT f.user_id, f.friend_id, f.created_at, f.sync_version
+FROM friendships f
+WHERE f.sync_version > $1
+  AND (f.user_id = $2 OR f.friend_id = $2)
+ORDER BY f.sync_version ASC
+LIMIT $3
+`
+
+type SyncFriendsBySequenceParams struct {
+	SyncVersion int64
+	UserID      uuid.UUID
+	Limit       int32
+}
+
+func (q *Queries) SyncFriendsBySequence(ctx context.Context, arg SyncFriendsBySequenceParams) ([]Friendship, error) {
+	rows, err := q.db.Query(ctx, syncFriendsBySequence, arg.SyncVersion, arg.UserID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Friendship
+	for rows.Next() {
+		var i Friendship
+		if err := rows.Scan(
+			&i.UserID,
+			&i.FriendID,
+			&i.CreatedAt,
+			&i.SyncVersion,
 		); err != nil {
 			return nil, err
 		}

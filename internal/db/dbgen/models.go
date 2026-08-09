@@ -153,6 +153,7 @@ type Expense struct {
 	CreatedAt   pgtype.Timestamptz
 	UpdatedAt   pgtype.Timestamptz
 	DeletedAt   pgtype.Timestamptz
+	SyncVersion int64
 }
 
 type ExpenseCategory struct {
@@ -179,9 +180,10 @@ type FeatureFlag struct {
 }
 
 type Friendship struct {
-	UserID    uuid.UUID
-	FriendID  uuid.UUID
-	CreatedAt pgtype.Timestamptz
+	UserID      uuid.UUID
+	FriendID    uuid.UUID
+	CreatedAt   pgtype.Timestamptz
+	SyncVersion int64
 }
 
 type Group struct {
@@ -195,6 +197,7 @@ type Group struct {
 	CreatedAt            pgtype.Timestamptz
 	UpdatedAt            pgtype.Timestamptz
 	ArchivedAt           pgtype.Timestamptz
+	SyncVersion          int64
 }
 
 type GroupMember struct {

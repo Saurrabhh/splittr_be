@@ -28,3 +28,14 @@ type SettleExpenseRequest struct {
 	PaidBy     string  `json:"paidBy"`
 	ReceivedBy string  `json:"receivedBy"`
 } // @name Expense.SettleRequest
+
+// UpdateExpenseRequest is the payload for PATCH /expenses/{id}.
+type UpdateExpenseRequest struct {
+	Description *string             `json:"description,omitempty"`
+	Amount      *float64            `json:"amount,omitempty"`
+	Currency    *string             `json:"currency,omitempty"`
+	Category    *string             `json:"category,omitempty"`
+	SplitType   *domain.SplitType   `json:"splitType,omitempty"`
+	Splits      []domain.InputSplit `json:"splits,omitempty"`
+} // @name Expense.UpdateRequest
+

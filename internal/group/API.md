@@ -290,3 +290,23 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
   - `cursor` (string, optional): Cursor token from previous response.
 - **Response** (`200 OK`): Paginated `Activity` response (`{ "data": [...], "pagination": {...} }`).
 - **Errors**: `401 Unauthorized`, `403 Forbidden` (not a group member), `500 Internal Server Error`.
+
+---
+
+### 14. Sync Groups
+- **GET** `/groups/sync?lastVersion={int64}&limit={int}`
+- **Authentication**: Required (`BearerAuth`)
+- **Description**: Retrieve active and archived groups modified after a given sequence version for offline sync.
+- **Query Parameters**:
+  - `lastVersion` (int64, optional): Last sequence version stored locally. Default: 0.
+  - `limit` (int, optional): Max items to return. Default: 100.
+- **Response** (`200 OK`): `GroupSyncResponse`
+  ```json
+  {
+    "newVersion": 150,
+    "updated": [ { ... } ],
+    "removedGroupIds": [ "550e8400-e29b-41d4-a716-446655440000" ]
+  }
+  ```
+- **Errors**: `401 Unauthorized`, `500 Internal Server Error`.
+

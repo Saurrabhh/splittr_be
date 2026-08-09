@@ -109,6 +109,15 @@ func (m *mockGroupRepository) UpdateGroupMemberRole(ctx context.Context, groupID
 	return m.Called(ctx, groupID, userID, role).Error(0)
 }
 
+func (m *mockGroupRepository) SyncGroupsBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]domain.Group, error) {
+	args := m.Called(ctx, lastVersion, userID, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Group), args.Error(1)
+}
+
+
 type mockActivityLogger struct {
 	mock.Mock
 }

@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/Saurrabhh/splittr_be/internal/auth"
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
@@ -11,6 +12,7 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/user/domain"
 	"github.com/go-chi/chi/v5"
 )
+
 
 // Handler handles HTTP requests for user domain.
 type Handler struct {
@@ -39,9 +41,11 @@ func (h *Handler) RegisterRoutes(r chi.Router, authMiddleware func(http.Handler)
 		r.Use(h.UserContext)
 		r.Post("/", h.AddFriend)
 		r.Get("/", h.GetFriends)
+		r.Get("/sync", h.SyncFriends)
 		r.Delete("/{friendId}", h.RemoveFriend)
 	})
 }
+
 
 // Register registers the authenticated user.
 // @Summary      Register user
@@ -195,3 +199,44 @@ func (h *Handler) RemoveFriend(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+// SyncFriends retrieves delta friendship updates using a monotonic sequence counter.
+// @Summary      Sync friends
+// @Description  Retrieve friendship changes modified after a given sequence version.
+// @Tags         friends
+// @Produce      json
+// @Param        lastVersion query int64 false "Last received sequence version"
+// @Param        limit       query int   false "Maximum items to return (default 100)"
+// @Success      200  {object}  domain.FriendSyncResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /friends/sync [get]
+// @Security     BearerAuth
+func (h *Handler) SyncFriends(w http.ResponseWriter, r *http.Request) {
+	currUser := MustFrom(r.Context())
+
+	lastVersionStr := r.URL.Query().Get("lastVersion")
+	var lastVersion int64
+	if lastVersionStr != "" {
+		if v, err := strconv.ParseInt(lastVersionStr, 10, 64); err == nil {
+			lastVersion = v
+		}
+	}
+
+	limitStr := r.URL.Query().Get("limit")
+	var limit int32 = 100
+	if limitStr != "" {
+		if l, err := strconv.ParseInt(limitStr, 10, 32); err == nil && l > 0 {
+			limit = int32(l)
+		}
+	}
+
+	res, err := h.uc.SyncFriends(r.Context(), lastVersion, currUser.ID, limit)
+	if err != nil {
+		response.HandleError(w, err)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, res)
+}
+

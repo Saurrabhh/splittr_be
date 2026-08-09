@@ -16,4 +16,13 @@ type Repository interface {
 	DeleteFriendship(ctx context.Context, userID, friendID string) error
 	GetFriendship(ctx context.Context, userID, friendID string) (bool, error)
 	ListFriends(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]User, error)
+	SyncFriendsBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]FriendshipSyncRecord, error)
 }
+
+type FriendshipSyncRecord struct {
+	UserID      string    `json:"userId"`
+	FriendID    string    `json:"friendId"`
+	CreatedAt   time.Time `json:"createdAt"`
+	SyncVersion int64     `json:"syncVersion"`
+}
+

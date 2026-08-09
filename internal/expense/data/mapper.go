@@ -59,6 +59,39 @@ func toExpensesFromGroupPaginated(rows []dbgen.ListExpensesByGroupPaginatedRow) 
 	return expenses
 }
 
+func toExpensesFromSyncBySequence(rows []dbgen.Expense) []domain.Expense {
+	expenses := make([]domain.Expense, 0, len(rows))
+	for _, r := range rows {
+		var groupIDStr *string
+		if r.GroupID.Valid {
+			s := uuid.UUID(r.GroupID.Bytes).String()
+			groupIDStr = &s
+		}
+		var deletedAtTime *time.Time
+		if r.DeletedAt.Valid {
+			deletedAtTime = &r.DeletedAt.Time
+		}
+		expenses = append(expenses, domain.Expense{
+			ID:          r.ID.String(),
+			Description: r.Description,
+			Amount:      numericToFloat(r.Amount),
+			Currency:    r.Currency,
+			Category:    r.Category,
+			GroupID:     groupIDStr,
+			PaidBy:      r.PaidBy.String(),
+			CreatedBy:   r.CreatedBy.String(),
+			IsPayment:   r.IsPayment,
+			SpentAt:     r.SpentAt.Time,
+			CreatedAt:   r.CreatedAt.Time,
+			UpdatedAt:   r.UpdatedAt.Time,
+			DeletedAt:   deletedAtTime,
+			SyncVersion: r.SyncVersion,
+		})
+	}
+	return expenses
+}
+
+
 func toExpensesFromPersonalPaginated(rows []dbgen.ListUserPersonalExpensesPaginatedRow) []domain.Expense {
 	expenses := make([]domain.Expense, 0, len(rows))
 	for _, row := range rows {
@@ -83,7 +116,7 @@ func toExpensesFromFriendPaginated(rows []dbgen.ListUserFriendExpensesPaginatedR
 	return expenses
 }
 
-func toDomainExpense(dbg dbgen.Expense) *domain.Expense {
+func toDomainExpense(dbg dbgen.GetExpenseByIDRow) *domain.Expense {
 	var groupIDStr *string
 	if dbg.GroupID.Valid {
 		s := uuid.UUID(dbg.GroupID.Bytes).String()
@@ -100,6 +133,7 @@ func toDomainExpense(dbg dbgen.Expense) *domain.Expense {
 		Description: dbg.Description,
 		Amount:      numericToFloat(dbg.Amount),
 		Currency:    dbg.Currency,
+		Category:    dbg.Category,
 		GroupID:     groupIDStr,
 		PaidBy:      dbg.PaidBy.String(),
 		CreatedBy:   dbg.CreatedBy.String(),

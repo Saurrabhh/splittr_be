@@ -263,3 +263,42 @@ func (u *UseCase) ListFriends(ctx context.Context, userID string, p pagination.P
 		return pagination.EncodeCursor(usr.CreatedAt, usr.ID)
 	}), nil
 }
+
+// FriendSyncResponse contains updated friends for offline sync.
+type FriendSyncResponse struct {
+	NewVersion int64                  `json:"newVersion"`
+	Friends    []FriendshipSyncRecord `json:"friends"`
+} // @name User.FriendSyncResponse
+
+// SyncFriends retrieves friendship changes after lastVersion for a user.
+func (u *UseCase) SyncFriends(ctx context.Context, lastVersion int64, userID string, limit int32) (*FriendSyncResponse, error) {
+	if limit <= 0 || limit > 500 {
+		limit = 100
+	}
+
+	records, err := u.repo.SyncFriendsBySequence(ctx, lastVersion, userID, limit)
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "Failed to sync friends",
+			Err:     err,
+		}
+	}
+
+	var maxVersion int64 = lastVersion
+	for _, r := range records {
+		if r.SyncVersion > maxVersion {
+			maxVersion = r.SyncVersion
+		}
+	}
+
+	if records == nil {
+		records = []FriendshipSyncRecord{}
+	}
+
+	return &FriendSyncResponse{
+		NewVersion: maxVersion,
+		Friends:    records,
+	}, nil
+}
+

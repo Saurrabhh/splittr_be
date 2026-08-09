@@ -29,13 +29,17 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Post("/", h.Create)
 		r.Post("/settle", h.Settle)
 		r.Get("/", h.List)
+		r.Get("/sync", h.Sync)
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", h.GetDetails)
+			r.Patch("/", h.Update)
 			r.Delete("/", h.Delete)
 		})
+
 	})
 	r.Get("/balances", h.GetBalances)
 }
+
 
 // Create logs a new expense and distributes the splits.
 // @Summary      Create expense
@@ -135,6 +139,26 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	groupID := r.URL.Query().Get("groupId")
 	personalStr := r.URL.Query().Get("personal")
 	friendID := r.URL.Query().Get("friendId")
+	isPersonal, _ := strconv.ParseBool(personalStr)
+
+	filterCount := 0
+	if groupID != "" {
+		filterCount++
+	}
+	if isPersonal {
+		filterCount++
+	}
+	if friendID != "" {
+		filterCount++
+	}
+
+	if filterCount > 1 {
+		response.HandleError(w, &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "conflicting filter parameters: pass only one of groupId, personal, or friendId",
+		})
+		return
+	}
 
 	var filterType string
 	var filterID string
@@ -142,7 +166,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	if groupID != "" {
 		filterType = "group"
 		filterID = groupID
-	} else if isPersonal, _ := strconv.ParseBool(personalStr); isPersonal {
+	} else if isPersonal {
 		filterType = "personal"
 	} else if friendID != "" {
 		filterType = "friend"
@@ -165,6 +189,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, result)
 
 }
+
 
 // GetDetails retrieves a specific expense and its details.
 // @Summary      Get expense details
@@ -260,3 +285,85 @@ func (h *Handler) GetBalances(w http.ResponseWriter, r *http.Request) {
 
 	response.JSON(w, http.StatusOK, balances)
 }
+
+// Sync retrieves delta expense updates using a monotonic sequence counter.
+// @Summary      Sync expenses
+// @Description  Retrieve active and deleted expenses modified after a given sequence version.
+// @Tags         expenses
+// @Produce      json
+// @Param        lastVersion query int64 false "Last received sequence version"
+// @Param        limit       query int   false "Maximum items to return (default 100)"
+// @Success      200  {object}  domain.ExpenseSyncResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /expenses/sync [get]
+// @Security     BearerAuth
+func (h *Handler) Sync(w http.ResponseWriter, r *http.Request) {
+	currUser := user.MustFrom(r.Context())
+
+	lastVersionStr := r.URL.Query().Get("lastVersion")
+	var lastVersion int64
+	if lastVersionStr != "" {
+		v, err := strconv.ParseInt(lastVersionStr, 10, 64)
+		if err == nil {
+			lastVersion = v
+		}
+	}
+
+	limitStr := r.URL.Query().Get("limit")
+	var limit int32 = 100
+	if limitStr != "" {
+		if l, err := strconv.ParseInt(limitStr, 10, 32); err == nil && l > 0 {
+			limit = int32(l)
+		}
+	}
+
+	res, err := h.uc.SyncExpenses(r.Context(), lastVersion, currUser.ID, limit)
+	if err != nil {
+		response.HandleError(w, err)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, res)
+}
+
+// Update handles partial updates to an existing expense.
+// @Summary      Update expense
+// @Description  Partially update description, amount, currency, category, or splits for an expense.
+// @Tags         expenses
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string                true  "Expense UUID"
+// @Param        body body      UpdateExpenseRequest  true  "Update Expense Payload"
+// @Success      200  {object}  ExpenseResponse
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      403  {object}  response.ErrorResponse
+// @Failure      404  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /expenses/{id} [patch]
+// @Security     BearerAuth
+func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
+	currUser := user.MustFrom(r.Context())
+
+	expenseID, ok := request.URLParam(w, r, "id")
+	if !ok {
+		return
+	}
+
+	request.Run(w, r, http.StatusOK, func(ctx context.Context, req UpdateExpenseRequest) (*ExpenseResponse, error) {
+		return h.uc.UpdateExpense(
+			ctx,
+			expenseID,
+			req.Description,
+			req.Amount,
+			req.Currency,
+			req.Category,
+			req.SplitType,
+			req.Splits,
+			currUser.ID,
+		)
+	})
+}
+
+
