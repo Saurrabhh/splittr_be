@@ -18,10 +18,6 @@ type AddMembersRequest struct {
 	UserIDs []string `json:"userIds" validate:"required,min=1"`
 } // @name AddMembersRequest
 
-type AddMemberRequest struct {
-	UserID string `json:"userId" validate:"required"`
-} // @name AddMemberRequest
-
 type UpdateRoleRequest struct {
 	Role domain.MemberRole `json:"role"`
 } // @name UpdateRoleRequest

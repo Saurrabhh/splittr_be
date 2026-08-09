@@ -169,27 +169,32 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
 
 ---
 
-### 7. Add Group Member Directly
+### 7. Add Group Members Directly (Bulk)
 - **POST** `/groups/{id}/members`
 - **Authentication**: Required (`BearerAuth`)
-- **Description**: Add a user directly to the group by User ID as an `ACTIVE` `MEMBER`. Admin privileges required.
+- **Description**: Add multiple users directly to the group by User IDs as `ACTIVE` `MEMBER`s. Admin privileges required.
 - **Request Body**:
   ```json
   {
-    "userId": "usr-target-uuid"
+    "userIds": [
+      "usr-target-uuid-1",
+      "usr-target-uuid-2"
+    ]
   }
   ```
-- **Response** (`201 Created`): Created `Member` object.
+- **Response** (`201 Created`): Array of created `Member` objects.
   ```json
-  {
-    "groupId": "550e8400-e29b-41d4-a716-446655440000",
-    "userId": "usr-target-uuid",
-    "role": "MEMBER",
-    "status": "ACTIVE",
-    "joinedAt": "2026-08-02T14:30:00Z",
-    "name": "John Doe",
-    "email": "john@example.com"
-  }
+  [
+    {
+      "groupId": "550e8400-e29b-41d4-a716-446655440000",
+      "userId": "usr-target-uuid-1",
+      "role": "MEMBER",
+      "status": "ACTIVE",
+      "joinedAt": "2026-08-02T14:30:00Z",
+      "name": "John Doe",
+      "email": "john@example.com"
+    }
+  ]
   ```
 - **Errors**: `400 Bad Request`, `401 Unauthorized`, `403 Forbidden` (non-admin), `404 Not Found`, `500 Internal Server Error`.
 

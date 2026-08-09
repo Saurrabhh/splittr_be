@@ -61,12 +61,16 @@ components:
         friendPhone:
           type: string
       type: object
-    AddMemberRequest:
+    AddMembersRequest:
       properties:
-        userId:
-          type: string
+        userIds:
+          items:
+            type: string
+          minItems: 1
+          type: array
+          uniqueItems: false
       required:
-      - userId
+      - userIds
       type: object
     AlertType:
       enum:
@@ -1462,7 +1466,8 @@ paths:
       tags:
       - groups
     post:
-      description: Add a user to a group by their User ID. Only admins can add members.
+      description: Add multiple users to a group by their User IDs. Only admins can
+        add members.
       parameters:
       - description: Group ID
         in: path
@@ -1476,17 +1481,19 @@ paths:
             schema:
               oneOf:
               - type: object
-              - $ref: '#/components/schemas/AddMemberRequest'
-                description: User ID of the member to add
+              - $ref: '#/components/schemas/AddMembersRequest'
+                description: User IDs of members to add
                 summary: request
-        description: User ID of the member to add
+        description: User IDs of members to add
         required: true
       responses:
         "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Member'
+                items:
+                  $ref: '#/components/schemas/Member'
+                type: array
           description: Created
         "400":
           content:
@@ -1508,7 +1515,7 @@ paths:
           description: Internal Server Error
       security:
       - BearerAuth: []
-      summary: Add group member
+      summary: Add group members
       tags:
       - groups
   /groups/{id}/members/{userId}:

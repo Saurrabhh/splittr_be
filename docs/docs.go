@@ -91,14 +91,19 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "AddMemberRequest": {
+            "AddMembersRequest": {
                 "properties": {
-                    "userId": {
-                        "type": "string"
+                    "userIds": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 1,
+                        "type": "array",
+                        "uniqueItems": false
                     }
                 },
                 "required": [
-                    "userId"
+                    "userIds"
                 ],
                 "type": "object"
             },
@@ -2474,7 +2479,7 @@ const docTemplate = `{
                 ]
             },
             "post": {
-                "description": "Add a user to a group by their User ID. Only admins can add members.",
+                "description": "Add multiple users to a group by their User IDs. Only admins can add members.",
                 "parameters": [
                     {
                         "description": "Group ID",
@@ -2495,15 +2500,15 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/AddMemberRequest",
+                                        "$ref": "#/components/schemas/AddMembersRequest",
                                         "summary": "request",
-                                        "description": "User ID of the member to add"
+                                        "description": "User IDs of members to add"
                                     }
                                 ]
                             }
                         }
                     },
-                    "description": "User ID of the member to add",
+                    "description": "User IDs of members to add",
                     "required": true
                 },
                 "responses": {
@@ -2511,7 +2516,10 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Member"
+                                    "items": {
+                                        "$ref": "#/components/schemas/Member"
+                                    },
+                                    "type": "array"
                                 }
                             }
                         },
@@ -2553,7 +2561,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Add group member",
+                "summary": "Add group members",
                 "tags": [
                     "groups"
                 ]
