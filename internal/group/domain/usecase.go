@@ -309,9 +309,9 @@ func (u *UseCase) ListMembers(ctx context.Context, groupID, statusFilter, action
 	return members, nil
 }
 
-// AddMember adds a new user to the group. Requires requester to be an admin.
-func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionByUserID string) (*Member, error) {
-	if groupID == "" || targetUserID == "" || actionByUserID == "" {
+// AddMembers adds new users to the group in bulk. Requires requester to be an admin.
+func (u *UseCase) AddMembers(ctx context.Context, groupID string, targetUserIDs []string, actionByUserID string) ([]Member, error) {
+	if groupID == "" || len(targetUserIDs) == 0 || actionByUserID == "" {
 		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgInvalidParam,
@@ -344,30 +344,24 @@ func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 		}
 	}
 
-	var addedMember Member
+	var addedMembers []Member
 	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
-		if err := u.repo.AddGroupMember(txCtx, groupID, targetUserID, MemberRoleMember, MemberStatusActive); err != nil {
-			return err
-		}
-
-		members, err := u.repo.ListGroupMembers(txCtx, groupID, MemberStatusActive)
+		var err error
+		addedMembers, err = u.repo.AddGroupMembers(txCtx, groupID, targetUserIDs, MemberRoleMember, MemberStatusActive)
 		if err != nil {
 			return err
 		}
-		for _, m := range members {
-			if m.UserID == targetUserID {
-				addedMember = m
-				break
-			}
-		}
 
-		payload := activity.MemberPayload{
-			Member: addedMember,
+		for _, m := range addedMembers {
+			payload := activity.MemberPayload{
+				Member: m,
+			}
+			_ = u.activity.LogEvent(
+				txCtx, actionByUserID, &groupID, nil,
+				activity.NewMemberAddedEvent(m.UserID, payload),
+			)
 		}
-		return u.activity.LogEvent(
-			txCtx, actionByUserID, &groupID, nil,
-			activity.NewMemberAddedEvent(targetUserID, payload),
-		)
+		return nil
 	})
 	if err != nil {
 		return nil, &response.AppError{
@@ -377,7 +371,7 @@ func (u *UseCase) AddMember(ctx context.Context, groupID, targetUserID, actionBy
 		}
 	}
 
-	return &addedMember, nil
+	return addedMembers, nil
 }
 
 // RemoveMember removes a member from the group.
