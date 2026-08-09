@@ -18,7 +18,7 @@ type CreateExpenseRequest struct {
 	PaidBy      string              `json:"paidBy"`
 	SplitType   domain.SplitType    `json:"splitType"`
 	Splits      []domain.InputSplit `json:"splits"`
-} // @name CreateExpenseRequest
+} // @name Expense.CreateRequest
 
 // SettleExpenseRequest is the payload for POST /expenses/settle.
 type SettleExpenseRequest struct {
@@ -27,4 +27,4 @@ type SettleExpenseRequest struct {
 	GroupID    *string `json:"groupId"`
 	PaidBy     string  `json:"paidBy"`
 	ReceivedBy string  `json:"receivedBy"`
-} // @name SettleExpenseRequest
+} // @name Expense.SettleRequest

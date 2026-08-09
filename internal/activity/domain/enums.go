@@ -2,7 +2,7 @@ package domain
 
 // EntityType represents the domain category of the payload discriminator.
 // @enums EXPENSE SETTLEMENT MEMBER GROUP
-type EntityType string // @name EntityType
+type EntityType string // @name Activity.EntityType
 
 const (
 	EntityTypeExpense    EntityType = "EXPENSE"
@@ -13,7 +13,7 @@ const (
 
 // ActionType represents the specific action performed.
 // @enums EXPENSE_CREATED SETTLEMENT MEMBER_ADDED MEMBER_LEFT MEMBER_KICKED MEMBER_ROLE_UPDATED GROUP_CREATED GROUP_UPDATED GROUP_ARCHIVED MEMBER_JOINED
-type ActionType string // @name ActionType
+type ActionType string // @name Activity.ActionType
 
 const (
 	ActionTypeExpenseCreated    ActionType = "EXPENSE_CREATED"

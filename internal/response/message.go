@@ -6,4 +6,4 @@ package response
 // Flutter clients can deserialize with a single shared MessageResponse class.
 type MessageResponse struct {
 	Message string `json:"message"`
-} // @name MessageResponse
+} // @name Common.MessageResponse

@@ -58,7 +58,7 @@ type JoinResponse struct {
 	Status  MemberStatus `json:"status"`
 	Message string       `json:"message,omitempty"`
 	Group   *Group       `json:"group,omitempty"`
-} // @name JoinResponse
+} // @name Group.JoinResponse
 
 // UseCase manages business workflows for the group domain.
 type UseCase struct {

@@ -2,14 +2,14 @@ package http
 
 type RegisterRequest struct {
 	Name string `json:"name"`
-} // @name RegisterRequest
+} // @name User.RegisterRequest
 
 type UpdateProfileRequest struct {
 	Name            string `json:"name"`
 	DefaultCurrency string `json:"defaultCurrency"`
-} // @name UpdateProfileRequest
+} // @name User.UpdateProfileRequest
 
 type AddFriendRequest struct {
 	FriendEmail string `json:"friendEmail"`
 	FriendPhone string `json:"friendPhone"`
-} // @name AddFriendRequest
+} // @name User.AddFriendRequest

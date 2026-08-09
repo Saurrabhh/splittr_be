@@ -2,7 +2,7 @@ package domain
 
 import "time"
 
-type MemberStatus string // @name MemberStatus
+type MemberStatus string // @name Group.MemberStatus
 
 const (
 	MemberStatusActive   MemberStatus = "ACTIVE"
@@ -10,7 +10,7 @@ const (
 	MemberStatusRejected MemberStatus = "REJECTED"
 )
 
-type MemberRole string // @name MemberRole
+type MemberRole string // @name Group.MemberRole
 
 const (
 	MemberRoleAdmin  MemberRole = "ADMIN"
@@ -30,7 +30,7 @@ type Group struct {
 	UpdatedAt            time.Time  `json:"updatedAt"`
 	ArchivedAt           *time.Time `json:"archivedAt,omitempty"`
 	Members              []Member   `json:"members,omitempty"`
-} // @name Group
+} // @name Group.Group
 
 // Member represents a user's membership details in a group, enriched with basic user details.
 type Member struct {
@@ -42,7 +42,7 @@ type Member struct {
 	Name     string       `json:"name"`
 	Email    *string      `json:"email,omitempty"`
 	Phone    *string      `json:"phone,omitempty"`
-} // @name Member
+} // @name Group.Member
 
 // Preview represents a summary of a group's details before joining.
 type Preview struct {
@@ -51,10 +51,10 @@ type Preview struct {
 	MemberCount          int64   `json:"memberCount"`
 	CreatorName          string  `json:"creatorName"`
 	RequireAdminApproval bool    `json:"requireAdminApproval"`
-} // @name Preview
+} // @name Group.Preview
 
 // JoinRequestAction is the action an admin can take on a pending join request.
-type JoinRequestAction string // @name JoinRequestAction
+type JoinRequestAction string // @name Group.JoinRequestAction
 
 const (
 	JoinRequestActionApprove JoinRequestAction = "APPROVE"
@@ -64,4 +64,4 @@ const (
 // DecideJoinRequestPayload is the request body for approving or rejecting a join request.
 type DecideJoinRequestPayload struct {
 	Action JoinRequestAction `json:"action"`
-} // @name DecideJoinRequestPayload
+} // @name Group.DecideJoinRequestPayload

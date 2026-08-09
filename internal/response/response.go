@@ -9,7 +9,7 @@ import (
 )
 
 // ErrorCode represents a centralized standard API error code.
-type ErrorCode string // @name ErrorCode
+type ErrorCode string // @name Common.ErrorCode
 
 // Generic error codes.
 const (
@@ -58,7 +58,7 @@ func (e *AppError) Unwrap() error {
 type ErrorResponse struct {
 	Code    ErrorCode `json:"code"`
 	Message string    `json:"message"`
-} // @name ErrorResponse
+} // @name Common.ErrorResponse
 
 // JSON sends a raw JSON response with the given status code.
 func JSON(w http.ResponseWriter, status int, data any) {

@@ -1,7 +1,7 @@
 package domain
 
 // AlertType represents the machine-readable category of a notification alert.
-type AlertType string // @name AlertType
+type AlertType string // @name Notification.AlertType
 
 const (
 	AlertTypeExpenseAdded        AlertType = "EXPENSE_ADDED"

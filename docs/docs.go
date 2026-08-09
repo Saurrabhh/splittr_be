@@ -8,7 +8,39 @@ const docTemplate = `{
     "schemes": {{ marshal .Schemes }},
     "components": {
         "schemas": {
-            "ActionType": {
+            "Activity": {
+                "properties": {
+                    "actionType": {
+                        "$ref": "#/components/schemas/Activity.ActionType"
+                    },
+                    "actor": {
+                        "$ref": "#/components/schemas/Activity.ActorInfo"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "entityId": {
+                        "type": "string"
+                    },
+                    "entityType": {
+                        "$ref": "#/components/schemas/Activity.EntityType"
+                    },
+                    "groupId": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "payload": {
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "Activity.ActionType": {
                 "enum": [
                     "EXPENSE_CREATED",
                     "SETTLEMENT",
@@ -37,13 +69,13 @@ const docTemplate = `{
                     "ActionTypeMemberRemoved"
                 ]
             },
-            "Activity": {
+            "Activity.Activity": {
                 "properties": {
                     "actionType": {
-                        "$ref": "#/components/schemas/ActionType"
+                        "$ref": "#/components/schemas/Activity.ActionType"
                     },
                     "actor": {
-                        "$ref": "#/components/schemas/ActorInfo"
+                        "$ref": "#/components/schemas/Activity.ActorInfo"
                     },
                     "createdAt": {
                         "type": "string"
@@ -55,7 +87,7 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "entityType": {
-                        "$ref": "#/components/schemas/EntityType"
+                        "$ref": "#/components/schemas/Activity.EntityType"
                     },
                     "groupId": {
                         "type": "string"
@@ -69,7 +101,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "ActorInfo": {
+            "Activity.ActorInfo": {
                 "properties": {
                     "id": {
                         "type": "string"
@@ -80,54 +112,25 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "AddFriendRequest": {
-                "properties": {
-                    "friendEmail": {
-                        "type": "string"
-                    },
-                    "friendPhone": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "AddMembersRequest": {
-                "properties": {
-                    "userIds": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "minItems": 1,
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "required": [
-                    "userIds"
-                ],
-                "type": "object"
-            },
-            "AlertType": {
+            "Activity.EntityType": {
                 "enum": [
-                    "EXPENSE_ADDED",
-                    "PAYMENT_RECEIVED",
-                    "JOIN_REQUEST_PENDING",
-                    "JOIN_REQUEST_APPROVED",
-                    "JOIN_REQUEST_REJECTED"
+                    "EXPENSE",
+                    "SETTLEMENT",
+                    "MEMBER",
+                    "GROUP"
                 ],
                 "type": "string",
                 "x-enum-varnames": [
-                    "AlertTypeExpenseAdded",
-                    "AlertTypePaymentReceived",
-                    "AlertTypeJoinRequestPending",
-                    "AlertTypeJoinRequestApproved",
-                    "AlertTypeJoinRequestRejected"
+                    "EntityTypeExpense",
+                    "EntityTypeSettlement",
+                    "EntityTypeMember",
+                    "EntityTypeGroup"
                 ]
             },
-            "AppConfigData": {
+            "AppConfig.AppConfigData": {
                 "properties": {
                     "domain": {
-                        "$ref": "#/components/schemas/DomainConfig"
+                        "$ref": "#/components/schemas/AppConfig.DomainConfig"
                     },
                     "featureFlags": {
                         "additionalProperties": {
@@ -136,18 +139,18 @@ const docTemplate = `{
                         "type": "object"
                     },
                     "legal": {
-                        "$ref": "#/components/schemas/LegalConfig"
+                        "$ref": "#/components/schemas/AppConfig.LegalConfig"
                     },
                     "system": {
-                        "$ref": "#/components/schemas/SystemConfig"
+                        "$ref": "#/components/schemas/AppConfig.SystemConfig"
                     },
                     "userContext": {
-                        "$ref": "#/components/schemas/UserContext"
+                        "$ref": "#/components/schemas/AppConfig.UserContext"
                     }
                 },
                 "type": "object"
             },
-            "AppConfigMeta": {
+            "AppConfig.AppConfigMeta": {
                 "properties": {
                     "configVersion": {
                         "type": "string"
@@ -158,18 +161,18 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "AppConfigResponse": {
+            "AppConfig.AppConfigResponse": {
                 "properties": {
                     "data": {
-                        "$ref": "#/components/schemas/AppConfigData"
+                        "$ref": "#/components/schemas/AppConfig.AppConfigData"
                     },
                     "meta": {
-                        "$ref": "#/components/schemas/AppConfigMeta"
+                        "$ref": "#/components/schemas/AppConfig.AppConfigMeta"
                     }
                 },
                 "type": "object"
             },
-            "AppVersion": {
+            "AppConfig.AppVersion": {
                 "properties": {
                     "forceUpdate": {
                         "type": "boolean"
@@ -192,26 +195,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "BalanceResponse": {
-                "properties": {
-                    "balances": {
-                        "items": {
-                            "$ref": "#/components/schemas/UserBalance"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "settlements": {
-                        "items": {
-                            "$ref": "#/components/schemas/Settlement"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
-            "Category": {
+            "AppConfig.Category": {
                 "properties": {
                     "iconUrl": {
                         "type": "string"
@@ -225,57 +209,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "CreateExpenseRequest": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "category": {
-                        "type": "string"
-                    },
-                    "currency": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "groupId": {
-                        "type": "string"
-                    },
-                    "paidBy": {
-                        "type": "string"
-                    },
-                    "splitType": {
-                        "$ref": "#/components/schemas/SplitType"
-                    },
-                    "splits": {
-                        "items": {
-                            "$ref": "#/components/schemas/InputSplit"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
-            "CreateGroupRequest": {
-                "properties": {
-                    "description": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "requireAdminApproval": {
-                        "type": "boolean"
-                    }
-                },
-                "required": [
-                    "name"
-                ],
-                "type": "object"
-            },
-            "Currency": {
+            "AppConfig.Currency": {
                 "properties": {
                     "code": {
                         "type": "string"
@@ -295,43 +229,35 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "DecideJoinRequestPayload": {
-                "properties": {
-                    "action": {
-                        "$ref": "#/components/schemas/JoinRequestAction"
-                    }
-                },
-                "type": "object"
-            },
-            "DomainConfig": {
+            "AppConfig.DomainConfig": {
                 "properties": {
                     "categories": {
                         "items": {
-                            "$ref": "#/components/schemas/Category"
+                            "$ref": "#/components/schemas/AppConfig.Category"
                         },
                         "type": "array",
                         "uniqueItems": false
                     },
                     "currencies": {
                         "items": {
-                            "$ref": "#/components/schemas/Currency"
+                            "$ref": "#/components/schemas/AppConfig.Currency"
                         },
                         "type": "array",
                         "uniqueItems": false
                     },
                     "limits": {
-                        "$ref": "#/components/schemas/LimitsConfig"
+                        "$ref": "#/components/schemas/AppConfig.LimitsConfig"
                     },
                     "paymentIntegrations": {
                         "items": {
-                            "$ref": "#/components/schemas/PaymentIntegration"
+                            "$ref": "#/components/schemas/AppConfig.PaymentIntegration"
                         },
                         "type": "array",
                         "uniqueItems": false
                     },
                     "splitTypes": {
                         "items": {
-                            "$ref": "#/components/schemas/SplitTypeConfig"
+                            "$ref": "#/components/schemas/AppConfig.SplitTypeConfig"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -339,22 +265,122 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "EntityType": {
-                "enum": [
-                    "EXPENSE",
-                    "SETTLEMENT",
-                    "MEMBER",
-                    "GROUP"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "EntityTypeExpense",
-                    "EntityTypeSettlement",
-                    "EntityTypeMember",
-                    "EntityTypeGroup"
-                ]
+            "AppConfig.LegalConfig": {
+                "properties": {
+                    "faqUrl": {
+                        "type": "string"
+                    },
+                    "privacyPolicyUrl": {
+                        "type": "string"
+                    },
+                    "supportEmail": {
+                        "type": "string"
+                    },
+                    "termsOfServiceUrl": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
             },
-            "ErrorCode": {
+            "AppConfig.LimitsConfig": {
+                "properties": {
+                    "allowedReceiptMimeTypes": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "maxExpenseAmount": {
+                        "type": "number"
+                    },
+                    "maxGroupMembers": {
+                        "type": "integer"
+                    },
+                    "maxReceiptSizeMb": {
+                        "type": "integer"
+                    },
+                    "maxSplitParticipants": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "AppConfig.MaintenanceConfig": {
+                "properties": {
+                    "estimatedEndTime": {
+                        "type": "string"
+                    },
+                    "inMaintenance": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "readOnlyMode": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "AppConfig.PaymentIntegration": {
+                "properties": {
+                    "deepLinkScheme": {
+                        "type": "string"
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "AppConfig.SplitTypeConfig": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "AppConfig.SystemConfig": {
+                "properties": {
+                    "appVersion": {
+                        "$ref": "#/components/schemas/AppConfig.AppVersion"
+                    },
+                    "maintenance": {
+                        "$ref": "#/components/schemas/AppConfig.MaintenanceConfig"
+                    }
+                },
+                "type": "object"
+            },
+            "AppConfig.UserContext": {
+                "properties": {
+                    "isAuthenticated": {
+                        "type": "boolean"
+                    },
+                    "userFeatureFlags": {
+                        "additionalProperties": {},
+                        "type": "object"
+                    },
+                    "userPreferredCurrency": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Common.ErrorCode": {
                 "enum": [
                     "BAD_REQUEST",
                     "UNAUTHORIZED",
@@ -375,10 +401,10 @@ const docTemplate = `{
                     "ErrUserNotFound"
                 ]
             },
-            "ErrorResponse": {
+            "Common.ErrorResponse": {
                 "properties": {
                     "code": {
-                        "$ref": "#/components/schemas/ErrorCode"
+                        "$ref": "#/components/schemas/Common.ErrorCode"
                     },
                     "message": {
                         "type": "string"
@@ -386,7 +412,67 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "ExpenseWithSplits": {
+            "Common.MessageResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Expense.BalanceResponse": {
+                "properties": {
+                    "balances": {
+                        "items": {
+                            "$ref": "#/components/schemas/Expense.UserBalance"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "settlements": {
+                        "items": {
+                            "$ref": "#/components/schemas/Expense.Settlement"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "Expense.CreateRequest": {
+                "properties": {
+                    "amount": {
+                        "type": "number"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "groupId": {
+                        "type": "string"
+                    },
+                    "paidBy": {
+                        "type": "string"
+                    },
+                    "splitType": {
+                        "$ref": "#/components/schemas/Expense.SplitType"
+                    },
+                    "splits": {
+                        "items": {
+                            "$ref": "#/components/schemas/Expense.InputSplit"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "Expense.ExpenseWithSplits": {
                 "properties": {
                     "amount": {
                         "type": "number"
@@ -426,7 +512,7 @@ const docTemplate = `{
                     },
                     "splits": {
                         "items": {
-                            "$ref": "#/components/schemas/Split"
+                            "$ref": "#/components/schemas/Expense.Split"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -437,7 +523,160 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "Group": {
+            "Expense.InputSplit": {
+                "properties": {
+                    "amount": {
+                        "description": "Required if splitType is EXACT",
+                        "type": "number"
+                    },
+                    "percentage": {
+                        "description": "Required if splitType is PERCENTAGE",
+                        "type": "number"
+                    },
+                    "userId": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Expense.SettleRequest": {
+                "properties": {
+                    "amount": {
+                        "type": "number"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "groupId": {
+                        "type": "string"
+                    },
+                    "paidBy": {
+                        "type": "string"
+                    },
+                    "receivedBy": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Expense.Settlement": {
+                "properties": {
+                    "amount": {
+                        "type": "number"
+                    },
+                    "fromUserId": {
+                        "type": "string"
+                    },
+                    "fromUserName": {
+                        "type": "string"
+                    },
+                    "toUserId": {
+                        "type": "string"
+                    },
+                    "toUserName": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Expense.Split": {
+                "properties": {
+                    "amount": {
+                        "type": "number"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "expenseId": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "splitType": {
+                        "$ref": "#/components/schemas/Expense.SplitType"
+                    },
+                    "splitValue": {
+                        "type": "number"
+                    },
+                    "userId": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Expense.SplitType": {
+                "enum": [
+                    "EQUAL",
+                    "EXACT",
+                    "PERCENTAGE"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "SplitTypeEqual",
+                    "SplitTypeExact",
+                    "SplitTypePercentage"
+                ]
+            },
+            "Expense.UserBalance": {
+                "properties": {
+                    "netBalance": {
+                        "type": "number"
+                    },
+                    "userId": {
+                        "type": "string"
+                    },
+                    "userName": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Group.AddMembersRequest": {
+                "properties": {
+                    "userIds": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 1,
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "required": [
+                    "userIds"
+                ],
+                "type": "object"
+            },
+            "Group.CreateRequest": {
+                "properties": {
+                    "description": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "requireAdminApproval": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "type": "object"
+            },
+            "Group.DecideJoinRequestPayload": {
+                "properties": {
+                    "action": {
+                        "$ref": "#/components/schemas/Group.JoinRequestAction"
+                    }
+                },
+                "type": "object"
+            },
+            "Group.Group": {
                 "properties": {
                     "archivedAt": {
                         "type": "string"
@@ -462,7 +701,7 @@ const docTemplate = `{
                     },
                     "members": {
                         "items": {
-                            "$ref": "#/components/schemas/Member"
+                            "$ref": "#/components/schemas/Group.Member"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -479,23 +718,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "InputSplit": {
-                "properties": {
-                    "amount": {
-                        "description": "Required if splitType is EXACT",
-                        "type": "number"
-                    },
-                    "percentage": {
-                        "description": "Required if splitType is PERCENTAGE",
-                        "type": "number"
-                    },
-                    "userId": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "JoinGroupRequest": {
+            "Group.JoinRequest": {
                 "properties": {
                     "inviteCode": {
                         "type": "string"
@@ -506,7 +729,7 @@ const docTemplate = `{
                 ],
                 "type": "object"
             },
-            "JoinRequestAction": {
+            "Group.JoinRequestAction": {
                 "enum": [
                     "APPROVE",
                     "REJECT"
@@ -517,79 +740,21 @@ const docTemplate = `{
                     "JoinRequestActionReject"
                 ]
             },
-            "JoinResponse": {
+            "Group.JoinResponse": {
                 "properties": {
                     "group": {
-                        "$ref": "#/components/schemas/Group"
+                        "$ref": "#/components/schemas/Group.Group"
                     },
                     "message": {
                         "type": "string"
                     },
                     "status": {
-                        "$ref": "#/components/schemas/MemberStatus"
+                        "$ref": "#/components/schemas/Group.MemberStatus"
                     }
                 },
                 "type": "object"
             },
-            "LegalConfig": {
-                "properties": {
-                    "faqUrl": {
-                        "type": "string"
-                    },
-                    "privacyPolicyUrl": {
-                        "type": "string"
-                    },
-                    "supportEmail": {
-                        "type": "string"
-                    },
-                    "termsOfServiceUrl": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "LimitsConfig": {
-                "properties": {
-                    "allowedReceiptMimeTypes": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "maxExpenseAmount": {
-                        "type": "number"
-                    },
-                    "maxGroupMembers": {
-                        "type": "integer"
-                    },
-                    "maxReceiptSizeMb": {
-                        "type": "integer"
-                    },
-                    "maxSplitParticipants": {
-                        "type": "integer"
-                    }
-                },
-                "type": "object"
-            },
-            "MaintenanceConfig": {
-                "properties": {
-                    "estimatedEndTime": {
-                        "type": "string"
-                    },
-                    "inMaintenance": {
-                        "type": "boolean"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "readOnlyMode": {
-                        "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
-            "Member": {
+            "Group.Member": {
                 "properties": {
                     "email": {
                         "type": "string"
@@ -607,10 +772,10 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "role": {
-                        "$ref": "#/components/schemas/MemberRole"
+                        "$ref": "#/components/schemas/Group.MemberRole"
                     },
                     "status": {
-                        "$ref": "#/components/schemas/MemberStatus"
+                        "$ref": "#/components/schemas/Group.MemberStatus"
                     },
                     "userId": {
                         "type": "string"
@@ -618,7 +783,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "MemberRole": {
+            "Group.MemberRole": {
                 "enum": [
                     "ADMIN",
                     "MEMBER"
@@ -629,7 +794,7 @@ const docTemplate = `{
                     "MemberRoleMember"
                 ]
             },
-            "MemberStatus": {
+            "Group.MemberStatus": {
                 "enum": [
                     "ACTIVE",
                     "PENDING",
@@ -642,10 +807,30 @@ const docTemplate = `{
                     "MemberStatusRejected"
                 ]
             },
-            "MessageResponse": {
+            "Group.Preview": {
                 "properties": {
-                    "message": {
+                    "creatorName": {
                         "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "memberCount": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "requireAdminApproval": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "Group.UpdateRoleRequest": {
+                "properties": {
+                    "role": {
+                        "$ref": "#/components/schemas/Group.MemberRole"
                     }
                 },
                 "type": "object"
@@ -661,7 +846,24 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "Notification": {
+            "Notification.AlertType": {
+                "enum": [
+                    "EXPENSE_ADDED",
+                    "PAYMENT_RECEIVED",
+                    "JOIN_REQUEST_PENDING",
+                    "JOIN_REQUEST_APPROVED",
+                    "JOIN_REQUEST_REJECTED"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "AlertTypeExpenseAdded",
+                    "AlertTypePaymentReceived",
+                    "AlertTypeJoinRequestPending",
+                    "AlertTypeJoinRequestApproved",
+                    "AlertTypeJoinRequestRejected"
+                ]
+            },
+            "Notification.Notification": {
                 "properties": {
                     "activityId": {
                         "type": "string"
@@ -688,7 +890,7 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "type": {
-                        "$ref": "#/components/schemas/AlertType"
+                        "$ref": "#/components/schemas/Notification.AlertType"
                     },
                     "userId": {
                         "type": "string"
@@ -711,11 +913,11 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "Page-ExpenseWithSplits": {
+            "Page-Activity_Activity": {
                 "properties": {
                     "data": {
                         "items": {
-                            "$ref": "#/components/schemas/ExpenseWithSplits"
+                            "$ref": "#/components/schemas/Activity.Activity"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -726,11 +928,11 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "Page-Group": {
+            "Page-Expense_ExpenseWithSplits": {
                 "properties": {
                     "data": {
                         "items": {
-                            "$ref": "#/components/schemas/Group"
+                            "$ref": "#/components/schemas/Expense.ExpenseWithSplits"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -741,11 +943,11 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "Page-Notification": {
+            "Page-Group_Group": {
                 "properties": {
                     "data": {
                         "items": {
-                            "$ref": "#/components/schemas/Notification"
+                            "$ref": "#/components/schemas/Group.Group"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -756,11 +958,11 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "Page-User": {
+            "Page-Notification_Notification": {
                 "properties": {
                     "data": {
                         "items": {
-                            "$ref": "#/components/schemas/User"
+                            "$ref": "#/components/schemas/Notification.Notification"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -771,44 +973,33 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "PaymentIntegration": {
+            "Page-User_User": {
                 "properties": {
-                    "deepLinkScheme": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/User.User"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/Meta"
+                    }
+                },
+                "type": "object"
+            },
+            "User.AddFriendRequest": {
+                "properties": {
+                    "friendEmail": {
                         "type": "string"
                     },
-                    "enabled": {
-                        "type": "boolean"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "name": {
+                    "friendPhone": {
                         "type": "string"
                     }
                 },
                 "type": "object"
             },
-            "Preview": {
-                "properties": {
-                    "creatorName": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "memberCount": {
-                        "type": "integer"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "requireAdminApproval": {
-                        "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
-            "RegisterRequest": {
+            "User.RegisterRequest": {
                 "properties": {
                     "name": {
                         "type": "string"
@@ -816,114 +1007,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "SettleExpenseRequest": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "currency": {
-                        "type": "string"
-                    },
-                    "groupId": {
-                        "type": "string"
-                    },
-                    "paidBy": {
-                        "type": "string"
-                    },
-                    "receivedBy": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "Settlement": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "fromUserId": {
-                        "type": "string"
-                    },
-                    "fromUserName": {
-                        "type": "string"
-                    },
-                    "toUserId": {
-                        "type": "string"
-                    },
-                    "toUserName": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "Split": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "email": {
-                        "type": "string"
-                    },
-                    "expenseId": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "phone": {
-                        "type": "string"
-                    },
-                    "splitType": {
-                        "$ref": "#/components/schemas/SplitType"
-                    },
-                    "splitValue": {
-                        "type": "number"
-                    },
-                    "userId": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "SplitType": {
-                "enum": [
-                    "EQUAL",
-                    "EXACT",
-                    "PERCENTAGE"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "SplitTypeEqual",
-                    "SplitTypeExact",
-                    "SplitTypePercentage"
-                ]
-            },
-            "SplitTypeConfig": {
-                "properties": {
-                    "code": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "label": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "SystemConfig": {
-                "properties": {
-                    "appVersion": {
-                        "$ref": "#/components/schemas/AppVersion"
-                    },
-                    "maintenance": {
-                        "$ref": "#/components/schemas/MaintenanceConfig"
-                    }
-                },
-                "type": "object"
-            },
-            "UpdateProfileRequest": {
+            "User.UpdateProfileRequest": {
                 "properties": {
                     "defaultCurrency": {
                         "type": "string"
@@ -934,15 +1018,7 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "UpdateRoleRequest": {
-                "properties": {
-                    "role": {
-                        "$ref": "#/components/schemas/MemberRole"
-                    }
-                },
-                "type": "object"
-            },
-            "User": {
+            "User.User": {
                 "properties": {
                     "createdAt": {
                         "type": "string"
@@ -963,35 +1039,6 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "updatedAt": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "UserBalance": {
-                "properties": {
-                    "netBalance": {
-                        "type": "number"
-                    },
-                    "userId": {
-                        "type": "string"
-                    },
-                    "userName": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "UserContext": {
-                "properties": {
-                    "isAuthenticated": {
-                        "type": "boolean"
-                    },
-                    "userFeatureFlags": {
-                        "additionalProperties": {},
-                        "type": "object"
-                    },
-                    "userPreferredCurrency": {
                         "type": "string"
                     }
                 },
@@ -1041,7 +1088,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Page-Activity"
+                                    "$ref": "#/components/schemas/Page-Activity_Activity"
                                 }
                             }
                         },
@@ -1051,7 +1098,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1061,7 +1108,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1106,7 +1153,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/AppConfigResponse"
+                                    "$ref": "#/components/schemas/AppConfig.AppConfigResponse"
                                 }
                             }
                         },
@@ -1119,7 +1166,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1158,7 +1205,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/BalanceResponse"
+                                    "$ref": "#/components/schemas/Expense.BalanceResponse"
                                 }
                             }
                         },
@@ -1168,7 +1215,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1178,7 +1225,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1188,7 +1235,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1256,7 +1303,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Page-ExpenseWithSplits"
+                                    "$ref": "#/components/schemas/Page-Expense_ExpenseWithSplits"
                                 }
                             }
                         },
@@ -1266,7 +1313,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1276,7 +1323,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1286,7 +1333,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1314,7 +1361,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/CreateExpenseRequest",
+                                        "$ref": "#/components/schemas/Expense.CreateRequest",
                                         "summary": "request",
                                         "description": "Expense details and splits structure"
                                     }
@@ -1330,7 +1377,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ExpenseWithSplits"
+                                    "$ref": "#/components/schemas/Expense.ExpenseWithSplits"
                                 }
                             }
                         },
@@ -1340,7 +1387,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1350,7 +1397,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1360,7 +1407,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1390,7 +1437,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/SettleExpenseRequest",
+                                        "$ref": "#/components/schemas/Expense.SettleRequest",
                                         "summary": "request",
                                         "description": "Settlement details"
                                     }
@@ -1406,7 +1453,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ExpenseWithSplits"
+                                    "$ref": "#/components/schemas/Expense.ExpenseWithSplits"
                                 }
                             }
                         },
@@ -1416,7 +1463,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1426,7 +1473,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1436,7 +1483,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1476,7 +1523,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1486,7 +1533,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1496,7 +1543,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1506,7 +1553,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1516,7 +1563,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1551,7 +1598,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ExpenseWithSplits"
+                                    "$ref": "#/components/schemas/Expense.ExpenseWithSplits"
                                 }
                             }
                         },
@@ -1561,7 +1608,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1571,7 +1618,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1581,7 +1628,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1591,7 +1638,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1601,7 +1648,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1645,7 +1692,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Page-User"
+                                    "$ref": "#/components/schemas/Page-User_User"
                                 }
                             }
                         },
@@ -1655,7 +1702,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1665,7 +1712,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1693,7 +1740,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/AddFriendRequest",
+                                        "$ref": "#/components/schemas/User.AddFriendRequest",
                                         "summary": "request",
                                         "description": "Friend email or phone"
                                     }
@@ -1709,7 +1756,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/User"
+                                    "$ref": "#/components/schemas/User.User"
                                 }
                             }
                         },
@@ -1719,7 +1766,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1729,7 +1776,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1739,7 +1786,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1779,7 +1826,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1789,7 +1836,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1799,7 +1846,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1843,7 +1890,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Page-Group"
+                                    "$ref": "#/components/schemas/Page-Group_Group"
                                 }
                             }
                         },
@@ -1853,7 +1900,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1863,7 +1910,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1891,7 +1938,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/CreateGroupRequest",
+                                        "$ref": "#/components/schemas/Group.CreateRequest",
                                         "summary": "request",
                                         "description": "Group creation data"
                                     }
@@ -1907,7 +1954,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Group"
+                                    "$ref": "#/components/schemas/Group.Group"
                                 }
                             }
                         },
@@ -1917,7 +1964,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1927,7 +1974,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1937,7 +1984,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -1967,7 +2014,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/JoinGroupRequest",
+                                        "$ref": "#/components/schemas/Group.JoinRequest",
                                         "summary": "request",
                                         "description": "Group join data"
                                     }
@@ -1983,7 +2030,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/JoinResponse"
+                                    "$ref": "#/components/schemas/Group.JoinResponse"
                                 }
                             }
                         },
@@ -1993,7 +2040,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2003,7 +2050,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2013,7 +2060,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2023,7 +2070,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2033,7 +2080,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2070,7 +2117,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Preview"
+                                    "$ref": "#/components/schemas/Group.Preview"
                                 }
                             }
                         },
@@ -2080,7 +2127,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2090,7 +2137,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2100,7 +2147,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2140,7 +2187,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2150,7 +2197,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2160,7 +2207,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2195,7 +2242,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Group"
+                                    "$ref": "#/components/schemas/Group.Group"
                                 }
                             }
                         },
@@ -2205,7 +2252,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2215,7 +2262,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2225,7 +2272,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2288,7 +2335,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2298,7 +2345,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2308,7 +2355,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2345,7 +2392,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Group"
+                                    "$ref": "#/components/schemas/Group.Group"
                                 }
                             }
                         },
@@ -2355,7 +2402,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2365,7 +2412,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2375,7 +2422,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2421,7 +2468,7 @@ const docTemplate = `{
                             "application/json": {
                                 "schema": {
                                     "items": {
-                                        "$ref": "#/components/schemas/Member"
+                                        "$ref": "#/components/schemas/Group.Member"
                                     },
                                     "type": "array"
                                 }
@@ -2433,7 +2480,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2443,7 +2490,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2453,7 +2500,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2492,7 +2539,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/AddMembersRequest",
+                                        "$ref": "#/components/schemas/Group.AddMembersRequest",
                                         "summary": "request",
                                         "description": "User IDs of members to add"
                                     }
@@ -2509,7 +2556,7 @@ const docTemplate = `{
                             "application/json": {
                                 "schema": {
                                     "items": {
-                                        "$ref": "#/components/schemas/Member"
+                                        "$ref": "#/components/schemas/Group.Member"
                                     },
                                     "type": "array"
                                 }
@@ -2521,7 +2568,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2531,7 +2578,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2541,7 +2588,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2590,7 +2637,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2600,7 +2647,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2610,7 +2657,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2660,7 +2707,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/DecideJoinRequestPayload",
+                                        "$ref": "#/components/schemas/Group.DecideJoinRequestPayload",
                                         "summary": "request",
                                         "description": "Action (APPROVE or REJECT)"
                                     }
@@ -2676,7 +2723,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Member"
+                                    "$ref": "#/components/schemas/Group.Member"
                                 }
                             }
                         },
@@ -2686,7 +2733,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2696,7 +2743,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2706,7 +2753,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2716,7 +2763,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2766,7 +2813,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/UpdateRoleRequest",
+                                        "$ref": "#/components/schemas/Group.UpdateRoleRequest",
                                         "summary": "request",
                                         "description": "New role value"
                                     }
@@ -2782,7 +2829,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Member"
+                                    "$ref": "#/components/schemas/Group.Member"
                                 }
                             }
                         },
@@ -2792,7 +2839,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2802,7 +2849,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2812,7 +2859,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2856,7 +2903,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Page-Notification"
+                                    "$ref": "#/components/schemas/Page-Notification_Notification"
                                 }
                             }
                         },
@@ -2866,7 +2913,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2876,7 +2923,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2902,7 +2949,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/MessageResponse"
+                                    "$ref": "#/components/schemas/Common.MessageResponse"
                                 }
                             }
                         },
@@ -2912,7 +2959,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2922,7 +2969,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2959,7 +3006,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/MessageResponse"
+                                    "$ref": "#/components/schemas/Common.MessageResponse"
                                 }
                             }
                         },
@@ -2969,7 +3016,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2979,7 +3026,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2989,7 +3036,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -2999,7 +3046,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -3029,7 +3076,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/RegisterRequest",
+                                        "$ref": "#/components/schemas/User.RegisterRequest",
                                         "summary": "request",
                                         "description": "Registration data"
                                     }
@@ -3045,7 +3092,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/User"
+                                    "$ref": "#/components/schemas/User.User"
                                 }
                             }
                         },
@@ -3055,7 +3102,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -3065,7 +3112,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -3075,7 +3122,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -3101,7 +3148,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/User"
+                                    "$ref": "#/components/schemas/User.User"
                                 }
                             }
                         },
@@ -3111,7 +3158,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -3121,7 +3168,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -3149,7 +3196,7 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/UpdateProfileRequest",
+                                        "$ref": "#/components/schemas/User.UpdateProfileRequest",
                                         "summary": "request",
                                         "description": "Profile details to update"
                                     }
@@ -3165,7 +3212,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/User"
+                                    "$ref": "#/components/schemas/User.User"
                                 }
                             }
                         },
@@ -3175,7 +3222,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -3185,7 +3232,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
@@ -3195,7 +3242,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
                                 }
                             }
                         },
