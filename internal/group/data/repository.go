@@ -224,31 +224,6 @@ func parseGroupIDAndUserID(groupID, userID string) (uuid.UUID, uuid.UUID, error)
 	return parsedGroupID, parsedUserID, nil
 }
 
-// AddGroupMember adds a member to the group with status.
-func (r *DBRepository) AddGroupMember(ctx context.Context, groupID, userID string, role domain.MemberRole, status domain.MemberStatus) error {
-	parsedGroupID, parsedUserID, err := parseGroupIDAndUserID(groupID, userID)
-	if err != nil {
-		return err
-	}
-	if status == "" {
-		status = domain.MemberStatusActive
-	}
-
-	client := r.tm.GetTxOrPool(ctx)
-	q := dbgen.New(client)
-
-	err = q.AddGroupMember(ctx, dbgen.AddGroupMemberParams{
-		GroupID: parsedGroupID,
-		UserID:  parsedUserID,
-		Role:    dbgen.MemberRole(role),
-		Status:  dbgen.MemberStatus(status),
-	})
-	if err != nil {
-		return fmt.Errorf("add group member: %w", err)
-	}
-	return nil
-}
-
 // AddGroupMembers adds multiple members to the group with the given role and status, returning the added members.
 func (r *DBRepository) AddGroupMembers(ctx context.Context, groupID string, userIDs []string, role domain.MemberRole, status domain.MemberStatus) ([]domain.Member, error) {
 	parsedGroupID, err := uuid.Parse(groupID)

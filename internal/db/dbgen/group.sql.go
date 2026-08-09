@@ -12,30 +12,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const addGroupMember = `-- name: AddGroupMember :exec
-INSERT INTO group_members (group_id, user_id, role, status, joined_at)
-VALUES ($1, $2, $3, $4, NOW())
-ON CONFLICT (group_id, user_id) 
-DO UPDATE SET role = EXCLUDED.role, status = EXCLUDED.status, joined_at = NOW()
-`
-
-type AddGroupMemberParams struct {
-	GroupID uuid.UUID
-	UserID  uuid.UUID
-	Role    MemberRole
-	Status  MemberStatus
-}
-
-func (q *Queries) AddGroupMember(ctx context.Context, arg AddGroupMemberParams) error {
-	_, err := q.db.Exec(ctx, addGroupMember,
-		arg.GroupID,
-		arg.UserID,
-		arg.Role,
-		arg.Status,
-	)
-	return err
-}
-
 const addGroupMembers = `-- name: AddGroupMembers :exec
 INSERT INTO group_members (group_id, user_id, role, status, joined_at)
 SELECT $1::uuid, unnest($2::uuid[]), $3::member_role, $4::member_status, NOW()

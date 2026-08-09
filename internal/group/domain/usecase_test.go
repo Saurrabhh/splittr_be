@@ -88,9 +88,6 @@ func (m *mockGroupRepository) Archive(ctx context.Context, id string) error {
 	return m.Called(ctx, id).Error(0)
 }
 
-func (m *mockGroupRepository) AddGroupMember(ctx context.Context, groupID, userID string, role domain.MemberRole, status domain.MemberStatus) error {
-	return m.Called(ctx, groupID, userID, role, status).Error(0)
-}
 
 func (m *mockGroupRepository) AddGroupMembers(ctx context.Context, groupID string, userIDs []string, role domain.MemberRole, status domain.MemberStatus) ([]domain.Member, error) {
 	args := m.Called(ctx, groupID, userIDs, role, status)
@@ -169,7 +166,7 @@ func TestCreateGroup_Success(t *testing.T) {
 	groupDesc := "Fun vacation"
 
 	mockRepo.On("CreateGroup", ctx, mock.AnythingOfType("*domain.Group")).Return(nil)
-	mockRepo.On("AddGroupMember", ctx, mock.AnythingOfType("string"), creatorID, domain.MemberRoleAdmin, domain.MemberStatusActive).Return(nil)
+	mockRepo.On("AddGroupMembers", ctx, mock.AnythingOfType("string"), []string{creatorID}, domain.MemberRoleAdmin, domain.MemberStatusActive).Return([]domain.Member{}, nil)
 	mockRepo.On("ListGroupMembers", ctx, mock.AnythingOfType("string"), domain.MemberStatusActive).Return([]domain.Member{
 		{GroupID: "grp-1", UserID: creatorID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive},
 	}, nil)
@@ -279,7 +276,7 @@ func TestJoinGroup_NewMember_Success(t *testing.T) {
 
 	mockRepo.On("GetByInviteCode", ctx, inviteCode).Return(g, nil)
 	mockRepo.On("GetGroupMember", ctx, groupID, userID).Return(nil, nil)
-	mockRepo.On("AddGroupMember", ctx, groupID, userID, domain.MemberRoleMember, domain.MemberStatusActive).Return(nil)
+	mockRepo.On("AddGroupMembers", ctx, groupID, []string{userID}, domain.MemberRoleMember, domain.MemberStatusActive).Return([]domain.Member{}, nil)
 	mockRepo.On("ListGroupMembers", ctx, groupID, domain.MemberStatusActive).Return([]domain.Member{newMember}, nil)
 
 	mockAct.On("LogEvent",
@@ -337,7 +334,7 @@ func TestJoinGroup_RequireAdminApproval_Pending(t *testing.T) {
 
 	mockRepo.On("GetByInviteCode", ctx, inviteCode).Return(g, nil)
 	mockRepo.On("GetGroupMember", ctx, groupID, userID).Return(nil, nil)
-	mockRepo.On("AddGroupMember", ctx, groupID, userID, domain.MemberRoleMember, domain.MemberStatusPending).Return(nil)
+	mockRepo.On("AddGroupMembers", ctx, groupID, []string{userID}, domain.MemberRoleMember, domain.MemberStatusPending).Return([]domain.Member{}, nil)
 	mockRepo.On("ListGroupMembers", ctx, groupID, domain.MemberStatusActive).Return([]domain.Member{
 		{GroupID: groupID, UserID: adminID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive},
 	}, nil)

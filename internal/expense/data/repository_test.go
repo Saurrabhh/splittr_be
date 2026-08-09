@@ -299,9 +299,10 @@ func TestRepository_GetGroupBalances_And_Pairwise(t *testing.T) {
 	u2 := createTestUser(t, userRepo, "Bob")
 	g := createTestGroup(t, groupRepo, u1.ID, "Balance Group")
 
-	// Add u1 and u2 to group members
-	require.NoError(t, groupRepo.AddGroupMember(ctx, g.ID, u1.ID, group.MemberRoleAdmin, group.MemberStatusActive))
-	require.NoError(t, groupRepo.AddGroupMember(ctx, g.ID, u2.ID, group.MemberRoleMember, group.MemberStatusActive))
+	_, err = groupRepo.AddGroupMembers(ctx, g.ID, []string{u1.ID}, group.MemberRoleAdmin, group.MemberStatusActive)
+	require.NoError(t, err)
+	_, err = groupRepo.AddGroupMembers(ctx, g.ID, []string{u2.ID}, group.MemberRoleMember, group.MemberStatusActive)
+	require.NoError(t, err)
 
 	expID := uuid.New().String()
 	e := &domain.Expense{

@@ -103,8 +103,8 @@ func TestRepository_GetByInviteCode_And_Preview(t *testing.T) {
 		InviteCode:  &inviteCode,
 		CreatedBy:   &creator.ID,
 	}
-	require.NoError(t, groupRepo.CreateGroup(ctx, g))
-	require.NoError(t, groupRepo.AddGroupMember(ctx, groupID, creator.ID, domain.MemberRoleAdmin, domain.MemberStatusActive))
+	_, err = groupRepo.AddGroupMembers(ctx, groupID, []string{creator.ID}, domain.MemberRoleAdmin, domain.MemberStatusActive)
+	require.NoError(t, err)
 
 	// GetByInviteCode Success
 	fetched, err := groupRepo.GetByInviteCode(ctx, inviteCode)
@@ -216,8 +216,8 @@ func TestRepository_GroupMembers_CRUD(t *testing.T) {
 	require.NoError(t, groupRepo.CreateGroup(ctx, g))
 
 	// Add Members
-	require.NoError(t, groupRepo.AddGroupMember(ctx, groupID, u1.ID, domain.MemberRoleAdmin, domain.MemberStatusActive))
-	require.NoError(t, groupRepo.AddGroupMember(ctx, groupID, u2.ID, domain.MemberRoleMember, domain.MemberStatusActive))
+	_, err = groupRepo.AddGroupMembers(ctx, groupID, []string{u1.ID, u2.ID}, domain.MemberRoleAdmin, domain.MemberStatusActive)
+	require.NoError(t, err)
 
 	// GetGroupMember Success
 	m1, err := groupRepo.GetGroupMember(ctx, groupID, u1.ID)
@@ -287,9 +287,10 @@ func TestRepository_ListUserGroupsWithMembers(t *testing.T) {
 	require.NoError(t, groupRepo.CreateGroup(ctx, g1))
 	require.NoError(t, groupRepo.CreateGroup(ctx, g2))
 
-	require.NoError(t, groupRepo.AddGroupMember(ctx, g1ID, u1.ID, domain.MemberRoleAdmin, domain.MemberStatusActive))
-	require.NoError(t, groupRepo.AddGroupMember(ctx, g1ID, u2.ID, domain.MemberRoleMember, domain.MemberStatusActive))
-	require.NoError(t, groupRepo.AddGroupMember(ctx, g2ID, u1.ID, domain.MemberRoleAdmin, domain.MemberStatusActive))
+	_, err = groupRepo.AddGroupMembers(ctx, g1ID, []string{u1.ID, u2.ID}, domain.MemberRoleAdmin, domain.MemberStatusActive)
+	require.NoError(t, err)
+	_, err = groupRepo.AddGroupMembers(ctx, g2ID, []string{u1.ID}, domain.MemberRoleAdmin, domain.MemberStatusActive)
+	require.NoError(t, err)
 
 	// List groups for u1
 	groupsList, err := groupRepo.ListUserGroupsWithMembers(ctx, u1.ID, 10, nil, nil)
@@ -325,19 +326,20 @@ func TestRepository_ForeignKeys_And_ConstraintEdgeCases(t *testing.T) {
 	g1 := &domain.Group{ID: g1ID, Name: "FK Group", CreatedBy: &u1.ID}
 	require.NoError(t, groupRepo.CreateGroup(ctx, g1))
 
-	// 1. Non-existent User ID in AddGroupMember (Foreign Key Constraint)
+	// 1. Non-existent User ID in AddGroupMembers (Foreign Key Constraint)
 	nonExistentUserID := uuid.New().String()
-	err := groupRepo.AddGroupMember(ctx, g1ID, nonExistentUserID, domain.MemberRoleMember, domain.MemberStatusActive)
+	_, err := groupRepo.AddGroupMembers(ctx, g1ID, []string{nonExistentUserID}, domain.MemberRoleMember, domain.MemberStatusActive)
 	require.Error(t, err, "expected foreign key violation for non-existent user")
 
-	// 2. Non-existent Group ID in AddGroupMember (Foreign Key Constraint)
+	// 2. Non-existent Group ID in AddGroupMembers (Foreign Key Constraint)
 	nonExistentGroupID := uuid.New().String()
-	err = groupRepo.AddGroupMember(ctx, nonExistentGroupID, u1.ID, domain.MemberRoleMember, domain.MemberStatusActive)
+	_, err = groupRepo.AddGroupMembers(ctx, nonExistentGroupID, []string{u1.ID}, domain.MemberRoleMember, domain.MemberStatusActive)
 	require.Error(t, err, "expected foreign key violation for non-existent group")
 
 	// 3. Duplicate Group Member Insertion is handled via ON CONFLICT DO NOTHING
-	require.NoError(t, groupRepo.AddGroupMember(ctx, g1ID, u1.ID, domain.MemberRoleAdmin, domain.MemberStatusActive))
-	err = groupRepo.AddGroupMember(ctx, g1ID, u1.ID, domain.MemberRoleMember, domain.MemberStatusActive)
+	_, err = groupRepo.AddGroupMembers(ctx, g1ID, []string{u1.ID}, domain.MemberRoleAdmin, domain.MemberStatusActive)
+	require.NoError(t, err)
+	_, err = groupRepo.AddGroupMembers(ctx, g1ID, []string{u1.ID}, domain.MemberRoleMember, domain.MemberStatusActive)
 	require.NoError(t, err, "ON CONFLICT DO NOTHING handles duplicate insertion silently")
 
 	members, err := groupRepo.ListGroupMembers(ctx, g1ID, domain.MemberStatus(""))

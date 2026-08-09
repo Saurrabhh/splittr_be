@@ -53,7 +53,7 @@ func createTestGroup(t *testing.T, groupRepo *group.DBRepository, creatorID stri
 	}
 	err := groupRepo.CreateGroup(ctx, g)
 	require.NoError(t, err)
-	err = groupRepo.AddGroupMember(ctx, g.ID, creatorID, group.MemberRoleAdmin, group.MemberStatusActive)
+	_, err = groupRepo.AddGroupMembers(ctx, g.ID, []string{creatorID}, group.MemberRoleAdmin, group.MemberStatusActive)
 	require.NoError(t, err)
 	return g
 }
@@ -169,7 +169,8 @@ func TestRepository_ListGroupFeed_And_Pagination(t *testing.T) {
 	member := createTestUser(t, userRepo, "Member Bob")
 	g := createTestGroup(t, groupRepo, admin.ID, "Road Trip")
 
-	require.NoError(t, groupRepo.AddGroupMember(ctx, g.ID, member.ID, group.MemberRoleMember, group.MemberStatusActive))
+	_, err = groupRepo.AddGroupMembers(ctx, g.ID, []string{member.ID}, group.MemberRoleMember, group.MemberStatusActive)
+	require.NoError(t, err)
 
 	// Create 3 group activities
 	act1 := &domain.Activity{ID: uuid.New().String(), GroupID: &g.ID, Actor: domain.ActorInfo{ID: admin.ID, Name: admin.Name}, ActionType: domain.ActionTypeGroupCreated, Description: "Created group", EntityType: domain.EntityTypeGroup}

@@ -119,7 +119,7 @@ func (u *UseCase) CreateGroup(ctx context.Context, name, description string, req
 		if err := u.repo.CreateGroup(txCtx, newGroup); err != nil {
 			return err
 		}
-		if err := u.repo.AddGroupMember(txCtx, newGroup.ID, creatorID, MemberRoleAdmin, MemberStatusActive); err != nil {
+		if _, err := u.repo.AddGroupMembers(txCtx, newGroup.ID, []string{creatorID}, MemberRoleAdmin, MemberStatusActive); err != nil {
 			return err
 		}
 		var err error
@@ -756,7 +756,7 @@ func (u *UseCase) JoinGroup(ctx context.Context, inviteCode, userID string) (*Jo
 	}
 
 	err = u.tx.RunInTx(ctx, func(txCtx context.Context) error {
-		if err := u.repo.AddGroupMember(txCtx, g.ID, userID, MemberRoleMember, targetStatus); err != nil {
+		if _, err := u.repo.AddGroupMembers(txCtx, g.ID, []string{userID}, MemberRoleMember, targetStatus); err != nil {
 			return err
 		}
 

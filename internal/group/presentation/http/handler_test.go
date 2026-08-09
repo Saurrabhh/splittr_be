@@ -95,9 +95,6 @@ func (m *mockGroupRepository) Archive(ctx context.Context, id string) error {
 	return m.Called(ctx, id).Error(0)
 }
 
-func (m *mockGroupRepository) AddGroupMember(ctx context.Context, groupID, userID string, role domain.MemberRole, status domain.MemberStatus) error {
-	return m.Called(ctx, groupID, userID, role, status).Error(0)
-}
 
 func (m *mockGroupRepository) AddGroupMembers(ctx context.Context, groupID string, userIDs []string, role domain.MemberRole, status domain.MemberStatus) ([]domain.Member, error) {
 	args := m.Called(ctx, groupID, userIDs, role, status)
@@ -222,7 +219,7 @@ func TestHandler_CreateGroup_Success(t *testing.T) {
 	createdGroup := &domain.Group{ID: "grp-1", Name: "New Group", CreatedBy: &currentUser.ID}
 
 	mockRepo.On("CreateGroup", mock.Anything, mock.AnythingOfType("*domain.Group")).Return(nil)
-	mockRepo.On("AddGroupMember", mock.Anything, mock.Anything, currentUser.ID, domain.MemberRoleAdmin, domain.MemberStatusActive).Return(nil)
+	mockRepo.On("AddGroupMembers", mock.Anything, mock.Anything, []string{currentUser.ID}, domain.MemberRoleAdmin, domain.MemberStatusActive).Return([]domain.Member{}, nil)
 	mockRepo.On("ListGroupMembers", mock.Anything, mock.Anything, mock.Anything).Return([]domain.Member{
 		{GroupID: "grp-1", UserID: currentUser.ID, Role: domain.MemberRoleAdmin, Status: domain.MemberStatusActive},
 	}, nil)
@@ -823,7 +820,7 @@ func TestHandler_JoinGroup_Success(t *testing.T) {
 
 	mockRepo.On("GetByInviteCode", mock.Anything, inviteCode).Return(g, nil)
 	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(nil, nil)
-	mockRepo.On("AddGroupMember", mock.Anything, groupID, currentUser.ID, domain.MemberRoleMember, mock.Anything).Return(nil)
+	mockRepo.On("AddGroupMembers", mock.Anything, groupID, []string{currentUser.ID}, domain.MemberRoleMember, mock.Anything).Return([]domain.Member{}, nil)
 	mockRepo.On("ListGroupMembers", mock.Anything, groupID, mock.Anything).Return([]domain.Member{newMember}, nil)
 
 	mockAct.On("LogEvent", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
