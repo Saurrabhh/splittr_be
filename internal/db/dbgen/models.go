@@ -103,10 +103,10 @@ type Activity struct {
 	ActorID     pgtype.UUID
 	ActionType  string
 	Description string
-	CreatedAt   pgtype.Timestamptz
 	EntityType  string
 	EntityID    pgtype.UUID
 	Metadata    []byte
+	CreatedAt   pgtype.Timestamptz
 }
 
 type ActivityVisibility struct {
@@ -189,20 +189,20 @@ type Group struct {
 	Name                 string
 	Description          pgtype.Text
 	InviteCode           pgtype.Text
+	InviteCodeExpiresAt  pgtype.Timestamptz
+	RequireAdminApproval bool
 	CreatedBy            pgtype.UUID
 	CreatedAt            pgtype.Timestamptz
 	UpdatedAt            pgtype.Timestamptz
 	ArchivedAt           pgtype.Timestamptz
-	InviteCodeExpiresAt  pgtype.Timestamptz
-	RequireAdminApproval bool
 }
 
 type GroupMember struct {
 	GroupID  uuid.UUID
 	UserID   uuid.UUID
-	JoinedAt pgtype.Timestamptz
 	Role     MemberRole
 	Status   MemberStatus
+	JoinedAt pgtype.Timestamptz
 }
 
 type LegalConfig struct {
@@ -228,9 +228,9 @@ type Notification struct {
 	ActivityID pgtype.UUID
 	Title      string
 	Content    string
+	Type       string
 	IsRead     bool
 	CreatedAt  pgtype.Timestamptz
-	Type       string
 }
 
 type SystemLimit struct {

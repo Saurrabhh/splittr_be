@@ -99,6 +99,14 @@ func (m *mockGroupRepository) AddGroupMember(ctx context.Context, groupID, userI
 	return m.Called(ctx, groupID, userID, role, status).Error(0)
 }
 
+func (m *mockGroupRepository) AddGroupMembers(ctx context.Context, groupID string, userIDs []string, role domain.MemberRole, status domain.MemberStatus) ([]domain.Member, error) {
+	args := m.Called(ctx, groupID, userIDs, role, status)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Member), args.Error(1)
+}
+
 func (m *mockGroupRepository) UpdateMemberStatus(ctx context.Context, groupID, userID string, status domain.MemberStatus) error {
 	return m.Called(ctx, groupID, userID, status).Error(0)
 }

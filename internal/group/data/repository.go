@@ -249,6 +249,60 @@ func (r *DBRepository) AddGroupMember(ctx context.Context, groupID, userID strin
 	return nil
 }
 
+// AddGroupMembers adds multiple members to the group with the given role and status, returning the added members.
+func (r *DBRepository) AddGroupMembers(ctx context.Context, groupID string, userIDs []string, role domain.MemberRole, status domain.MemberStatus) ([]domain.Member, error) {
+	parsedGroupID, err := uuid.Parse(groupID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid group uuid: %w", err)
+	}
+
+	if len(userIDs) == 0 {
+		return []domain.Member{}, nil
+	}
+
+	parsedUserIDs := make([]uuid.UUID, 0, len(userIDs))
+	userMap := make(map[string]bool, len(userIDs))
+	for _, uID := range userIDs {
+		parsed, err := uuid.Parse(uID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid user uuid: %w", err)
+		}
+		parsedUserIDs = append(parsedUserIDs, parsed)
+		userMap[uID] = true
+	}
+
+	if status == "" {
+		status = domain.MemberStatusActive
+	}
+
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+
+	err = q.AddGroupMembers(ctx, dbgen.AddGroupMembersParams{
+		GroupID: parsedGroupID,
+		UserIds: parsedUserIDs,
+		Role:    dbgen.MemberRole(role),
+		Status:  dbgen.MemberStatus(status),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("add group members: %w", err)
+	}
+
+	allMembers, err := r.ListGroupMembers(ctx, groupID, "")
+	if err != nil {
+		return nil, fmt.Errorf("fetch group members after batch add: %w", err)
+	}
+
+	addedMembers := make([]domain.Member, 0, len(userIDs))
+	for _, m := range allMembers {
+		if userMap[m.UserID] {
+			addedMembers = append(addedMembers, m)
+		}
+	}
+
+	return addedMembers, nil
+}
+
 // UpdateMemberStatus updates a member's status in a group.
 func (r *DBRepository) UpdateMemberStatus(ctx context.Context, groupID, userID string, status domain.MemberStatus) error {
 	parsedGroupID, parsedUserID, err := parseGroupIDAndUserID(groupID, userID)

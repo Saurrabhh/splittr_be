@@ -14,6 +14,10 @@ type JoinGroupRequest struct {
 	InviteCode string `json:"inviteCode" validate:"required"`
 } // @name JoinGroupRequest
 
+type AddMembersRequest struct {
+	UserIDs []string `json:"userIds" validate:"required,min=1"`
+} // @name AddMembersRequest
+
 type AddMemberRequest struct {
 	UserID string `json:"userId" validate:"required"`
 } // @name AddMemberRequest

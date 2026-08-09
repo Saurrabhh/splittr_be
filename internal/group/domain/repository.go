@@ -18,6 +18,7 @@ type Repository interface {
 	ResetInviteCode(ctx context.Context, groupID, newInviteCode string, expiresAt time.Time) (*Group, error)
 	Archive(ctx context.Context, id string) error
 	AddGroupMember(ctx context.Context, groupID, userID string, role MemberRole, status MemberStatus) error
+	AddGroupMembers(ctx context.Context, groupID string, userIDs []string, role MemberRole, status MemberStatus) ([]Member, error)
 	UpdateMemberStatus(ctx context.Context, groupID, userID string, status MemberStatus) error
 	RemoveGroupMember(ctx context.Context, groupID, userID string) error
 	UpdateGroupMemberRole(ctx context.Context, groupID, userID string, role MemberRole) error

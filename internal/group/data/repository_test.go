@@ -344,3 +344,47 @@ func TestRepository_ForeignKeys_And_ConstraintEdgeCases(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, members, 1)
 }
+
+func TestRepository_AddGroupMembers(t *testing.T) {
+	groupRepo, userRepo, cleanup := setupTestRepo(t)
+	defer cleanup()
+	ctx := context.Background()
+
+	u1 := createTestUser(t, userRepo, "Batch User 1")
+	u2 := createTestUser(t, userRepo, "Batch User 2")
+	u3 := createTestUser(t, userRepo, "Batch User 3")
+
+	gID := uuid.New().String()
+	g := &domain.Group{ID: gID, Name: "Batch Group", CreatedBy: &u1.ID}
+	require.NoError(t, groupRepo.CreateGroup(ctx, g))
+
+	// Batch add u1, u2, u3
+	added, err := groupRepo.AddGroupMembers(ctx, gID, []string{u1.ID, u2.ID, u3.ID}, domain.MemberRoleMember, domain.MemberStatusActive)
+	require.NoError(t, err)
+	assert.Len(t, added, 3)
+
+	// Empty user IDs
+	emptyAdded, err := groupRepo.AddGroupMembers(ctx, gID, []string{}, domain.MemberRoleMember, domain.MemberStatusActive)
+	require.NoError(t, err)
+	assert.Empty(t, emptyAdded)
+
+	// Invalid group UUID
+	_, err = groupRepo.AddGroupMembers(ctx, "invalid-uuid", []string{u1.ID}, domain.MemberRoleMember, domain.MemberStatusActive)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid group uuid")
+
+	// Invalid user UUID
+	_, err = groupRepo.AddGroupMembers(ctx, gID, []string{"invalid-user-uuid"}, domain.MemberRoleMember, domain.MemberStatusActive)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid user uuid")
+
+	// Duplicate insertion handles via ON CONFLICT DO NOTHING
+	addedDup, err := groupRepo.AddGroupMembers(ctx, gID, []string{u1.ID}, domain.MemberRoleMember, domain.MemberStatusActive)
+	require.NoError(t, err)
+	assert.Len(t, addedDup, 1)
+
+	// Total group members remains 3
+	allMembers, err := groupRepo.ListGroupMembers(ctx, gID, "")
+	require.NoError(t, err)
+	assert.Len(t, allMembers, 3)
+}

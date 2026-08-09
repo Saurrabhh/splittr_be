@@ -25,6 +25,11 @@ VALUES ($1, $2, $3, $4, NOW())
 ON CONFLICT (group_id, user_id) 
 DO UPDATE SET role = EXCLUDED.role, status = EXCLUDED.status, joined_at = NOW();
 
+-- name: AddGroupMembers :exec
+INSERT INTO group_members (group_id, user_id, role, status, joined_at)
+SELECT sqlc.arg(group_id)::uuid, unnest(sqlc.arg(user_ids)::uuid[]), sqlc.arg(role)::member_role, sqlc.arg(status)::member_status, NOW()
+ON CONFLICT (group_id, user_id) DO NOTHING;
+
 -- name: RemoveGroupMember :exec
 DELETE FROM group_members
 WHERE group_id = $1 AND user_id = $2;
