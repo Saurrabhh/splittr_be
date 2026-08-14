@@ -163,9 +163,9 @@ func (u *UseCase) UpdateProfile(ctx context.Context, userID string, name string,
 }
 
 // AddFriendByEmailOrPhone matches a user profile by email or phone and establishes a friendship or pending request.
-func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, email string, phone string) (*User, FriendshipStatus, error) {
+func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, email string, phone string) (*FriendWithStatus, error) {
 	if email == "" && phone == "" {
-		return nil, "", &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgMissingEmailOrPhone,
 		}
@@ -173,14 +173,14 @@ func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, em
 
 	friendWithSettings, err := u.repo.GetByEmailOrPhoneWithSettings(ctx, email, phone)
 	if err != nil {
-		return nil, "", &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogLookupUser,
 			Err:     err,
 		}
 	}
 	if friendWithSettings == nil {
-		return nil, "", &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeNotFound,
 			Message: response.MsgUserNotFound,
 		}
@@ -189,7 +189,7 @@ func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, em
 	friend := &friendWithSettings.User
 
 	if friend.ID == userID {
-		return nil, "", &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgSelfFriendError,
 		}
@@ -197,7 +197,7 @@ func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, em
 
 	existingFriendship, err := u.repo.GetFriendship(ctx, userID, friend.ID)
 	if err != nil {
-		return nil, "", &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogVerifyFriendship,
 			Err:     err,
@@ -205,12 +205,16 @@ func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, em
 	}
 	if existingFriendship != nil {
 		if existingFriendship.Status == Blocked {
-			return nil, "", &response.AppError{
+			return nil, &response.AppError{
 				Type:    response.TypeValidation,
 				Message: "Cannot add friend: user is blocked",
 			}
 		}
-		return friend, existingFriendship.Status, nil
+		return &FriendWithStatus{
+			User:         *friend,
+			Status:       existingFriendship.Status,
+			ActionUserID: existingFriendship.ActionUserID,
+		}, nil
 	}
 
 	status := Pending
@@ -219,14 +223,18 @@ func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, em
 	}
 
 	if err := u.repo.CreateFriendship(ctx, userID, friend.ID, status, userID); err != nil {
-		return nil, "", &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogAddFriend,
 			Err:     err,
 		}
 	}
 
-	return friend, status, nil
+	return &FriendWithStatus{
+		User:         *friend,
+		Status:       status,
+		ActionUserID: userID,
+	}, nil
 }
 
 // UpdateFriendshipStatus updates the status of an existing friendship (ACCEPTED, DECLINED, BLOCKED).

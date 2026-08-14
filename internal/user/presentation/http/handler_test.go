@@ -251,10 +251,10 @@ func TestHandler_AddFriend_Success(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var resp userhttp.AddFriendResponse
+	var resp domain.FriendWithStatus
 	err := json.Unmarshal(rr.Body.Bytes(), &resp)
 	require.NoError(t, err)
-	assert.Equal(t, "usr-2", resp.Friend.ID)
+	assert.Equal(t, "usr-2", resp.ID)
 	assert.Equal(t, domain.Pending, resp.Status)
 }
 

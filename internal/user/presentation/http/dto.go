@@ -16,11 +16,6 @@ type AddFriendRequest struct {
 	FriendPhone string `json:"friendPhone"`
 } // @name User.AddFriendRequest
 
-type AddFriendResponse struct {
-	Friend domain.User             `json:"friend"`
-	Status domain.FriendshipStatus `json:"status"`
-} // @name User.AddFriendResponse
-
 type UpdateFriendStatusRequest struct {
 	Status domain.FriendshipStatus `json:"status"`
 } // @name User.UpdateFriendStatusRequest

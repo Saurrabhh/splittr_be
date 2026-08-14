@@ -1076,17 +1076,6 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
-            "User.AddFriendResponse": {
-                "properties": {
-                    "friend": {
-                        "$ref": "#/components/schemas/User.User"
-                    },
-                    "status": {
-                        "$ref": "#/components/schemas/User.FriendshipStatus"
-                    }
-                },
-                "type": "object"
-            },
             "User.FriendSyncResponse": {
                 "properties": {
                     "friends": {
@@ -1098,6 +1087,38 @@ const docTemplate = `{
                     },
                     "newVersion": {
                         "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "User.FriendWithStatus": {
+                "properties": {
+                    "actionUserId": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "defaultCurrency": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/User.FriendshipStatus"
+                    },
+                    "updatedAt": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -2107,7 +2128,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/User.AddFriendResponse"
+                                    "$ref": "#/components/schemas/User.FriendWithStatus"
                                 }
                             }
                         },

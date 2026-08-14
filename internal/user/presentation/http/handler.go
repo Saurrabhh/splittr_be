@@ -185,7 +185,7 @@ func (h *Handler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Param        request body AddFriendRequest true "Friend email or phone"
-// @Success      200  {object}  AddFriendResponse
+// @Success      200  {object}  domain.FriendWithStatus
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -194,15 +194,8 @@ func (h *Handler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) AddFriend(w http.ResponseWriter, r *http.Request) {
 	currUser := MustFrom(r.Context())
 
-	request.Run(w, r, http.StatusOK, func(ctx context.Context, req AddFriendRequest) (*AddFriendResponse, error) {
-		friend, status, err := h.uc.AddFriendByEmailOrPhone(ctx, currUser.ID, req.FriendEmail, req.FriendPhone)
-		if err != nil {
-			return nil, err
-		}
-		return &AddFriendResponse{
-			Friend: *friend,
-			Status: status,
-		}, nil
+	request.Run(w, r, http.StatusOK, func(ctx context.Context, req AddFriendRequest) (*domain.FriendWithStatus, error) {
+		return h.uc.AddFriendByEmailOrPhone(ctx, currUser.ID, req.FriendEmail, req.FriendPhone)
 	})
 }
 

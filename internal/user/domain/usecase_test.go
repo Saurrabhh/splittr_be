@@ -166,10 +166,10 @@ func TestAddFriendByEmailOrPhone_PendingWhenAutoAcceptFalse(t *testing.T) {
 	mockRepo.On("CreateFriendship", ctx, "usr-1", "usr-2", domain.Pending, "usr-1").Return(nil)
 
 	uc := domain.NewUseCase(mockRepo)
-	friend, status, err := uc.AddFriendByEmailOrPhone(ctx, "usr-1", "bob@example.com", "")
+	friend, err := uc.AddFriendByEmailOrPhone(ctx, "usr-1", "bob@example.com", "")
 	require.NoError(t, err)
 	assert.Equal(t, "usr-2", friend.ID)
-	assert.Equal(t, domain.Pending, status)
+	assert.Equal(t, domain.Pending, friend.Status)
 	mockRepo.AssertExpectations(t)
 }
 
@@ -186,10 +186,10 @@ func TestAddFriendByEmailOrPhone_AcceptedWhenAutoAcceptTrue(t *testing.T) {
 	mockRepo.On("CreateFriendship", ctx, "usr-1", "usr-2", domain.Accepted, "usr-1").Return(nil)
 
 	uc := domain.NewUseCase(mockRepo)
-	friend, status, err := uc.AddFriendByEmailOrPhone(ctx, "usr-1", "bob@example.com", "")
+	friend, err := uc.AddFriendByEmailOrPhone(ctx, "usr-1", "bob@example.com", "")
 	require.NoError(t, err)
 	assert.Equal(t, "usr-2", friend.ID)
-	assert.Equal(t, domain.Accepted, status)
+	assert.Equal(t, domain.Accepted, friend.Status)
 	mockRepo.AssertExpectations(t)
 }
 
@@ -209,7 +209,7 @@ func TestAddFriendByEmailOrPhone_BlockedUserError(t *testing.T) {
 	}, nil)
 
 	uc := domain.NewUseCase(mockRepo)
-	_, _, err := uc.AddFriendByEmailOrPhone(ctx, "usr-1", "bob@example.com", "")
+	_, err := uc.AddFriendByEmailOrPhone(ctx, "usr-1", "bob@example.com", "")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "blocked")
 }
