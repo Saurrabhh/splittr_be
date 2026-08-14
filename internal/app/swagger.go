@@ -32,12 +32,12 @@ func (app *Application) registerSwaggerRoutes(r chi.Router) {
 			response.JSON(w, http.StatusOK, json.RawMessage(doc))
 		})
 
-		// Swagger UI route with custom operation method sorting within tags (GET -> POST -> PUT -> PATCH -> DELETE)
+		// Swagger UI route with combined path-alphabetical + REST method order sorting within tags
 		r.Get("/*", httpSwagger.Handler(
 			httpSwagger.DefaultModelsExpandDepth(2),
 			httpSwagger.URL("/swagger/doc.json"),
 			httpSwagger.UIConfig(map[string]string{
-				"operationsSorter": "(a, b) => { const order = {'get': 1, 'post': 2, 'put': 3, 'patch': 4, 'delete': 5}; return (order[a.get('method')] || 99) - (order[b.get('method')] || 99); }",
+				"operationsSorter": "(a, b) => { const pathComp = a.get('path').localeCompare(b.get('path')); if (pathComp !== 0) return pathComp; const order = {'get': 1, 'post': 2, 'put': 3, 'patch': 4, 'delete': 5}; return (order[a.get('method')] || 99) - (order[b.get('method')] || 99); }",
 			}),
 		))
 	})
