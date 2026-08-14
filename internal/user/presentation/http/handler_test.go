@@ -272,6 +272,7 @@ func TestHandler_UpdateFriendStatus_Success(t *testing.T) {
 		Status:   domain.Pending,
 	}, nil)
 	mockRepo.On("UpdateFriendshipStatus", mock.Anything, "usr-1", "usr-2", domain.Accepted, "usr-1").Return(nil)
+	mockRepo.On("GetByID", mock.Anything, "usr-2").Return(&domain.User{ID: "usr-2", Name: "Bob"}, nil)
 
 	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, identity)
@@ -283,7 +284,12 @@ func TestHandler_UpdateFriendStatus_Success(t *testing.T) {
 
 	router.ServeHTTP(rr, req)
 
-	assert.Equal(t, http.StatusNoContent, rr.Code)
+	assert.Equal(t, http.StatusOK, rr.Code)
+	var resp domain.FriendWithStatus
+	err := json.Unmarshal(rr.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	assert.Equal(t, "usr-2", resp.ID)
+	assert.Equal(t, domain.Accepted, resp.Status)
 }
 
 // --- DELETE /friends/{friendId} Tests ---

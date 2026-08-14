@@ -2333,8 +2333,15 @@ const docTemplate = `{
                     "required": true
                 },
                 "responses": {
-                    "204": {
-                        "description": "No Content"
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User.FriendWithStatus"
+                                }
+                            }
+                        },
+                        "description": "OK"
                     },
                     "400": {
                         "content": {

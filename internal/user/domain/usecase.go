@@ -237,17 +237,17 @@ func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, em
 	}, nil
 }
 
-// UpdateFriendshipStatus updates the status of an existing friendship (ACCEPTED, DECLINED, BLOCKED).
-func (u *UseCase) UpdateFriendshipStatus(ctx context.Context, userID string, friendID string, status FriendshipStatus) error {
+// UpdateFriendshipStatus updates the status of an existing friendship (ACCEPTED, DECLINED, BLOCKED) and returns the updated friend details.
+func (u *UseCase) UpdateFriendshipStatus(ctx context.Context, userID string, friendID string, status FriendshipStatus) (*FriendWithStatus, error) {
 	if friendID == "" {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgInvalidParam,
 		}
 	}
 
 	if status != Accepted && status != Declined && status != Blocked {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeValidation,
 			Message: "Invalid friendship status",
 		}
@@ -255,27 +255,40 @@ func (u *UseCase) UpdateFriendshipStatus(ctx context.Context, userID string, fri
 
 	existing, err := u.repo.GetFriendship(ctx, userID, friendID)
 	if err != nil {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogVerifyFriendship,
 			Err:     err,
 		}
 	}
 	if existing == nil {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeNotFound,
 			Message: response.MsgNotFriends,
 		}
 	}
 
 	if err := u.repo.UpdateFriendshipStatus(ctx, userID, friendID, status, userID); err != nil {
-		return &response.AppError{
+		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: "Failed to update friendship status",
 			Err:     err,
 		}
 	}
-	return nil
+
+	friendUser, err := u.repo.GetByID(ctx, friendID)
+	if err != nil || friendUser == nil {
+		return nil, &response.AppError{
+			Type:    response.TypeNotFound,
+			Message: response.MsgUserNotFound,
+		}
+	}
+
+	return &FriendWithStatus{
+		User:         *friendUser,
+		Status:       status,
+		ActionUserID: userID,
+	}, nil
 }
 
 // RemoveFriend deletes a friendship link.

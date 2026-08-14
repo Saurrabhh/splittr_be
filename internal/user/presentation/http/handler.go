@@ -235,7 +235,7 @@ func (h *Handler) GetFriends(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, result)
 }
 
-// UpdateFriendStatus updates friendship state (ACCEPTED, DECLINED, BLOCKED).
+// UpdateFriendStatus updates friendship state (ACCEPTED, DECLINED, BLOCKED) and returns updated friend.
 // @Summary      Update friendship status
 // @Description  Accept, decline, or block a friend request / friendship.
 // @Tags         friends
@@ -243,7 +243,7 @@ func (h *Handler) GetFriends(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        friendId path string true "Friend User ID"
 // @Param        request body UpdateFriendStatusRequest true "New status (ACCEPTED, DECLINED, BLOCKED)"
-// @Success      204  "No Content"
+// @Success      200  {object}  domain.FriendWithStatus
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -257,12 +257,8 @@ func (h *Handler) UpdateFriendStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request.Run(w, r, http.StatusNoContent, func(ctx context.Context, req UpdateFriendStatusRequest) (any, error) {
-		err := h.uc.UpdateFriendshipStatus(ctx, currUser.ID, friendID, req.Status)
-		if err != nil {
-			return nil, err
-		}
-		return nil, nil
+	request.Run(w, r, http.StatusOK, func(ctx context.Context, req UpdateFriendStatusRequest) (*domain.FriendWithStatus, error) {
+		return h.uc.UpdateFriendshipStatus(ctx, currUser.ID, friendID, req.Status)
 	})
 }
 

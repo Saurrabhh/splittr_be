@@ -226,10 +226,13 @@ func TestUpdateFriendshipStatus_Success(t *testing.T) {
 		Status:   domain.Pending,
 	}, nil)
 	mockRepo.On("UpdateFriendshipStatus", ctx, "usr-1", "usr-2", domain.Accepted, "usr-1").Return(nil)
+	mockRepo.On("GetByID", ctx, "usr-2").Return(&domain.User{ID: "usr-2", Name: "Bob"}, nil)
 
 	uc := domain.NewUseCase(mockRepo)
-	err := uc.UpdateFriendshipStatus(ctx, "usr-1", "usr-2", domain.Accepted)
+	friend, err := uc.UpdateFriendshipStatus(ctx, "usr-1", "usr-2", domain.Accepted)
 	require.NoError(t, err)
+	assert.Equal(t, "usr-2", friend.ID)
+	assert.Equal(t, domain.Accepted, friend.Status)
 	mockRepo.AssertExpectations(t)
 }
 
