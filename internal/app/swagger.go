@@ -37,7 +37,7 @@ func (app *Application) registerSwaggerRoutes(r chi.Router) {
 			httpSwagger.DefaultModelsExpandDepth(2),
 			httpSwagger.URL("/swagger/doc.json"),
 			httpSwagger.UIConfig(map[string]string{
-				"operationsSorter": "'method'",
+				"operationsSorter": "'alpha'",
 			}),
 		))
 	})
