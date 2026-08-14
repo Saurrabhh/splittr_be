@@ -238,7 +238,7 @@ func (r *DBRepository) UpsertSettings(ctx context.Context, settings *domain.User
 }
 
 // CreateFriendship creates or updates a friendship link with status.
-func (r *DBRepository) CreateFriendship(ctx context.Context, userID, friendID, status, actionUserID string) error {
+func (r *DBRepository) CreateFriendship(ctx context.Context, userID, friendID string, status domain.FriendshipStatus, actionUserID string) error {
 	parsedUser, err := uuid.Parse(userID)
 	if err != nil {
 		return fmt.Errorf("invalid user uuid: %w", err)
@@ -258,13 +258,13 @@ func (r *DBRepository) CreateFriendship(ctx context.Context, userID, friendID, s
 	return q.CreateFriendship(ctx, dbgen.CreateFriendshipParams{
 		UserID:       parsedUser,
 		FriendID:     parsedFriend,
-		Status:       status,
+		Status:       string(status),
 		ActionUserID: pgtype.UUID{Bytes: parsedActionUser, Valid: true},
 	})
 }
 
 // UpdateFriendshipStatus updates the status of an existing friendship.
-func (r *DBRepository) UpdateFriendshipStatus(ctx context.Context, userID, friendID, status, actionUserID string) error {
+func (r *DBRepository) UpdateFriendshipStatus(ctx context.Context, userID, friendID string, status domain.FriendshipStatus, actionUserID string) error {
 	parsedUser, err := uuid.Parse(userID)
 	if err != nil {
 		return fmt.Errorf("invalid user uuid: %w", err)
@@ -284,7 +284,7 @@ func (r *DBRepository) UpdateFriendshipStatus(ctx context.Context, userID, frien
 	return q.UpdateFriendshipStatus(ctx, dbgen.UpdateFriendshipStatusParams{
 		UserID:       parsedUser,
 		FriendID:     parsedFriend,
-		Status:       status,
+		Status:       string(status),
 		ActionUserID: pgtype.UUID{Bytes: parsedActionUser, Valid: true},
 	})
 }
@@ -342,7 +342,7 @@ func (r *DBRepository) GetFriendship(ctx context.Context, userID, friendID strin
 	return &domain.Friendship{
 		UserID:       row.UserID.String(),
 		FriendID:     row.FriendID.String(),
-		Status:       row.Status,
+		Status:       domain.FriendshipStatus(row.Status),
 		ActionUserID: actionUserID,
 		CreatedAt:    row.CreatedAt.Time,
 		UpdatedAt:    row.UpdatedAt.Time,
@@ -391,7 +391,7 @@ func (r *DBRepository) ListFriends(ctx context.Context, userID string, limit int
 }
 
 // ListFriendsByStatus retrieves friends filtered by specific friendship status (ACCEPTED, PENDING, BLOCKED).
-func (r *DBRepository) ListFriendsByStatus(ctx context.Context, userID string, status string) ([]domain.FriendWithStatus, error) {
+func (r *DBRepository) ListFriendsByStatus(ctx context.Context, userID string, status domain.FriendshipStatus) ([]domain.FriendWithStatus, error) {
 	parsedID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid uuid: %w", err)
@@ -402,7 +402,7 @@ func (r *DBRepository) ListFriendsByStatus(ctx context.Context, userID string, s
 
 	rows, err := q.ListFriendsByStatus(ctx, dbgen.ListFriendsByStatusParams{
 		UserID: parsedID,
-		Status: status,
+		Status: string(status),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list friends by status: %w", err)
@@ -426,7 +426,7 @@ func (r *DBRepository) ListFriendsByStatus(ctx context.Context, userID string, s
 				CreatedAt:       row.CreatedAt.Time,
 				UpdatedAt:       row.UpdatedAt.Time,
 			},
-			Status:       row.Status,
+			Status:       domain.FriendshipStatus(row.Status),
 			ActionUserID: actionUserID,
 		})
 	}
@@ -462,7 +462,7 @@ func (r *DBRepository) SyncFriendsBySequence(ctx context.Context, lastVersion in
 		records = append(records, domain.FriendshipSyncRecord{
 			UserID:       row.UserID.String(),
 			FriendID:     row.FriendID.String(),
-			Status:       row.Status,
+			Status:       domain.FriendshipStatus(row.Status),
 			ActionUserID: actionUserID,
 			CreatedAt:    row.CreatedAt.Time,
 			UpdatedAt:    row.UpdatedAt.Time,

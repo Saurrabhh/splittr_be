@@ -2,6 +2,17 @@ package domain
 
 import "time"
 
+// FriendshipStatus represents the state of a friendship relation.
+// @enums PENDING ACCEPTED DECLINED BLOCKED
+type FriendshipStatus string // @name User.FriendshipStatus
+
+const (
+	Pending  FriendshipStatus = "PENDING"
+	Accepted FriendshipStatus = "ACCEPTED"
+	Declined FriendshipStatus = "DECLINED"
+	Blocked  FriendshipStatus = "BLOCKED"
+)
+
 // User represents a user in the system.
 type User struct {
 	ID              string    `json:"id"`
@@ -30,17 +41,17 @@ type UserSettings struct {
 
 // Friendship represents a relation between two users with status.
 type Friendship struct {
-	UserID       string    `json:"userId"`
-	FriendID     string    `json:"friendId"`
-	Status       string    `json:"status"` // PENDING, ACCEPTED, DECLINED, BLOCKED
-	ActionUserID string    `json:"actionUserId"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
+	UserID       string           `json:"userId"`
+	FriendID     string           `json:"friendId"`
+	Status       FriendshipStatus `json:"status"` // PENDING, ACCEPTED, DECLINED, BLOCKED
+	ActionUserID string           `json:"actionUserId"`
+	CreatedAt    time.Time        `json:"createdAt"`
+	UpdatedAt    time.Time        `json:"updatedAt"`
 } // @name User.Friendship
 
 // FriendWithStatus represents a friend along with current friendship status.
 type FriendWithStatus struct {
 	User
-	Status       string `json:"status"`
-	ActionUserID string `json:"actionUserId"`
+	Status       FriendshipStatus `json:"status"`
+	ActionUserID string           `json:"actionUserId"`
 } // @name User.FriendWithStatus

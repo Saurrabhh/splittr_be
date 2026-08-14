@@ -211,9 +211,9 @@ func (h *Handler) AddFriend(w http.ResponseWriter, r *http.Request) {
 // @Description  Get friends list. Use optional status parameter to filter by ACCEPTED, PENDING, or BLOCKED.
 // @Tags         friends
 // @Produce      json
-// @Param        status  query  string  false  "Filter by status: ACCEPTED, PENDING, BLOCKED"
-// @Param        limit   query  int     false  "Items per page (max 100, default 20)"
-// @Param        cursor  query  string  false  "Opaque cursor token from a previous response"
+// @Param        status  query  domain.FriendshipStatus  false  "Filter by status: ACCEPTED, PENDING, BLOCKED"
+// @Param        limit   query  int                      false  "Items per page (max 100, default 20)"
+// @Param        cursor  query  string                   false  "Opaque cursor token from a previous response"
 // @Success      200  {object}  pagination.Response[domain.User]
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -224,7 +224,7 @@ func (h *Handler) GetFriends(w http.ResponseWriter, r *http.Request) {
 	statusParam := r.URL.Query().Get("status")
 
 	if statusParam != "" {
-		friends, err := h.uc.ListFriendsByStatus(r.Context(), currUser.ID, statusParam)
+		friends, err := h.uc.ListFriendsByStatus(r.Context(), currUser.ID, domain.FriendshipStatus(statusParam))
 		if err != nil {
 			response.HandleError(w, err)
 			return

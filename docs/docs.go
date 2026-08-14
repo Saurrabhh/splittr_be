@@ -1082,7 +1082,7 @@ const docTemplate = `{
                         "$ref": "#/components/schemas/User.User"
                     },
                     "status": {
-                        "type": "string"
+                        "$ref": "#/components/schemas/User.FriendshipStatus"
                     }
                 },
                 "type": "object"
@@ -1102,6 +1102,24 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "User.FriendshipStatus": {
+                "enum": [
+                    "PENDING",
+                    "ACCEPTED",
+                    "DECLINED",
+                    "BLOCKED",
+                    "ACCEPTED",
+                    "DECLINED",
+                    "BLOCKED"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "Pending",
+                    "Accepted",
+                    "Declined",
+                    "Blocked"
+                ]
+            },
             "User.RegisterRequest": {
                 "properties": {
                     "name": {
@@ -1113,12 +1131,7 @@ const docTemplate = `{
             "User.UpdateFriendStatusRequest": {
                 "properties": {
                     "status": {
-                        "enum": [
-                            "ACCEPTED",
-                            "DECLINED",
-                            "BLOCKED"
-                        ],
-                        "type": "string"
+                        "$ref": "#/components/schemas/User.FriendshipStatus"
                     }
                 },
                 "required": [
@@ -1191,7 +1204,7 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "status": {
-                        "type": "string"
+                        "$ref": "#/components/schemas/User.FriendshipStatus"
                     },
                     "syncVersion": {
                         "type": "integer"
@@ -2059,6 +2072,12 @@ const docTemplate = `{
                         "in": "query",
                         "name": "status",
                         "schema": {
+                            "enum": [
+                                "PENDING",
+                                "ACCEPTED",
+                                "DECLINED",
+                                "BLOCKED"
+                            ],
                             "type": "string"
                         }
                     },

@@ -78,11 +78,11 @@ func (m *mockUserRepository) UpsertSettings(ctx context.Context, settings *domai
 	return m.Called(ctx, settings).Error(0)
 }
 
-func (m *mockUserRepository) CreateFriendship(ctx context.Context, userID, friendID, status, actionUserID string) error {
+func (m *mockUserRepository) CreateFriendship(ctx context.Context, userID, friendID string, status domain.FriendshipStatus, actionUserID string) error {
 	return m.Called(ctx, userID, friendID, status, actionUserID).Error(0)
 }
 
-func (m *mockUserRepository) UpdateFriendshipStatus(ctx context.Context, userID, friendID, status, actionUserID string) error {
+func (m *mockUserRepository) UpdateFriendshipStatus(ctx context.Context, userID, friendID string, status domain.FriendshipStatus, actionUserID string) error {
 	return m.Called(ctx, userID, friendID, status, actionUserID).Error(0)
 }
 
@@ -106,7 +106,7 @@ func (m *mockUserRepository) ListFriends(ctx context.Context, userID string, lim
 	return args.Get(0).([]domain.User), args.Error(1)
 }
 
-func (m *mockUserRepository) ListFriendsByStatus(ctx context.Context, userID string, status string) ([]domain.FriendWithStatus, error) {
+func (m *mockUserRepository) ListFriendsByStatus(ctx context.Context, userID string, status domain.FriendshipStatus) ([]domain.FriendWithStatus, error) {
 	args := m.Called(ctx, userID, status)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -238,7 +238,7 @@ func TestHandler_AddFriend_Success(t *testing.T) {
 	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-123").Return(currentUser, nil)
 	mockRepo.On("GetByEmailOrPhoneWithSettings", mock.Anything, "bob@example.com", "").Return(friendUserWithSettings, nil)
 	mockRepo.On("GetFriendship", mock.Anything, "usr-1", "usr-2").Return(nil, nil)
-	mockRepo.On("CreateFriendship", mock.Anything, "usr-1", "usr-2", "PENDING", "usr-1").Return(nil)
+	mockRepo.On("CreateFriendship", mock.Anything, "usr-1", "usr-2", domain.Pending, "usr-1").Return(nil)
 
 	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, identity)
@@ -255,7 +255,7 @@ func TestHandler_AddFriend_Success(t *testing.T) {
 	err := json.Unmarshal(rr.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	assert.Equal(t, "usr-2", resp.Friend.ID)
-	assert.Equal(t, "PENDING", resp.Status)
+	assert.Equal(t, domain.Pending, resp.Status)
 }
 
 // --- PATCH /friends/{friendId} Tests ---
@@ -269,9 +269,9 @@ func TestHandler_UpdateFriendStatus_Success(t *testing.T) {
 	mockRepo.On("GetFriendship", mock.Anything, "usr-1", "usr-2").Return(&domain.Friendship{
 		UserID:   "usr-2",
 		FriendID: "usr-1",
-		Status:   "PENDING",
+		Status:   domain.Pending,
 	}, nil)
-	mockRepo.On("UpdateFriendshipStatus", mock.Anything, "usr-1", "usr-2", "ACCEPTED", "usr-1").Return(nil)
+	mockRepo.On("UpdateFriendshipStatus", mock.Anything, "usr-1", "usr-2", domain.Accepted, "usr-1").Return(nil)
 
 	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, identity)
@@ -297,7 +297,7 @@ func TestHandler_RemoveFriend_Success(t *testing.T) {
 	mockRepo.On("GetFriendship", mock.Anything, "usr-1", "usr-2").Return(&domain.Friendship{
 		UserID:   "usr-1",
 		FriendID: "usr-2",
-		Status:   "ACCEPTED",
+		Status:   domain.Accepted,
 	}, nil)
 	mockRepo.On("DeleteFriendship", mock.Anything, "usr-1", "usr-2").Return(nil)
 

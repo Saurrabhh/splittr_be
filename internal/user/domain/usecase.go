@@ -65,7 +65,7 @@ func (u *UseCase) RegisterUser(ctx context.Context, firebaseUID string, email, p
 
 	// Create default user_settings row for newly registered user
 	if err := u.repo.CreateDefaultSettings(ctx, newUser.ID); err != nil {
-		// Log or handle error if needed, non-fatal fallback
+		// Non-fatal fallback
 	}
 
 	return newUser, nil
@@ -163,7 +163,7 @@ func (u *UseCase) UpdateProfile(ctx context.Context, userID string, name string,
 }
 
 // AddFriendByEmailOrPhone matches a user profile by email or phone and establishes a friendship or pending request.
-func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, email string, phone string) (*User, string, error) {
+func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, email string, phone string) (*User, FriendshipStatus, error) {
 	if email == "" && phone == "" {
 		return nil, "", &response.AppError{
 			Type:    response.TypeValidation,
@@ -204,7 +204,7 @@ func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, em
 		}
 	}
 	if existingFriendship != nil {
-		if existingFriendship.Status == "BLOCKED" {
+		if existingFriendship.Status == Blocked {
 			return nil, "", &response.AppError{
 				Type:    response.TypeValidation,
 				Message: "Cannot add friend: user is blocked",
@@ -213,9 +213,9 @@ func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, em
 		return friend, existingFriendship.Status, nil
 	}
 
-	status := "PENDING"
+	status := Pending
 	if friendWithSettings.AutoAcceptFriendRequests {
-		status = "ACCEPTED"
+		status = Accepted
 	}
 
 	if err := u.repo.CreateFriendship(ctx, userID, friend.ID, status, userID); err != nil {
@@ -230,7 +230,7 @@ func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, em
 }
 
 // UpdateFriendshipStatus updates the status of an existing friendship (ACCEPTED, DECLINED, BLOCKED).
-func (u *UseCase) UpdateFriendshipStatus(ctx context.Context, userID string, friendID string, status string) error {
+func (u *UseCase) UpdateFriendshipStatus(ctx context.Context, userID string, friendID string, status FriendshipStatus) error {
 	if friendID == "" {
 		return &response.AppError{
 			Type:    response.TypeValidation,
@@ -238,7 +238,7 @@ func (u *UseCase) UpdateFriendshipStatus(ctx context.Context, userID string, fri
 		}
 	}
 
-	if status != "ACCEPTED" && status != "DECLINED" && status != "BLOCKED" {
+	if status != Accepted && status != Declined && status != Blocked {
 		return &response.AppError{
 			Type:    response.TypeValidation,
 			Message: "Invalid friendship status",
@@ -324,12 +324,12 @@ func (u *UseCase) ListFriends(ctx context.Context, userID string, p pagination.P
 }
 
 // ListFriendsByStatus returns a list of friends filtered by status (ACCEPTED, PENDING, BLOCKED).
-func (u *UseCase) ListFriendsByStatus(ctx context.Context, userID string, status string) ([]FriendWithStatus, error) {
+func (u *UseCase) ListFriendsByStatus(ctx context.Context, userID string, status FriendshipStatus) ([]FriendWithStatus, error) {
 	if userID == "" {
 		return nil, &response.AppError{Type: response.TypeValidation, Message: response.MsgInvalidParam}
 	}
 	if status == "" {
-		status = "ACCEPTED"
+		status = Accepted
 	}
 
 	friends, err := u.repo.ListFriendsByStatus(ctx, userID, status)

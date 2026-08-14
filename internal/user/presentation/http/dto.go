@@ -17,12 +17,12 @@ type AddFriendRequest struct {
 } // @name User.AddFriendRequest
 
 type AddFriendResponse struct {
-	Friend domain.User `json:"friend"`
-	Status string      `json:"status"`
+	Friend domain.User           `json:"friend"`
+	Status domain.FriendshipStatus `json:"status"`
 } // @name User.AddFriendResponse
 
 type UpdateFriendStatusRequest struct {
-	Status string `json:"status" validate:"required,oneof=ACCEPTED DECLINED BLOCKED"`
+	Status domain.FriendshipStatus `json:"status" validate:"required,oneof=ACCEPTED DECLINED BLOCKED"`
 } // @name User.UpdateFriendStatusRequest
 
 type UserSettingsResponse struct {

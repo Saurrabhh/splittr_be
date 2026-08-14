@@ -71,11 +71,11 @@ func (m *mockUserRepository) UpsertSettings(ctx context.Context, settings *domai
 	return m.Called(ctx, settings).Error(0)
 }
 
-func (m *mockUserRepository) CreateFriendship(ctx context.Context, userID, friendID, status, actionUserID string) error {
+func (m *mockUserRepository) CreateFriendship(ctx context.Context, userID, friendID string, status domain.FriendshipStatus, actionUserID string) error {
 	return m.Called(ctx, userID, friendID, status, actionUserID).Error(0)
 }
 
-func (m *mockUserRepository) UpdateFriendshipStatus(ctx context.Context, userID, friendID, status, actionUserID string) error {
+func (m *mockUserRepository) UpdateFriendshipStatus(ctx context.Context, userID, friendID string, status domain.FriendshipStatus, actionUserID string) error {
 	return m.Called(ctx, userID, friendID, status, actionUserID).Error(0)
 }
 
@@ -99,7 +99,7 @@ func (m *mockUserRepository) ListFriends(ctx context.Context, userID string, lim
 	return args.Get(0).([]domain.User), args.Error(1)
 }
 
-func (m *mockUserRepository) ListFriendsByStatus(ctx context.Context, userID string, status string) ([]domain.FriendWithStatus, error) {
+func (m *mockUserRepository) ListFriendsByStatus(ctx context.Context, userID string, status domain.FriendshipStatus) ([]domain.FriendWithStatus, error) {
 	args := m.Called(ctx, userID, status)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -163,13 +163,13 @@ func TestAddFriendByEmailOrPhone_PendingWhenAutoAcceptFalse(t *testing.T) {
 	}
 	mockRepo.On("GetByEmailOrPhoneWithSettings", ctx, "bob@example.com", "").Return(friendUserWithSettings, nil)
 	mockRepo.On("GetFriendship", ctx, "usr-1", "usr-2").Return(nil, nil)
-	mockRepo.On("CreateFriendship", ctx, "usr-1", "usr-2", "PENDING", "usr-1").Return(nil)
+	mockRepo.On("CreateFriendship", ctx, "usr-1", "usr-2", domain.Pending, "usr-1").Return(nil)
 
 	uc := domain.NewUseCase(mockRepo)
 	friend, status, err := uc.AddFriendByEmailOrPhone(ctx, "usr-1", "bob@example.com", "")
 	require.NoError(t, err)
 	assert.Equal(t, "usr-2", friend.ID)
-	assert.Equal(t, "PENDING", status)
+	assert.Equal(t, domain.Pending, status)
 	mockRepo.AssertExpectations(t)
 }
 
@@ -183,13 +183,13 @@ func TestAddFriendByEmailOrPhone_AcceptedWhenAutoAcceptTrue(t *testing.T) {
 	}
 	mockRepo.On("GetByEmailOrPhoneWithSettings", ctx, "bob@example.com", "").Return(friendUserWithSettings, nil)
 	mockRepo.On("GetFriendship", ctx, "usr-1", "usr-2").Return(nil, nil)
-	mockRepo.On("CreateFriendship", ctx, "usr-1", "usr-2", "ACCEPTED", "usr-1").Return(nil)
+	mockRepo.On("CreateFriendship", ctx, "usr-1", "usr-2", domain.Accepted, "usr-1").Return(nil)
 
 	uc := domain.NewUseCase(mockRepo)
 	friend, status, err := uc.AddFriendByEmailOrPhone(ctx, "usr-1", "bob@example.com", "")
 	require.NoError(t, err)
 	assert.Equal(t, "usr-2", friend.ID)
-	assert.Equal(t, "ACCEPTED", status)
+	assert.Equal(t, domain.Accepted, status)
 	mockRepo.AssertExpectations(t)
 }
 
@@ -205,7 +205,7 @@ func TestAddFriendByEmailOrPhone_BlockedUserError(t *testing.T) {
 	mockRepo.On("GetFriendship", ctx, "usr-1", "usr-2").Return(&domain.Friendship{
 		UserID:   "usr-1",
 		FriendID: "usr-2",
-		Status:   "BLOCKED",
+		Status:   domain.Blocked,
 	}, nil)
 
 	uc := domain.NewUseCase(mockRepo)
@@ -223,12 +223,12 @@ func TestUpdateFriendshipStatus_Success(t *testing.T) {
 	mockRepo.On("GetFriendship", ctx, "usr-1", "usr-2").Return(&domain.Friendship{
 		UserID:   "usr-2",
 		FriendID: "usr-1",
-		Status:   "PENDING",
+		Status:   domain.Pending,
 	}, nil)
-	mockRepo.On("UpdateFriendshipStatus", ctx, "usr-1", "usr-2", "ACCEPTED", "usr-1").Return(nil)
+	mockRepo.On("UpdateFriendshipStatus", ctx, "usr-1", "usr-2", domain.Accepted, "usr-1").Return(nil)
 
 	uc := domain.NewUseCase(mockRepo)
-	err := uc.UpdateFriendshipStatus(ctx, "usr-1", "usr-2", "ACCEPTED")
+	err := uc.UpdateFriendshipStatus(ctx, "usr-1", "usr-2", domain.Accepted)
 	require.NoError(t, err)
 	mockRepo.AssertExpectations(t)
 }
