@@ -335,7 +335,7 @@ func (h *Handler) Sync(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        id   path      string                true  "Expense UUID"
 // @Param        body body      UpdateExpenseRequest  true  "Update Expense Payload"
-// @Success      200  {object}  ExpenseResponse
+// @Success      200  {object}  domain.ExpenseWithSplits
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      403  {object}  response.ErrorResponse

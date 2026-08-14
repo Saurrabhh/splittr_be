@@ -1091,7 +1091,7 @@ const docTemplate = `{
                 "properties": {
                     "friends": {
                         "items": {
-                            "$ref": "#/components/schemas/github_com_Saurrabhh_splittr_be_internal_user_domain.FriendshipSyncRecord"
+                            "$ref": "#/components/schemas/User.FriendshipSyncRecord"
                         },
                         "type": "array",
                         "uniqueItems": false
@@ -1116,6 +1116,32 @@ const docTemplate = `{
                     "Declined",
                     "Blocked"
                 ]
+            },
+            "User.FriendshipSyncRecord": {
+                "properties": {
+                    "actionUserId": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "friendId": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/User.FriendshipStatus"
+                    },
+                    "syncVersion": {
+                        "type": "integer"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    },
+                    "userId": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
             },
             "User.RegisterRequest": {
                 "properties": {
@@ -1182,86 +1208,6 @@ const docTemplate = `{
                 "properties": {
                     "autoAcceptFriendRequests": {
                         "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
-            "github_com_Saurrabhh_splittr_be_internal_user_domain.FriendshipSyncRecord": {
-                "properties": {
-                    "actionUserId": {
-                        "type": "string"
-                    },
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "friendId": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "$ref": "#/components/schemas/User.FriendshipStatus"
-                    },
-                    "syncVersion": {
-                        "type": "integer"
-                    },
-                    "updatedAt": {
-                        "type": "string"
-                    },
-                    "userId": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "internal_expense_presentation_http.ExpenseResponse": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "category": {
-                        "type": "string"
-                    },
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "createdBy": {
-                        "type": "string"
-                    },
-                    "currency": {
-                        "type": "string"
-                    },
-                    "deletedAt": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "groupId": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "isPayment": {
-                        "type": "boolean"
-                    },
-                    "paidBy": {
-                        "type": "string"
-                    },
-                    "spentAt": {
-                        "type": "string"
-                    },
-                    "splits": {
-                        "items": {
-                            "$ref": "#/components/schemas/Expense.Split"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "syncVersion": {
-                        "type": "integer"
-                    },
-                    "updatedAt": {
-                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -1989,7 +1935,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/internal_expense_presentation_http.ExpenseResponse"
+                                    "$ref": "#/components/schemas/Expense.ExpenseWithSplits"
                                 }
                             }
                         },

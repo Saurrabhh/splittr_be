@@ -35,4 +35,4 @@ type FriendshipSyncRecord struct {
 	CreatedAt    time.Time        `json:"createdAt"`
 	UpdatedAt    time.Time        `json:"updatedAt"`
 	SyncVersion  int64            `json:"syncVersion"`
-}
+} // @name User.FriendshipSyncRecord
