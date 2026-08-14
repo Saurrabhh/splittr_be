@@ -747,9 +747,6 @@ components:
       - ACCEPTED
       - DECLINED
       - BLOCKED
-      - ACCEPTED
-      - DECLINED
-      - BLOCKED
       type: string
       x-enum-varnames:
       - Pending
@@ -765,8 +762,6 @@ components:
       properties:
         status:
           $ref: '#/components/schemas/User.FriendshipStatus'
-      required:
-      - status
       type: object
     User.UpdateProfileRequest:
       properties:

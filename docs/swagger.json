@@ -1100,9 +1100,6 @@
                     "PENDING",
                     "ACCEPTED",
                     "DECLINED",
-                    "BLOCKED",
-                    "ACCEPTED",
-                    "DECLINED",
                     "BLOCKED"
                 ],
                 "type": "string",
@@ -1127,9 +1124,6 @@
                         "$ref": "#/components/schemas/User.FriendshipStatus"
                     }
                 },
-                "required": [
-                    "status"
-                ],
                 "type": "object"
             },
             "User.UpdateProfileRequest": {

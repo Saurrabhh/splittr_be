@@ -3,7 +3,6 @@ package domain
 import "time"
 
 // FriendshipStatus represents the state of a friendship relation.
-// @enums PENDING ACCEPTED DECLINED BLOCKED
 type FriendshipStatus string // @name User.FriendshipStatus
 
 const (

@@ -1107,9 +1107,6 @@ const docTemplate = `{
                     "PENDING",
                     "ACCEPTED",
                     "DECLINED",
-                    "BLOCKED",
-                    "ACCEPTED",
-                    "DECLINED",
                     "BLOCKED"
                 ],
                 "type": "string",
@@ -1134,9 +1131,6 @@ const docTemplate = `{
                         "$ref": "#/components/schemas/User.FriendshipStatus"
                     }
                 },
-                "required": [
-                    "status"
-                ],
                 "type": "object"
             },
             "User.UpdateProfileRequest": {
