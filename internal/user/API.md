@@ -63,16 +63,18 @@ The User module manages authentication identity mapping (Firebase UID to local u
     "friendPhone": ""
   }
   ```
-- **Response** (`200 OK`):
+- **Response** (`200 OK`): `FriendWithStatus` object.
   ```json
   {
-    "friend": {
-      "id": "usr-uuid-2",
-      "name": "Bob",
-      "email": "bob@example.com",
-      "defaultCurrency": "INR"
-    },
-    "status": "PENDING"
+    "id": "usr-uuid-2",
+    "name": "Bob",
+    "email": "bob@example.com",
+    "phone": "+1234567890",
+    "defaultCurrency": "INR",
+    "createdAt": "2026-08-14T15:45:00Z",
+    "updatedAt": "2026-08-14T15:45:00Z",
+    "status": "PENDING",
+    "actionUserId": "usr-uuid-1"
   }
   ```
 
@@ -83,14 +85,27 @@ The User module manages authentication identity mapping (Firebase UID to local u
 
 ### 8. Update Friendship Status (Accept / Decline / Block)
 - **PATCH** `/friends/{friendId}`
-- **Description**: Update status of a friendship or friend request (`ACCEPTED`, `DECLINED`, `BLOCKED`).
+- **Description**: Update status of a friendship or friend request (`ACCEPTED`, `DECLINED`, `BLOCKED`). Returns the updated friend profile and status.
 - **Request Body**:
   ```json
   {
     "status": "ACCEPTED"
   }
   ```
-- **Response** (`204 No Content`).
+- **Response** (`200 OK`): Updated `FriendWithStatus` object.
+  ```json
+  {
+    "id": "usr-uuid-2",
+    "name": "Bob",
+    "email": "bob@example.com",
+    "phone": "+1234567890",
+    "defaultCurrency": "INR",
+    "createdAt": "2026-08-14T15:45:00Z",
+    "updatedAt": "2026-08-14T15:47:00Z",
+    "status": "ACCEPTED",
+    "actionUserId": "usr-uuid-1"
+  }
+  ```
 
 ### 9. Remove Friend
 - **DELETE** `/friends/{friendId}`
