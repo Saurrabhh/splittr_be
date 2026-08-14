@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE,
     phone VARCHAR(255) UNIQUE,
     name VARCHAR(255) NOT NULL,
-    default_currency VARCHAR(3) NOT NULL DEFAULT 'INR',
+    default_currency VARCHAR(3) NOT NULL DEFAULT 'INR' CHECK (length(default_currency) = 3 AND default_currency = UPPER(default_currency)),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT email_or_phone_required CHECK (email IS NOT NULL OR phone IS NOT NULL)

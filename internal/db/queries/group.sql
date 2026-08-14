@@ -21,7 +21,7 @@ WHERE id = $1;
 
 -- name: AddGroupMembers :exec
 INSERT INTO group_members (group_id, user_id, role, status, joined_at)
-SELECT sqlc.arg(group_id)::uuid, unnest(sqlc.arg(user_ids)::uuid[]), sqlc.arg(role)::member_role, sqlc.arg(status)::member_status, NOW()
+SELECT sqlc.arg(group_id)::uuid, unnest(sqlc.arg(user_ids)::uuid[]), sqlc.arg(role)::text, sqlc.arg(status)::text, NOW()
 ON CONFLICT (group_id, user_id) DO NOTHING;
 
 -- name: RemoveGroupMember :exec

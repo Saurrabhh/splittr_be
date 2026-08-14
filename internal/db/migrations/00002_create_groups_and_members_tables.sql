@@ -1,7 +1,4 @@
 -- +goose Up
-CREATE TYPE member_role AS ENUM ('ADMIN', 'MEMBER');
-CREATE TYPE member_status AS ENUM ('ACTIVE', 'PENDING', 'REJECTED');
-
 CREATE TABLE IF NOT EXISTS groups (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
@@ -18,8 +15,8 @@ CREATE TABLE IF NOT EXISTS groups (
 CREATE TABLE IF NOT EXISTS group_members (
     group_id UUID REFERENCES groups(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    role member_role NOT NULL DEFAULT 'MEMBER',
-    status member_status NOT NULL DEFAULT 'ACTIVE',
+    role VARCHAR(20) NOT NULL DEFAULT 'MEMBER' CHECK (role IN ('ADMIN', 'MEMBER')),
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'PENDING', 'REJECTED')),
     joined_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (group_id, user_id)
 );
@@ -29,5 +26,3 @@ CREATE INDEX idx_group_members_user_id ON group_members(user_id);
 -- +goose Down
 DROP TABLE IF EXISTS group_members;
 DROP TABLE IF EXISTS groups;
-DROP TYPE IF EXISTS member_status;
-DROP TYPE IF EXISTS member_role;

@@ -5,97 +5,9 @@
 package dbgen
 
 import (
-	"database/sql/driver"
-	"fmt"
-
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
-
-type MemberRole string
-
-const (
-	MemberRoleADMIN  MemberRole = "ADMIN"
-	MemberRoleMEMBER MemberRole = "MEMBER"
-)
-
-func (e *MemberRole) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = MemberRole(s)
-	case string:
-		*e = MemberRole(s)
-	default:
-		return fmt.Errorf("unsupported scan type for MemberRole: %T", src)
-	}
-	return nil
-}
-
-type NullMemberRole struct {
-	MemberRole MemberRole
-	Valid      bool // Valid is true if MemberRole is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullMemberRole) Scan(value interface{}) error {
-	if value == nil {
-		ns.MemberRole, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.MemberRole.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullMemberRole) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.MemberRole), nil
-}
-
-type MemberStatus string
-
-const (
-	MemberStatusACTIVE   MemberStatus = "ACTIVE"
-	MemberStatusPENDING  MemberStatus = "PENDING"
-	MemberStatusREJECTED MemberStatus = "REJECTED"
-)
-
-func (e *MemberStatus) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = MemberStatus(s)
-	case string:
-		*e = MemberStatus(s)
-	default:
-		return fmt.Errorf("unsupported scan type for MemberStatus: %T", src)
-	}
-	return nil
-}
-
-type NullMemberStatus struct {
-	MemberStatus MemberStatus
-	Valid        bool // Valid is true if MemberStatus is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullMemberStatus) Scan(value interface{}) error {
-	if value == nil {
-		ns.MemberStatus, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.MemberStatus.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullMemberStatus) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.MemberStatus), nil
-}
 
 type Activity struct {
 	ID          uuid.UUID
@@ -203,8 +115,8 @@ type Group struct {
 type GroupMember struct {
 	GroupID  uuid.UUID
 	UserID   uuid.UUID
-	Role     MemberRole
-	Status   MemberStatus
+	Role     string
+	Status   string
 	JoinedAt pgtype.Timestamptz
 }
 

@@ -14,15 +14,15 @@ import (
 
 const addGroupMembers = `-- name: AddGroupMembers :exec
 INSERT INTO group_members (group_id, user_id, role, status, joined_at)
-SELECT $1::uuid, unnest($2::uuid[]), $3::member_role, $4::member_status, NOW()
+SELECT $1::uuid, unnest($2::uuid[]), $3::text, $4::text, NOW()
 ON CONFLICT (group_id, user_id) DO NOTHING
 `
 
 type AddGroupMembersParams struct {
 	GroupID uuid.UUID
 	UserIds []uuid.UUID
-	Role    MemberRole
-	Status  MemberStatus
+	Role    string
+	Status  string
 }
 
 func (q *Queries) AddGroupMembers(ctx context.Context, arg AddGroupMembersParams) error {
@@ -246,8 +246,8 @@ type ListGroupMembersParams struct {
 type ListGroupMembersRow struct {
 	GroupID  uuid.UUID
 	UserID   uuid.UUID
-	Role     MemberRole
-	Status   MemberStatus
+	Role     string
+	Status   string
 	JoinedAt pgtype.Timestamptz
 	Name     string
 	Email    pgtype.Text
@@ -666,7 +666,7 @@ WHERE group_id = $1 AND user_id = $2
 type UpdateGroupMemberRoleParams struct {
 	GroupID uuid.UUID
 	UserID  uuid.UUID
-	Role    MemberRole
+	Role    string
 }
 
 func (q *Queries) UpdateGroupMemberRole(ctx context.Context, arg UpdateGroupMemberRoleParams) error {
@@ -683,7 +683,7 @@ WHERE group_id = $1 AND user_id = $2
 type UpdateMemberStatusParams struct {
 	GroupID uuid.UUID
 	UserID  uuid.UUID
-	Status  MemberStatus
+	Status  string
 }
 
 func (q *Queries) UpdateMemberStatus(ctx context.Context, arg UpdateMemberStatusParams) error {

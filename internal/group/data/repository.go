@@ -256,8 +256,8 @@ func (r *DBRepository) AddGroupMembers(ctx context.Context, groupID string, user
 	err = q.AddGroupMembers(ctx, dbgen.AddGroupMembersParams{
 		GroupID: parsedGroupID,
 		UserIds: parsedUserIDs,
-		Role:    dbgen.MemberRole(role),
-		Status:  dbgen.MemberStatus(status),
+		Role:    string(role),
+		Status:  string(status),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("add group members: %w", err)
@@ -291,7 +291,7 @@ func (r *DBRepository) UpdateMemberStatus(ctx context.Context, groupID, userID s
 	err = q.UpdateMemberStatus(ctx, dbgen.UpdateMemberStatusParams{
 		GroupID: parsedGroupID,
 		UserID:  parsedUserID,
-		Status:  dbgen.MemberStatus(status),
+		Status:  string(status),
 	})
 	if err != nil {
 		return fmt.Errorf("update member status: %w", err)
@@ -332,7 +332,7 @@ func (r *DBRepository) UpdateGroupMemberRole(ctx context.Context, groupID, userI
 	err = q.UpdateGroupMemberRole(ctx, dbgen.UpdateGroupMemberRoleParams{
 		GroupID: parsedGroupID,
 		UserID:  parsedUserID,
-		Role:    dbgen.MemberRole(role),
+		Role:    string(role),
 	})
 	if err != nil {
 		return fmt.Errorf("update group member role: %w", err)
