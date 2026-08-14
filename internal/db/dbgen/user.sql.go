@@ -13,17 +13,28 @@ import (
 )
 
 const createFriendship = `-- name: CreateFriendship :exec
-INSERT INTO friendships (user_id, friend_id)
-VALUES ($1, $2)
+INSERT INTO friendships (user_id, friend_id, status, action_user_id, created_at, updated_at)
+VALUES ($1, $2, $3, $4, NOW(), NOW())
+ON CONFLICT (user_id, friend_id) DO UPDATE
+SET status = EXCLUDED.status,
+    action_user_id = EXCLUDED.action_user_id,
+    updated_at = NOW()
 `
 
 type CreateFriendshipParams struct {
-	UserID   uuid.UUID
-	FriendID uuid.UUID
+	UserID       uuid.UUID
+	FriendID     uuid.UUID
+	Status       string
+	ActionUserID pgtype.UUID
 }
 
 func (q *Queries) CreateFriendship(ctx context.Context, arg CreateFriendshipParams) error {
-	_, err := q.db.Exec(ctx, createFriendship, arg.UserID, arg.FriendID)
+	_, err := q.db.Exec(ctx, createFriendship,
+		arg.UserID,
+		arg.FriendID,
+		arg.Status,
+		arg.ActionUserID,
+	)
 	return err
 }
 
@@ -81,7 +92,7 @@ func (q *Queries) DeleteFriendship(ctx context.Context, arg DeleteFriendshipPara
 }
 
 const getFriendship = `-- name: GetFriendship :one
-SELECT user_id, friend_id, created_at
+SELECT user_id, friend_id, status, action_user_id, created_at, updated_at
 FROM friendships
 WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)
 `
@@ -92,15 +103,25 @@ type GetFriendshipParams struct {
 }
 
 type GetFriendshipRow struct {
-	UserID    uuid.UUID
-	FriendID  uuid.UUID
-	CreatedAt pgtype.Timestamptz
+	UserID       uuid.UUID
+	FriendID     uuid.UUID
+	Status       string
+	ActionUserID pgtype.UUID
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
 }
 
 func (q *Queries) GetFriendship(ctx context.Context, arg GetFriendshipParams) (GetFriendshipRow, error) {
 	row := q.db.QueryRow(ctx, getFriendship, arg.UserID, arg.FriendID)
 	var i GetFriendshipRow
-	err := row.Scan(&i.UserID, &i.FriendID, &i.CreatedAt)
+	err := row.Scan(
+		&i.UserID,
+		&i.FriendID,
+		&i.Status,
+		&i.ActionUserID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
 	return i, err
 }
 
@@ -175,13 +196,55 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 	return i, err
 }
 
+const getUserWithSettingsByEmailOrPhone = `-- name: GetUserWithSettingsByEmailOrPhone :one
+SELECT u.id, u.firebase_uid, u.email, u.phone, u.name, u.default_currency, u.created_at, u.updated_at,
+       COALESCE(s.auto_accept_friend_requests, FALSE)::BOOLEAN AS auto_accept_friend_requests
+FROM users u
+LEFT JOIN user_settings s ON u.id = s.user_id
+WHERE u.email = $1 OR u.phone = $2
+`
+
+type GetUserWithSettingsByEmailOrPhoneParams struct {
+	Email pgtype.Text
+	Phone pgtype.Text
+}
+
+type GetUserWithSettingsByEmailOrPhoneRow struct {
+	ID                       uuid.UUID
+	FirebaseUid              string
+	Email                    pgtype.Text
+	Phone                    pgtype.Text
+	Name                     string
+	DefaultCurrency          string
+	CreatedAt                pgtype.Timestamptz
+	UpdatedAt                pgtype.Timestamptz
+	AutoAcceptFriendRequests bool
+}
+
+func (q *Queries) GetUserWithSettingsByEmailOrPhone(ctx context.Context, arg GetUserWithSettingsByEmailOrPhoneParams) (GetUserWithSettingsByEmailOrPhoneRow, error) {
+	row := q.db.QueryRow(ctx, getUserWithSettingsByEmailOrPhone, arg.Email, arg.Phone)
+	var i GetUserWithSettingsByEmailOrPhoneRow
+	err := row.Scan(
+		&i.ID,
+		&i.FirebaseUid,
+		&i.Email,
+		&i.Phone,
+		&i.Name,
+		&i.DefaultCurrency,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.AutoAcceptFriendRequests,
+	)
+	return i, err
+}
+
 const listFriends = `-- name: ListFriends :many
 SELECT u.id, u.firebase_uid, u.email, u.phone, u.name, u.default_currency, u.created_at, u.updated_at
 FROM users u
 WHERE u.id IN (
-    SELECT f.friend_id FROM friendships f WHERE f.user_id = $1
+    SELECT f.friend_id FROM friendships f WHERE f.user_id = $1 AND f.status = 'ACCEPTED'
     UNION
-    SELECT f.user_id FROM friendships f WHERE f.friend_id = $1
+    SELECT f.user_id FROM friendships f WHERE f.friend_id = $1 AND f.status = 'ACCEPTED'
 )
 `
 
@@ -214,13 +277,72 @@ func (q *Queries) ListFriends(ctx context.Context, userID uuid.UUID) ([]User, er
 	return items, nil
 }
 
+const listFriendsByStatus = `-- name: ListFriendsByStatus :many
+SELECT u.id, u.firebase_uid, u.email, u.phone, u.name, u.default_currency, u.created_at, u.updated_at, f.status, f.action_user_id
+FROM users u
+JOIN friendships f ON (
+    (f.user_id = $1 AND f.friend_id = u.id) OR
+    (f.friend_id = $1 AND f.user_id = u.id)
+)
+WHERE f.status = $2
+`
+
+type ListFriendsByStatusParams struct {
+	UserID uuid.UUID
+	Status string
+}
+
+type ListFriendsByStatusRow struct {
+	ID              uuid.UUID
+	FirebaseUid     string
+	Email           pgtype.Text
+	Phone           pgtype.Text
+	Name            string
+	DefaultCurrency string
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
+	Status          string
+	ActionUserID    pgtype.UUID
+}
+
+func (q *Queries) ListFriendsByStatus(ctx context.Context, arg ListFriendsByStatusParams) ([]ListFriendsByStatusRow, error) {
+	rows, err := q.db.Query(ctx, listFriendsByStatus, arg.UserID, arg.Status)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListFriendsByStatusRow
+	for rows.Next() {
+		var i ListFriendsByStatusRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.FirebaseUid,
+			&i.Email,
+			&i.Phone,
+			&i.Name,
+			&i.DefaultCurrency,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Status,
+			&i.ActionUserID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listFriendsPaginated = `-- name: ListFriendsPaginated :many
 SELECT u.id, u.firebase_uid, u.email, u.phone, u.name, u.default_currency, u.created_at, u.updated_at
 FROM users u
 WHERE u.id IN (
-    SELECT f.friend_id FROM friendships f WHERE f.user_id = $1
+    SELECT f.friend_id FROM friendships f WHERE f.user_id = $1 AND f.status = 'ACCEPTED'
     UNION
-    SELECT f.user_id FROM friendships f WHERE f.friend_id = $1
+    SELECT f.user_id FROM friendships f WHERE f.friend_id = $1 AND f.status = 'ACCEPTED'
 )
 AND (
   $3::TIMESTAMP WITH TIME ZONE IS NULL
@@ -273,7 +395,7 @@ func (q *Queries) ListFriendsPaginated(ctx context.Context, arg ListFriendsPagin
 }
 
 const syncFriendsBySequence = `-- name: SyncFriendsBySequence :many
-SELECT f.user_id, f.friend_id, f.created_at, f.sync_version
+SELECT f.user_id, f.friend_id, f.status, f.action_user_id, f.created_at, f.updated_at, f.sync_version
 FROM friendships f
 WHERE f.sync_version > $1
   AND (f.user_id = $2 OR f.friend_id = $2)
@@ -287,19 +409,32 @@ type SyncFriendsBySequenceParams struct {
 	Limit       int32
 }
 
-func (q *Queries) SyncFriendsBySequence(ctx context.Context, arg SyncFriendsBySequenceParams) ([]Friendship, error) {
+type SyncFriendsBySequenceRow struct {
+	UserID       uuid.UUID
+	FriendID     uuid.UUID
+	Status       string
+	ActionUserID pgtype.UUID
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
+	SyncVersion  int64
+}
+
+func (q *Queries) SyncFriendsBySequence(ctx context.Context, arg SyncFriendsBySequenceParams) ([]SyncFriendsBySequenceRow, error) {
 	rows, err := q.db.Query(ctx, syncFriendsBySequence, arg.SyncVersion, arg.UserID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Friendship
+	var items []SyncFriendsBySequenceRow
 	for rows.Next() {
-		var i Friendship
+		var i SyncFriendsBySequenceRow
 		if err := rows.Scan(
 			&i.UserID,
 			&i.FriendID,
+			&i.Status,
+			&i.ActionUserID,
 			&i.CreatedAt,
+			&i.UpdatedAt,
 			&i.SyncVersion,
 		); err != nil {
 			return nil, err
@@ -310,6 +445,31 @@ func (q *Queries) SyncFriendsBySequence(ctx context.Context, arg SyncFriendsBySe
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateFriendshipStatus = `-- name: UpdateFriendshipStatus :exec
+UPDATE friendships
+SET status = $3,
+    action_user_id = $4,
+    updated_at = NOW()
+WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)
+`
+
+type UpdateFriendshipStatusParams struct {
+	UserID       uuid.UUID
+	FriendID     uuid.UUID
+	Status       string
+	ActionUserID pgtype.UUID
+}
+
+func (q *Queries) UpdateFriendshipStatus(ctx context.Context, arg UpdateFriendshipStatusParams) error {
+	_, err := q.db.Exec(ctx, updateFriendshipStatus,
+		arg.UserID,
+		arg.FriendID,
+		arg.Status,
+		arg.ActionUserID,
+	)
+	return err
 }
 
 const updateUser = `-- name: UpdateUser :one

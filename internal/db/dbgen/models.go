@@ -92,10 +92,13 @@ type FeatureFlag struct {
 }
 
 type Friendship struct {
-	UserID      uuid.UUID
-	FriendID    uuid.UUID
-	CreatedAt   pgtype.Timestamptz
-	SyncVersion int64
+	UserID       uuid.UUID
+	FriendID     uuid.UUID
+	CreatedAt    pgtype.Timestamptz
+	SyncVersion  int64
+	Status       string
+	ActionUserID pgtype.UUID
+	UpdatedAt    pgtype.Timestamptz
 }
 
 type Group struct {
@@ -166,4 +169,11 @@ type User struct {
 	DefaultCurrency string
 	CreatedAt       pgtype.Timestamptz
 	UpdatedAt       pgtype.Timestamptz
+}
+
+type UserSetting struct {
+	UserID                   uuid.UUID
+	AutoAcceptFriendRequests bool
+	CreatedAt                pgtype.Timestamptz
+	UpdatedAt                pgtype.Timestamptz
 }

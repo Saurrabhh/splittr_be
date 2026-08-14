@@ -25,15 +25,26 @@ FROM users
 WHERE email = $1 OR phone = $2;
 
 -- name: CreateFriendship :exec
-INSERT INTO friendships (user_id, friend_id)
-VALUES ($1, $2);
+INSERT INTO friendships (user_id, friend_id, status, action_user_id, created_at, updated_at)
+VALUES ($1, $2, $3, $4, NOW(), NOW())
+ON CONFLICT (user_id, friend_id) DO UPDATE
+SET status = EXCLUDED.status,
+    action_user_id = EXCLUDED.action_user_id,
+    updated_at = NOW();
+
+-- name: UpdateFriendshipStatus :exec
+UPDATE friendships
+SET status = $3,
+    action_user_id = $4,
+    updated_at = NOW()
+WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1);
 
 -- name: DeleteFriendship :exec
 DELETE FROM friendships
 WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1);
 
 -- name: GetFriendship :one
-SELECT user_id, friend_id, created_at
+SELECT user_id, friend_id, status, action_user_id, created_at, updated_at
 FROM friendships
 WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1);
 
@@ -41,18 +52,18 @@ WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1);
 SELECT u.id, u.firebase_uid, u.email, u.phone, u.name, u.default_currency, u.created_at, u.updated_at
 FROM users u
 WHERE u.id IN (
-    SELECT f.friend_id FROM friendships f WHERE f.user_id = $1
+    SELECT f.friend_id FROM friendships f WHERE f.user_id = $1 AND f.status = 'ACCEPTED'
     UNION
-    SELECT f.user_id FROM friendships f WHERE f.friend_id = $1
+    SELECT f.user_id FROM friendships f WHERE f.friend_id = $1 AND f.status = 'ACCEPTED'
 );
 
 -- name: ListFriendsPaginated :many
 SELECT u.id, u.firebase_uid, u.email, u.phone, u.name, u.default_currency, u.created_at, u.updated_at
 FROM users u
 WHERE u.id IN (
-    SELECT f.friend_id FROM friendships f WHERE f.user_id = $1
+    SELECT f.friend_id FROM friendships f WHERE f.user_id = $1 AND f.status = 'ACCEPTED'
     UNION
-    SELECT f.user_id FROM friendships f WHERE f.friend_id = $1
+    SELECT f.user_id FROM friendships f WHERE f.friend_id = $1 AND f.status = 'ACCEPTED'
 )
 AND (
   $3::TIMESTAMP WITH TIME ZONE IS NULL
@@ -62,13 +73,26 @@ AND (
 ORDER BY u.created_at DESC, u.id DESC
 LIMIT $2;
 
+-- name: ListFriendsByStatus :many
+SELECT u.id, u.firebase_uid, u.email, u.phone, u.name, u.default_currency, u.created_at, u.updated_at, f.status, f.action_user_id
+FROM users u
+JOIN friendships f ON (
+    (f.user_id = $1 AND f.friend_id = u.id) OR
+    (f.friend_id = $1 AND f.user_id = u.id)
+)
+WHERE f.status = $2;
+
+-- name: GetUserWithSettingsByEmailOrPhone :one
+SELECT u.id, u.firebase_uid, u.email, u.phone, u.name, u.default_currency, u.created_at, u.updated_at,
+       COALESCE(s.auto_accept_friend_requests, FALSE)::BOOLEAN AS auto_accept_friend_requests
+FROM users u
+LEFT JOIN user_settings s ON u.id = s.user_id
+WHERE u.email = $1 OR u.phone = $2;
+
 -- name: SyncFriendsBySequence :many
-SELECT f.user_id, f.friend_id, f.created_at, f.sync_version
+SELECT f.user_id, f.friend_id, f.status, f.action_user_id, f.created_at, f.updated_at, f.sync_version
 FROM friendships f
 WHERE f.sync_version > $1
   AND (f.user_id = $2 OR f.friend_id = $2)
 ORDER BY f.sync_version ASC
 LIMIT $3;
-
-
-
