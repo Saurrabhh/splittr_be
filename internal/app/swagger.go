@@ -32,10 +32,13 @@ func (app *Application) registerSwaggerRoutes(r chi.Router) {
 			response.JSON(w, http.StatusOK, json.RawMessage(doc))
 		})
 
-		// Swagger UI route
+		// Swagger UI route with operation method sorting (GET -> POST -> PUT -> PATCH -> DELETE)
 		r.Get("/*", httpSwagger.Handler(
 			httpSwagger.DefaultModelsExpandDepth(2),
 			httpSwagger.URL("/swagger/doc.json"),
+			httpSwagger.UIConfig(map[string]string{
+				"operationsSorter": "'method'",
+			}),
 		))
 	})
 
