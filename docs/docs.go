@@ -1076,6 +1076,17 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "User.AddFriendResponse": {
+                "properties": {
+                    "friend": {
+                        "$ref": "#/components/schemas/User.User"
+                    },
+                    "status": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "User.FriendSyncResponse": {
                 "properties": {
                     "friends": {
@@ -1099,6 +1110,22 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "User.UpdateFriendStatusRequest": {
+                "properties": {
+                    "status": {
+                        "enum": [
+                            "ACCEPTED",
+                            "DECLINED",
+                            "BLOCKED"
+                        ],
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "status"
+                ],
+                "type": "object"
+            },
             "User.UpdateProfileRequest": {
                 "properties": {
                     "defaultCurrency": {
@@ -1106,6 +1133,14 @@ const docTemplate = `{
                     },
                     "name": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "User.UpdateUserSettingsRequest": {
+                "properties": {
+                    "autoAcceptFriendRequests": {
+                        "type": "boolean"
                     }
                 },
                 "type": "object"
@@ -1136,16 +1171,33 @@ const docTemplate = `{
                 },
                 "type": "object"
             },
+            "User.UserSettingsResponse": {
+                "properties": {
+                    "autoAcceptFriendRequests": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
             "github_com_Saurrabhh_splittr_be_internal_user_domain.FriendshipSyncRecord": {
                 "properties": {
+                    "actionUserId": {
+                        "type": "string"
+                    },
                     "createdAt": {
                         "type": "string"
                     },
                     "friendId": {
                         "type": "string"
                     },
+                    "status": {
+                        "type": "string"
+                    },
                     "syncVersion": {
                         "type": "integer"
+                    },
+                    "updatedAt": {
+                        "type": "string"
                     },
                     "userId": {
                         "type": "string"
@@ -2000,8 +2052,16 @@ const docTemplate = `{
         },
         "/friends": {
             "get": {
-                "description": "Get a cursor-paginated list of the current user's friends.",
+                "description": "Get friends list. Use optional status parameter to filter by ACCEPTED, PENDING, or BLOCKED.",
                 "parameters": [
+                    {
+                        "description": "Filter by status: ACCEPTED, PENDING, BLOCKED",
+                        "in": "query",
+                        "name": "status",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     {
                         "description": "Items per page (max 100, default 20)",
                         "in": "query",
@@ -2062,7 +2122,7 @@ const docTemplate = `{
                 ]
             },
             "post": {
-                "description": "Create a friendship link with another user by their email or phone.",
+                "description": "Create a friendship link (PENDING or ACCEPTED based on target user settings) using email or phone.",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2088,7 +2148,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/User.User"
+                                    "$ref": "#/components/schemas/User.AddFriendResponse"
                                 }
                             }
                         },
@@ -2130,7 +2190,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Add friend",
+                "summary": "Add friend or send friend request",
                 "tags": [
                     "friends"
                 ]
@@ -2255,6 +2315,84 @@ const docTemplate = `{
                     }
                 ],
                 "summary": "Remove friend",
+                "tags": [
+                    "friends"
+                ]
+            },
+            "patch": {
+                "description": "Accept, decline, or block a friend request / friendship.",
+                "parameters": [
+                    {
+                        "description": "Friend User ID",
+                        "in": "path",
+                        "name": "friendId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/User.UpdateFriendStatusRequest",
+                                        "summary": "request",
+                                        "description": "New status (ACCEPTED, DECLINED, BLOCKED)"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "New status (ACCEPTED, DECLINED, BLOCKED)",
+                    "required": true
+                },
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Update friendship status",
                 "tags": [
                     "friends"
                 ]
@@ -3715,6 +3853,126 @@ const docTemplate = `{
                     }
                 ],
                 "summary": "Update user profile",
+                "tags": [
+                    "users"
+                ]
+            }
+        },
+        "/users/me/settings": {
+            "get": {
+                "description": "Retrieve privacy and app settings for the current user.",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User.UserSettingsResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Get user settings",
+                "tags": [
+                    "users"
+                ]
+            },
+            "put": {
+                "description": "Update privacy preferences such as autoAcceptFriendRequests.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/User.UpdateUserSettingsRequest",
+                                        "summary": "request",
+                                        "description": "Settings to update"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Settings to update",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User.UserSettingsResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Update user settings",
                 "tags": [
                     "users"
                 ]
