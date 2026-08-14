@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// UseCase handles business operations for users.
+// UseCase handles business operations for users, settings, and friendships.
 type UseCase struct {
 	repo Repository
 }
@@ -20,7 +20,7 @@ func NewUseCase(repo Repository) *UseCase {
 	}
 }
 
-// RegisterUser registers a new user in the system if they do not exist.
+// RegisterUser registers a new user in the system if they do not exist, and creates default user settings.
 func (u *UseCase) RegisterUser(ctx context.Context, firebaseUID string, email, phone *string, name string) (*User, error) {
 	if firebaseUID == "" {
 		return nil, &response.AppError{
@@ -61,6 +61,11 @@ func (u *UseCase) RegisterUser(ctx context.Context, firebaseUID string, email, p
 			Message: response.ErrLogRegisterUser,
 			Err:     err,
 		}
+	}
+
+	// Create default user_settings row for newly registered user
+	if err := u.repo.CreateDefaultSettings(ctx, newUser.ID); err != nil {
+		// Log or handle error if needed, non-fatal fallback
 	}
 
 	return newUser, nil
@@ -157,58 +162,112 @@ func (u *UseCase) UpdateProfile(ctx context.Context, userID string, name string,
 	return usr, nil
 }
 
-// AddFriendByEmailOrPhone matches a user profile by email or phone and establishes a friendship relation.
-func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, email string, phone string) (*User, error) {
+// AddFriendByEmailOrPhone matches a user profile by email or phone and establishes a friendship or pending request.
+func (u *UseCase) AddFriendByEmailOrPhone(ctx context.Context, userID string, email string, phone string) (*User, string, error) {
 	if email == "" && phone == "" {
-		return nil, &response.AppError{
+		return nil, "", &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgMissingEmailOrPhone,
 		}
 	}
 
-	friend, err := u.repo.GetByEmailOrPhone(ctx, email, phone)
+	friendWithSettings, err := u.repo.GetByEmailOrPhoneWithSettings(ctx, email, phone)
 	if err != nil {
-		return nil, &response.AppError{
+		return nil, "", &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogLookupUser,
 			Err:     err,
 		}
 	}
-	if friend == nil {
-		return nil, &response.AppError{
+	if friendWithSettings == nil {
+		return nil, "", &response.AppError{
 			Type:    response.TypeNotFound,
 			Message: response.MsgUserNotFound,
 		}
 	}
 
+	friend := &friendWithSettings.User
+
 	if friend.ID == userID {
-		return nil, &response.AppError{
+		return nil, "", &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgSelfFriendError,
 		}
 	}
 
-	isFriend, err := u.repo.GetFriendship(ctx, userID, friend.ID)
+	existingFriendship, err := u.repo.GetFriendship(ctx, userID, friend.ID)
 	if err != nil {
-		return nil, &response.AppError{
+		return nil, "", &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogVerifyFriendship,
 			Err:     err,
 		}
 	}
-	if isFriend {
-		return friend, nil
+	if existingFriendship != nil {
+		if existingFriendship.Status == "BLOCKED" {
+			return nil, "", &response.AppError{
+				Type:    response.TypeValidation,
+				Message: "Cannot add friend: user is blocked",
+			}
+		}
+		return friend, existingFriendship.Status, nil
 	}
 
-	if err := u.repo.CreateFriendship(ctx, userID, friend.ID); err != nil {
-		return nil, &response.AppError{
+	status := "PENDING"
+	if friendWithSettings.AutoAcceptFriendRequests {
+		status = "ACCEPTED"
+	}
+
+	if err := u.repo.CreateFriendship(ctx, userID, friend.ID, status, userID); err != nil {
+		return nil, "", &response.AppError{
 			Type:    response.TypeInternal,
 			Message: response.ErrLogAddFriend,
 			Err:     err,
 		}
 	}
 
-	return friend, nil
+	return friend, status, nil
+}
+
+// UpdateFriendshipStatus updates the status of an existing friendship (ACCEPTED, DECLINED, BLOCKED).
+func (u *UseCase) UpdateFriendshipStatus(ctx context.Context, userID string, friendID string, status string) error {
+	if friendID == "" {
+		return &response.AppError{
+			Type:    response.TypeValidation,
+			Message: response.MsgInvalidParam,
+		}
+	}
+
+	if status != "ACCEPTED" && status != "DECLINED" && status != "BLOCKED" {
+		return &response.AppError{
+			Type:    response.TypeValidation,
+			Message: "Invalid friendship status",
+		}
+	}
+
+	existing, err := u.repo.GetFriendship(ctx, userID, friendID)
+	if err != nil {
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: response.ErrLogVerifyFriendship,
+			Err:     err,
+		}
+	}
+	if existing == nil {
+		return &response.AppError{
+			Type:    response.TypeNotFound,
+			Message: response.MsgNotFriends,
+		}
+	}
+
+	if err := u.repo.UpdateFriendshipStatus(ctx, userID, friendID, status, userID); err != nil {
+		return &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "Failed to update friendship status",
+			Err:     err,
+		}
+	}
+	return nil
 }
 
 // RemoveFriend deletes a friendship link.
@@ -220,7 +279,7 @@ func (u *UseCase) RemoveFriend(ctx context.Context, userID string, friendID stri
 		}
 	}
 
-	isFriend, err := u.repo.GetFriendship(ctx, userID, friendID)
+	existing, err := u.repo.GetFriendship(ctx, userID, friendID)
 	if err != nil {
 		return &response.AppError{
 			Type:    response.TypeInternal,
@@ -228,7 +287,7 @@ func (u *UseCase) RemoveFriend(ctx context.Context, userID string, friendID stri
 			Err:     err,
 		}
 	}
-	if !isFriend {
+	if existing == nil {
 		return &response.AppError{
 			Type:    response.TypeValidation,
 			Message: response.MsgNotFriends,
@@ -245,7 +304,7 @@ func (u *UseCase) RemoveFriend(ctx context.Context, userID string, friendID stri
 	return nil
 }
 
-// ListFriends returns a cursor-paginated list of the user's friends.
+// ListFriends returns a cursor-paginated list of the user's accepted friends.
 func (u *UseCase) ListFriends(ctx context.Context, userID string, p pagination.Params) (pagination.Response[User], error) {
 	if userID == "" {
 		return pagination.Response[User]{}, &response.AppError{Type: response.TypeValidation, Message: response.MsgInvalidParam}
@@ -262,6 +321,64 @@ func (u *UseCase) ListFriends(ctx context.Context, userID string, p pagination.P
 	return pagination.BuildResponse(friends, p.Limit, func(usr User) string {
 		return pagination.EncodeCursor(usr.CreatedAt, usr.ID)
 	}), nil
+}
+
+// ListFriendsByStatus returns a list of friends filtered by status (ACCEPTED, PENDING, BLOCKED).
+func (u *UseCase) ListFriendsByStatus(ctx context.Context, userID string, status string) ([]FriendWithStatus, error) {
+	if userID == "" {
+		return nil, &response.AppError{Type: response.TypeValidation, Message: response.MsgInvalidParam}
+	}
+	if status == "" {
+		status = "ACCEPTED"
+	}
+
+	friends, err := u.repo.ListFriendsByStatus(ctx, userID, status)
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: response.ErrLogRetrieveFriends,
+			Err:     err,
+		}
+	}
+	return friends, nil
+}
+
+// GetUserSettings retrieves the settings for a user.
+func (u *UseCase) GetUserSettings(ctx context.Context, userID string) (*UserSettings, error) {
+	if userID == "" {
+		return nil, &response.AppError{Type: response.TypeValidation, Message: response.MsgInvalidParam}
+	}
+	settings, err := u.repo.GetSettings(ctx, userID)
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "Failed to retrieve user settings",
+			Err:     err,
+		}
+	}
+	return settings, nil
+}
+
+// UpdateUserSettings creates or updates the user settings.
+func (u *UseCase) UpdateUserSettings(ctx context.Context, userID string, autoAcceptFriendRequests bool) (*UserSettings, error) {
+	if userID == "" {
+		return nil, &response.AppError{Type: response.TypeValidation, Message: response.MsgInvalidParam}
+	}
+
+	settings := &UserSettings{
+		UserID:                   userID,
+		AutoAcceptFriendRequests: autoAcceptFriendRequests,
+	}
+
+	if err := u.repo.UpsertSettings(ctx, settings); err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "Failed to update user settings",
+			Err:     err,
+		}
+	}
+
+	return settings, nil
 }
 
 // FriendSyncResponse contains updated friends for offline sync.
@@ -301,4 +418,3 @@ func (u *UseCase) SyncFriends(ctx context.Context, lastVersion int64, userID str
 		Friends:    records,
 	}, nil
 }
-
