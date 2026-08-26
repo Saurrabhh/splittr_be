@@ -213,13 +213,15 @@ func TestGetGroupFeed_CursorParsing(t *testing.T) {
 
 	expectedTime, _ := time.Parse(time.RFC3339, "2026-07-18T18:00:00Z")
 	lastID := "uuid-test"
+	cursor := pagination.EncodeCursor(expectedTime, lastID)
 
 	mockRepo.On("ListGroupFeed", ctx, "grp-1", "usr-1", int32(11), &expectedTime, &lastID).Return([]domain.Activity{}, nil)
 
 	uc := domain.NewUseCase(mockRepo)
-	_, err := uc.GetGroupFeed(ctx, "usr-1", "grp-1", pagination.Params{Limit: 10, Cursor: "2026-07-18T18:00:00Z_uuid-test"})
+	_, err := uc.GetGroupFeed(ctx, "usr-1", "grp-1", pagination.Params{Limit: 10, Cursor: cursor})
 	require.NoError(t, err)
 	mockRepo.AssertExpectations(t)
+
 }
 
 func TestGetGroupFeed_RepoError(t *testing.T) {

@@ -10,11 +10,12 @@ import (
 )
 
 func TestParseCursor_ValidInput(t *testing.T) {
-	c := pagination.ParseCursor("2026-07-18T18:00:00Z_abc-123")
+	expected, _ := time.Parse(time.RFC3339, "2026-07-18T18:00:00Z")
+	encoded := pagination.EncodeCursor(expected, "abc-123")
+	c := pagination.ParseCursor(encoded)
 	if c.LastTime == nil || c.LastID == nil {
 		t.Fatal("expected non-nil cursor fields")
 	}
-	expected, _ := time.Parse(time.RFC3339, "2026-07-18T18:00:00Z")
 	if !c.LastTime.Equal(expected) {
 		t.Errorf("time mismatch: got %v", *c.LastTime)
 	}
@@ -22,6 +23,7 @@ func TestParseCursor_ValidInput(t *testing.T) {
 		t.Errorf("id mismatch: got %s", *c.LastID)
 	}
 }
+
 
 func TestParseCursor_EmptyString(t *testing.T) {
 	c := pagination.ParseCursor("")

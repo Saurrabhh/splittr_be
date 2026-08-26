@@ -1,6 +1,7 @@
 package pagination
 
 import (
+	"encoding/base64"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,36 +14,43 @@ type Cursor struct {
 	LastID   *string
 }
 
-// ParseCursor decodes a cursor string of the form "<RFC3339Nano>_<uuid>".
+// ParseCursor decodes an opaque Base64-URL cursor string.
 // Returns a zero-value Cursor (both fields nil) on any parse error.
 func ParseCursor(s string) Cursor {
 	if s == "" {
 		return Cursor{}
 	}
-	// Split on the first underscore that follows the RFC3339 timestamp.
-	idx := strings.Index(s, "_")
-	if idx < 1 || idx == len(s)-1 {
-		return Cursor{}
-	}
-	t, err := time.Parse(time.RFC3339Nano, s[:idx])
+	decoded, err := base64.RawURLEncoding.DecodeString(s)
 	if err != nil {
 		return Cursor{}
 	}
-	id := s[idx+1:]
+	raw := string(decoded)
+	// Split on the first underscore that follows the RFC3339 timestamp.
+	idx := strings.Index(raw, "_")
+	if idx < 1 || idx == len(raw)-1 {
+		return Cursor{}
+	}
+	t, err := time.Parse(time.RFC3339Nano, raw[:idx])
+	if err != nil {
+		return Cursor{}
+	}
+	id := raw[idx+1:]
 	return Cursor{LastTime: &t, LastID: &id}
 }
 
-// EncodeCursor serialises a (time, id) pair into a cursor string.
+// EncodeCursor serialises a (time, id) pair into an opaque Base64-URL cursor string.
 // RFC3339Nano preserves sub-second precision so cursor-based pagination
 // never skips rows that share the same second.
 func EncodeCursor(t time.Time, id string) string {
-	return t.UTC().Format(time.RFC3339Nano) + "_" + id
+	raw := t.UTC().Format(time.RFC3339Nano) + "_" + id
+	return base64.RawURLEncoding.EncodeToString([]byte(raw))
 }
 
 // Params holds the parsed query parameters for a paginated request.
 type Params struct {
 	Limit  int32
 	Cursor string
+
 }
 
 // ParseParams reads "limit" and "cursor" from the request query string.
