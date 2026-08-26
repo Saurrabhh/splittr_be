@@ -3,20 +3,26 @@ package data
 import (
 	"github.com/Saurrabhh/splittr_be/internal/db/dbgen"
 	"github.com/Saurrabhh/splittr_be/internal/user/domain"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func toDomainUser(dbUser dbgen.User) *domain.User {
+func mapUserFields(id uuid.UUID, firebaseUID string, email pgtype.Text, phone pgtype.Text, name string, defaultCurrency string, avatarUrl pgtype.Text, createdAt pgtype.Timestamptz, updatedAt pgtype.Timestamptz) *domain.User {
 	return &domain.User{
-		ID:              dbUser.ID.String(),
-		FirebaseUID:     dbUser.FirebaseUid,
-		Email:           textToPtr(dbUser.Email),
-		Phone:           textToPtr(dbUser.Phone),
-		Name:            dbUser.Name,
-		DefaultCurrency: dbUser.DefaultCurrency,
-		CreatedAt:       dbUser.CreatedAt.Time,
-		UpdatedAt:       dbUser.UpdatedAt.Time,
+		ID:              id.String(),
+		FirebaseUID:     firebaseUID,
+		Email:           textToPtr(email),
+		Phone:           textToPtr(phone),
+		Name:            name,
+		DefaultCurrency: defaultCurrency,
+		AvatarURL:       textToPtr(avatarUrl),
+		CreatedAt:       createdAt.Time,
+		UpdatedAt:       updatedAt.Time,
 	}
+}
+
+func toDomainUser(dbUser dbgen.User) *domain.User {
+	return mapUserFields(dbUser.ID, dbUser.FirebaseUid, dbUser.Email, dbUser.Phone, dbUser.Name, dbUser.DefaultCurrency, dbUser.AvatarUrl, dbUser.CreatedAt, dbUser.UpdatedAt)
 }
 
 func textToPtr(t pgtype.Text) *string {

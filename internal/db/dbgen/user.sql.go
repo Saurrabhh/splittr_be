@@ -41,7 +41,7 @@ func (q *Queries) CreateFriendship(ctx context.Context, arg CreateFriendshipPara
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (id, firebase_uid, email, phone, name, default_currency, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-RETURNING id, firebase_uid, email, phone, name, default_currency, created_at, updated_at
+RETURNING id, firebase_uid, email, phone, name, default_currency, avatar_url, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -53,7 +53,19 @@ type CreateUserParams struct {
 	DefaultCurrency string
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+type CreateUserRow struct {
+	ID              uuid.UUID
+	FirebaseUid     string
+	Email           pgtype.Text
+	Phone           pgtype.Text
+	Name            string
+	DefaultCurrency string
+	AvatarUrl       pgtype.Text
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
 	row := q.db.QueryRow(ctx, createUser,
 		arg.ID,
 		arg.FirebaseUid,
@@ -62,7 +74,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Name,
 		arg.DefaultCurrency,
 	)
-	var i User
+	var i CreateUserRow
 	err := row.Scan(
 		&i.ID,
 		&i.FirebaseUid,
@@ -70,6 +82,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Phone,
 		&i.Name,
 		&i.DefaultCurrency,
+		&i.AvatarUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -126,7 +139,7 @@ func (q *Queries) GetFriendship(ctx context.Context, arg GetFriendshipParams) (G
 }
 
 const getUserByEmailOrPhone = `-- name: GetUserByEmailOrPhone :one
-SELECT id, firebase_uid, email, phone, name, default_currency, created_at, updated_at
+SELECT id, firebase_uid, email, phone, name, default_currency, avatar_url, created_at, updated_at
 FROM users
 WHERE email = $1 OR phone = $2
 `
@@ -136,9 +149,21 @@ type GetUserByEmailOrPhoneParams struct {
 	Phone pgtype.Text
 }
 
-func (q *Queries) GetUserByEmailOrPhone(ctx context.Context, arg GetUserByEmailOrPhoneParams) (User, error) {
+type GetUserByEmailOrPhoneRow struct {
+	ID              uuid.UUID
+	FirebaseUid     string
+	Email           pgtype.Text
+	Phone           pgtype.Text
+	Name            string
+	DefaultCurrency string
+	AvatarUrl       pgtype.Text
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
+}
+
+func (q *Queries) GetUserByEmailOrPhone(ctx context.Context, arg GetUserByEmailOrPhoneParams) (GetUserByEmailOrPhoneRow, error) {
 	row := q.db.QueryRow(ctx, getUserByEmailOrPhone, arg.Email, arg.Phone)
-	var i User
+	var i GetUserByEmailOrPhoneRow
 	err := row.Scan(
 		&i.ID,
 		&i.FirebaseUid,
@@ -146,6 +171,7 @@ func (q *Queries) GetUserByEmailOrPhone(ctx context.Context, arg GetUserByEmailO
 		&i.Phone,
 		&i.Name,
 		&i.DefaultCurrency,
+		&i.AvatarUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -153,14 +179,26 @@ func (q *Queries) GetUserByEmailOrPhone(ctx context.Context, arg GetUserByEmailO
 }
 
 const getUserByFirebaseUID = `-- name: GetUserByFirebaseUID :one
-SELECT id, firebase_uid, email, phone, name, default_currency, created_at, updated_at
+SELECT id, firebase_uid, email, phone, name, default_currency, avatar_url, created_at, updated_at
 FROM users
 WHERE firebase_uid = $1
 `
 
-func (q *Queries) GetUserByFirebaseUID(ctx context.Context, firebaseUid string) (User, error) {
+type GetUserByFirebaseUIDRow struct {
+	ID              uuid.UUID
+	FirebaseUid     string
+	Email           pgtype.Text
+	Phone           pgtype.Text
+	Name            string
+	DefaultCurrency string
+	AvatarUrl       pgtype.Text
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
+}
+
+func (q *Queries) GetUserByFirebaseUID(ctx context.Context, firebaseUid string) (GetUserByFirebaseUIDRow, error) {
 	row := q.db.QueryRow(ctx, getUserByFirebaseUID, firebaseUid)
-	var i User
+	var i GetUserByFirebaseUIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.FirebaseUid,
@@ -168,6 +206,7 @@ func (q *Queries) GetUserByFirebaseUID(ctx context.Context, firebaseUid string) 
 		&i.Phone,
 		&i.Name,
 		&i.DefaultCurrency,
+		&i.AvatarUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -175,14 +214,26 @@ func (q *Queries) GetUserByFirebaseUID(ctx context.Context, firebaseUid string) 
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, firebase_uid, email, phone, name, default_currency, created_at, updated_at
+SELECT id, firebase_uid, email, phone, name, default_currency, avatar_url, created_at, updated_at
 FROM users
 WHERE id = $1
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
+type GetUserByIDRow struct {
+	ID              uuid.UUID
+	FirebaseUid     string
+	Email           pgtype.Text
+	Phone           pgtype.Text
+	Name            string
+	DefaultCurrency string
+	AvatarUrl       pgtype.Text
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
+}
+
+func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow, error) {
 	row := q.db.QueryRow(ctx, getUserByID, id)
-	var i User
+	var i GetUserByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.FirebaseUid,
@@ -190,6 +241,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.Phone,
 		&i.Name,
 		&i.DefaultCurrency,
+		&i.AvatarUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -248,15 +300,26 @@ WHERE u.id IN (
 )
 `
 
-func (q *Queries) ListFriends(ctx context.Context, userID uuid.UUID) ([]User, error) {
+type ListFriendsRow struct {
+	ID              uuid.UUID
+	FirebaseUid     string
+	Email           pgtype.Text
+	Phone           pgtype.Text
+	Name            string
+	DefaultCurrency string
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
+}
+
+func (q *Queries) ListFriends(ctx context.Context, userID uuid.UUID) ([]ListFriendsRow, error) {
 	rows, err := q.db.Query(ctx, listFriends, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []User
+	var items []ListFriendsRow
 	for rows.Next() {
-		var i User
+		var i ListFriendsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.FirebaseUid,
@@ -360,7 +423,18 @@ type ListFriendsPaginatedParams struct {
 	Column4 uuid.UUID
 }
 
-func (q *Queries) ListFriendsPaginated(ctx context.Context, arg ListFriendsPaginatedParams) ([]User, error) {
+type ListFriendsPaginatedRow struct {
+	ID              uuid.UUID
+	FirebaseUid     string
+	Email           pgtype.Text
+	Phone           pgtype.Text
+	Name            string
+	DefaultCurrency string
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
+}
+
+func (q *Queries) ListFriendsPaginated(ctx context.Context, arg ListFriendsPaginatedParams) ([]ListFriendsPaginatedRow, error) {
 	rows, err := q.db.Query(ctx, listFriendsPaginated,
 		arg.UserID,
 		arg.Limit,
@@ -371,9 +445,9 @@ func (q *Queries) ListFriendsPaginated(ctx context.Context, arg ListFriendsPagin
 		return nil, err
 	}
 	defer rows.Close()
-	var items []User
+	var items []ListFriendsPaginatedRow
 	for rows.Next() {
-		var i User
+		var i ListFriendsPaginatedRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.FirebaseUid,
@@ -409,25 +483,15 @@ type SyncFriendsBySequenceParams struct {
 	Limit       int32
 }
 
-type SyncFriendsBySequenceRow struct {
-	UserID       uuid.UUID
-	FriendID     uuid.UUID
-	Status       string
-	ActionUserID pgtype.UUID
-	CreatedAt    pgtype.Timestamptz
-	UpdatedAt    pgtype.Timestamptz
-	SyncVersion  int64
-}
-
-func (q *Queries) SyncFriendsBySequence(ctx context.Context, arg SyncFriendsBySequenceParams) ([]SyncFriendsBySequenceRow, error) {
+func (q *Queries) SyncFriendsBySequence(ctx context.Context, arg SyncFriendsBySequenceParams) ([]Friendship, error) {
 	rows, err := q.db.Query(ctx, syncFriendsBySequence, arg.SyncVersion, arg.UserID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []SyncFriendsBySequenceRow
+	var items []Friendship
 	for rows.Next() {
-		var i SyncFriendsBySequenceRow
+		var i Friendship
 		if err := rows.Scan(
 			&i.UserID,
 			&i.FriendID,
@@ -476,7 +540,7 @@ const updateUser = `-- name: UpdateUser :one
 UPDATE users
 SET name = $2, default_currency = $3, updated_at = NOW()
 WHERE id = $1
-RETURNING id, firebase_uid, email, phone, name, default_currency, created_at, updated_at
+RETURNING id, firebase_uid, email, phone, name, default_currency, avatar_url, created_at, updated_at
 `
 
 type UpdateUserParams struct {
@@ -485,9 +549,21 @@ type UpdateUserParams struct {
 	DefaultCurrency string
 }
 
-func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+type UpdateUserRow struct {
+	ID              uuid.UUID
+	FirebaseUid     string
+	Email           pgtype.Text
+	Phone           pgtype.Text
+	Name            string
+	DefaultCurrency string
+	AvatarUrl       pgtype.Text
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error) {
 	row := q.db.QueryRow(ctx, updateUser, arg.ID, arg.Name, arg.DefaultCurrency)
-	var i User
+	var i UpdateUserRow
 	err := row.Scan(
 		&i.ID,
 		&i.FirebaseUid,
@@ -495,6 +571,48 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.Phone,
 		&i.Name,
 		&i.DefaultCurrency,
+		&i.AvatarUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateUserAvatar = `-- name: UpdateUserAvatar :one
+UPDATE users
+SET avatar_url = $2, updated_at = NOW()
+WHERE id = $1
+RETURNING id, firebase_uid, email, phone, name, default_currency, avatar_url, created_at, updated_at
+`
+
+type UpdateUserAvatarParams struct {
+	ID        uuid.UUID
+	AvatarUrl pgtype.Text
+}
+
+type UpdateUserAvatarRow struct {
+	ID              uuid.UUID
+	FirebaseUid     string
+	Email           pgtype.Text
+	Phone           pgtype.Text
+	Name            string
+	DefaultCurrency string
+	AvatarUrl       pgtype.Text
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
+}
+
+func (q *Queries) UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarParams) (UpdateUserAvatarRow, error) {
+	row := q.db.QueryRow(ctx, updateUserAvatar, arg.ID, arg.AvatarUrl)
+	var i UpdateUserAvatarRow
+	err := row.Scan(
+		&i.ID,
+		&i.FirebaseUid,
+		&i.Email,
+		&i.Phone,
+		&i.Name,
+		&i.DefaultCurrency,
+		&i.AvatarUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

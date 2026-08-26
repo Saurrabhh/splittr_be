@@ -48,7 +48,7 @@ func (r *DBRepository) GetByID(ctx context.Context, id string) (*domain.User, er
 		return nil, fmt.Errorf("query user: %w", err)
 	}
 
-	return toDomainUser(dbUser), nil
+	return mapUserFields(dbUser.ID, dbUser.FirebaseUid, dbUser.Email, dbUser.Phone, dbUser.Name, dbUser.DefaultCurrency, dbUser.AvatarUrl, dbUser.CreatedAt, dbUser.UpdatedAt), nil
 }
 
 // GetByFirebaseUID retrieves a user by Firebase UID.
@@ -64,7 +64,7 @@ func (r *DBRepository) GetByFirebaseUID(ctx context.Context, firebaseUID string)
 		return nil, fmt.Errorf("query user by firebase uid: %w", err)
 	}
 
-	return toDomainUser(dbUser), nil
+	return mapUserFields(dbUser.ID, dbUser.FirebaseUid, dbUser.Email, dbUser.Phone, dbUser.Name, dbUser.DefaultCurrency, dbUser.AvatarUrl, dbUser.CreatedAt, dbUser.UpdatedAt), nil
 }
 
 // Create inserts a new user.
@@ -122,6 +122,30 @@ func (r *DBRepository) UpdateUser(ctx context.Context, u *domain.User) error {
 	return nil
 }
 
+// UpdateAvatar updates a user's avatar URL.
+func (r *DBRepository) UpdateAvatar(ctx context.Context, userID string, avatarURL string) (*domain.User, error) {
+	parsedID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user uuid: %w", err)
+	}
+
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+
+	dbUser, err := q.UpdateUserAvatar(ctx, dbgen.UpdateUserAvatarParams{
+		ID:        parsedID,
+		AvatarUrl: pgtype.Text{String: avatarURL, Valid: avatarURL != ""},
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrUserNotFound
+		}
+		return nil, fmt.Errorf("update user avatar: %w", err)
+	}
+
+	return mapUserFields(dbUser.ID, dbUser.FirebaseUid, dbUser.Email, dbUser.Phone, dbUser.Name, dbUser.DefaultCurrency, dbUser.AvatarUrl, dbUser.CreatedAt, dbUser.UpdatedAt), nil
+}
+
 // GetByEmailOrPhone retrieves a user by their email or phone number.
 func (r *DBRepository) GetByEmailOrPhone(ctx context.Context, email, phone string) (*domain.User, error) {
 	client := r.tm.GetTxOrPool(ctx)
@@ -138,7 +162,7 @@ func (r *DBRepository) GetByEmailOrPhone(ctx context.Context, email, phone strin
 		return nil, fmt.Errorf("query user by email or phone: %w", err)
 	}
 
-	return toDomainUser(dbUser), nil
+	return mapUserFields(dbUser.ID, dbUser.FirebaseUid, dbUser.Email, dbUser.Phone, dbUser.Name, dbUser.DefaultCurrency, dbUser.AvatarUrl, dbUser.CreatedAt, dbUser.UpdatedAt), nil
 }
 
 // GetByEmailOrPhoneWithSettings retrieves a user along with their settings.

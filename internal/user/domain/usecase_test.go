@@ -39,6 +39,14 @@ func (m *mockUserRepository) UpdateUser(ctx context.Context, u *domain.User) err
 	return m.Called(ctx, u).Error(0)
 }
 
+func (m *mockUserRepository) UpdateAvatar(ctx context.Context, userID string, avatarURL string) (*domain.User, error) {
+	args := m.Called(ctx, userID, avatarURL)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.User), args.Error(1)
+}
+
 func (m *mockUserRepository) GetByEmailOrPhone(ctx context.Context, email, phone string) (*domain.User, error) {
 	args := m.Called(ctx, email, phone)
 	if args.Get(0) == nil {
@@ -126,7 +134,7 @@ func TestRegisterUser_Success(t *testing.T) {
 	mockRepo.On("Create", ctx, mock.AnythingOfType("*domain.User")).Return(nil)
 	mockRepo.On("CreateDefaultSettings", ctx, mock.AnythingOfType("string")).Return(nil)
 
-	uc := domain.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo, nil)
 	u, err := uc.RegisterUser(ctx, "fb-123", &email, nil, "Alice")
 	require.NoError(t, err)
 	assert.NotNil(t, u)
@@ -144,7 +152,7 @@ func TestRegisterUser_AlreadyExists(t *testing.T) {
 	existingUser := &domain.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice", Email: &email}
 	mockRepo.On("GetByFirebaseUID", ctx, "fb-123").Return(existingUser, nil)
 
-	uc := domain.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo, nil)
 	u, err := uc.RegisterUser(ctx, "fb-123", &email, nil, "Alice")
 	require.NoError(t, err)
 	assert.Equal(t, existingUser, u)
@@ -165,7 +173,7 @@ func TestAddFriendByEmailOrPhone_PendingWhenAutoAcceptFalse(t *testing.T) {
 	mockRepo.On("GetFriendship", ctx, "usr-1", "usr-2").Return(nil, nil)
 	mockRepo.On("CreateFriendship", ctx, "usr-1", "usr-2", domain.Pending, "usr-1").Return(nil)
 
-	uc := domain.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo, nil)
 	friend, err := uc.AddFriendByEmailOrPhone(ctx, "usr-1", "bob@example.com", "")
 	require.NoError(t, err)
 	assert.Equal(t, "usr-2", friend.ID)
@@ -185,7 +193,7 @@ func TestAddFriendByEmailOrPhone_AcceptedWhenAutoAcceptTrue(t *testing.T) {
 	mockRepo.On("GetFriendship", ctx, "usr-1", "usr-2").Return(nil, nil)
 	mockRepo.On("CreateFriendship", ctx, "usr-1", "usr-2", domain.Accepted, "usr-1").Return(nil)
 
-	uc := domain.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo, nil)
 	friend, err := uc.AddFriendByEmailOrPhone(ctx, "usr-1", "bob@example.com", "")
 	require.NoError(t, err)
 	assert.Equal(t, "usr-2", friend.ID)
@@ -208,7 +216,7 @@ func TestAddFriendByEmailOrPhone_BlockedUserError(t *testing.T) {
 		Status:   domain.Blocked,
 	}, nil)
 
-	uc := domain.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo, nil)
 	_, err := uc.AddFriendByEmailOrPhone(ctx, "usr-1", "bob@example.com", "")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "blocked")
@@ -228,7 +236,7 @@ func TestUpdateFriendshipStatus_Success(t *testing.T) {
 	mockRepo.On("UpdateFriendshipStatus", ctx, "usr-1", "usr-2", domain.Accepted, "usr-1").Return(nil)
 	mockRepo.On("GetByID", ctx, "usr-2").Return(&domain.User{ID: "usr-2", Name: "Bob"}, nil)
 
-	uc := domain.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo, nil)
 	friend, err := uc.UpdateFriendshipStatus(ctx, "usr-1", "usr-2", domain.Accepted)
 	require.NoError(t, err)
 	assert.Equal(t, "usr-2", friend.ID)
@@ -245,7 +253,7 @@ func TestGetUserSettings_Success(t *testing.T) {
 	expectedSettings := &domain.UserSettings{UserID: "usr-1", AutoAcceptFriendRequests: true}
 	mockRepo.On("GetSettings", ctx, "usr-1").Return(expectedSettings, nil)
 
-	uc := domain.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo, nil)
 	settings, err := uc.GetUserSettings(ctx, "usr-1")
 	require.NoError(t, err)
 	assert.Equal(t, expectedSettings, settings)
@@ -258,7 +266,7 @@ func TestUpdateUserSettings_Success(t *testing.T) {
 
 	mockRepo.On("UpsertSettings", ctx, mock.AnythingOfType("*domain.UserSettings")).Return(nil)
 
-	uc := domain.NewUseCase(mockRepo)
+	uc := domain.NewUseCase(mockRepo, nil)
 	settings, err := uc.UpdateUserSettings(ctx, "usr-1", true)
 	require.NoError(t, err)
 	assert.True(t, settings.AutoAcceptFriendRequests)

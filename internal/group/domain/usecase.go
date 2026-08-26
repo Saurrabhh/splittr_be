@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"crypto/rand"
+	"io"
 	"math/big"
 	"strings"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/notification"
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
+	"github.com/Saurrabhh/splittr_be/internal/storage"
 	"github.com/google/uuid"
 )
 
@@ -66,15 +68,17 @@ type UseCase struct {
 	tx           db.Transactor
 	activity     ActivityLogger
 	notification NotificationSender
+	storage      storage.Service
 }
 
 // NewUseCase instantiates a new UseCase.
-func NewUseCase(repo Repository, tx db.Transactor, activitySvc ActivityLogger, notificationSvc NotificationSender) *UseCase {
+func NewUseCase(repo Repository, tx db.Transactor, activitySvc ActivityLogger, notificationSvc NotificationSender, storageSvc storage.Service) *UseCase {
 	return &UseCase{
 		repo:         repo,
 		tx:           tx,
 		activity:     activitySvc,
 		notification: notificationSvc,
+		storage:      storageSvc,
 	}
 }
 
@@ -1056,5 +1060,50 @@ func (u *UseCase) SyncGroups(ctx context.Context, lastVersion int64, userID stri
 		Updated:         activeGroups,
 		RemovedGroupIDs: removedIDs,
 	}, nil
+}
+
+// UploadGroupIcon validates group membership, streams the file to storage provider, and updates the group icon URL.
+func (u *UseCase) UploadGroupIcon(ctx context.Context, groupID, userID string, file io.Reader, fileName, contentType string) (*Group, error) {
+	if u.storage == nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "Storage service not initialized",
+		}
+	}
+
+	member, err := u.repo.GetGroupMember(ctx, groupID, userID)
+	if err != nil || member == nil || member.Status != MemberStatusActive {
+		return nil, &response.AppError{
+			Type:    response.TypeForbidden,
+			Message: "Access denied. Only active group members can update group icon",
+		}
+	}
+
+	res, err := u.storage.Upload(ctx, storage.UploadParams{
+		File:        file,
+		FileName:    fileName,
+		ContentType: contentType,
+		Folder:      "splittr/groups/" + groupID,
+		Width:       500,
+		Height:      500,
+	})
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "Failed to upload image to storage provider",
+			Err:     err,
+		}
+	}
+
+	updatedGroup, err := u.repo.UpdateIcon(ctx, groupID, res.URL)
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "Failed to update group icon URL in database",
+			Err:     err,
+		}
+	}
+
+	return updatedGroup, nil
 }
 

@@ -1,0 +1,7 @@
+-- +goose Up
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+ALTER TABLE groups ADD COLUMN IF NOT EXISTS icon_url TEXT;
+
+-- +goose Down
+ALTER TABLE users DROP COLUMN IF EXISTS avatar_url;
+ALTER TABLE groups DROP COLUMN IF EXISTS icon_url;

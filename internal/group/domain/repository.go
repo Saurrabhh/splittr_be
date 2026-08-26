@@ -15,6 +15,7 @@ type Repository interface {
 	ListUserGroupsWithMembers(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]GroupWithMembers, error)
 	CreateGroup(ctx context.Context, g *Group) error
 	Update(ctx context.Context, g *Group) error
+	UpdateIcon(ctx context.Context, groupID string, iconURL string) (*Group, error)
 	ResetInviteCode(ctx context.Context, groupID, newInviteCode string, expiresAt time.Time) (*Group, error)
 	Archive(ctx context.Context, id string) error
 	AddGroupMembers(ctx context.Context, groupID string, userIDs []string, role MemberRole, status MemberStatus) ([]Member, error)

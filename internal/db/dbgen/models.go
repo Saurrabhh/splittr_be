@@ -11,14 +11,15 @@ import (
 
 type Activity struct {
 	ID          uuid.UUID
-	GroupID     pgtype.UUID
 	ActorID     pgtype.UUID
 	ActionType  string
-	Description string
 	EntityType  string
 	EntityID    pgtype.UUID
-	Metadata    []byte
+	GroupID     pgtype.UUID
+	Payload     []byte
 	CreatedAt   pgtype.Timestamptz
+	Description string
+	Metadata    []byte
 }
 
 type ActivityVisibility struct {
@@ -94,11 +95,11 @@ type FeatureFlag struct {
 type Friendship struct {
 	UserID       uuid.UUID
 	FriendID     uuid.UUID
-	CreatedAt    pgtype.Timestamptz
-	SyncVersion  int64
 	Status       string
 	ActionUserID pgtype.UUID
+	CreatedAt    pgtype.Timestamptz
 	UpdatedAt    pgtype.Timestamptz
+	SyncVersion  int64
 }
 
 type Group struct {
@@ -112,6 +113,7 @@ type Group struct {
 	CreatedAt            pgtype.Timestamptz
 	UpdatedAt            pgtype.Timestamptz
 	ArchivedAt           pgtype.Timestamptz
+	IconUrl              pgtype.Text
 	SyncVersion          int64
 }
 
@@ -143,12 +145,17 @@ type Notification struct {
 	ID         uuid.UUID
 	UserID     uuid.UUID
 	ActorID    pgtype.UUID
+	AlertType  string
+	EntityType string
+	EntityID   uuid.UUID
+	GroupID    pgtype.UUID
+	Payload    []byte
+	IsRead     bool
+	CreatedAt  pgtype.Timestamptz
 	ActivityID pgtype.UUID
 	Title      string
 	Content    string
 	Type       string
-	IsRead     bool
-	CreatedAt  pgtype.Timestamptz
 }
 
 type SystemLimit struct {
@@ -169,6 +176,7 @@ type User struct {
 	DefaultCurrency string
 	CreatedAt       pgtype.Timestamptz
 	UpdatedAt       pgtype.Timestamptz
+	AvatarUrl       pgtype.Text
 }
 
 type UserSetting struct {

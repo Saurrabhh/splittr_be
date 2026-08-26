@@ -92,7 +92,7 @@ func (r *DBRepository) GetByID(ctx context.Context, id string) (*domain.Group, e
 		return nil, fmt.Errorf("query group: %w", err)
 	}
 
-	return mapGroupFields(dbGroup.ID, dbGroup.Name, dbGroup.Description, dbGroup.InviteCode, dbGroup.InviteCodeExpiresAt, dbGroup.RequireAdminApproval, dbGroup.CreatedBy, dbGroup.CreatedAt, dbGroup.UpdatedAt, dbGroup.ArchivedAt), nil
+	return mapGroupFields(dbGroup.ID, dbGroup.Name, dbGroup.Description, dbGroup.InviteCode, dbGroup.InviteCodeExpiresAt, dbGroup.RequireAdminApproval, dbGroup.CreatedBy, dbGroup.CreatedAt, dbGroup.UpdatedAt, dbGroup.ArchivedAt, dbGroup.IconUrl), nil
 }
 
 // GetByInviteCode retrieves a group by its invite code.
@@ -112,7 +112,7 @@ func (r *DBRepository) GetByInviteCode(ctx context.Context, inviteCode string) (
 		return nil, fmt.Errorf("query group by invite code: %w", err)
 	}
 
-	return mapGroupFields(dbGroup.ID, dbGroup.Name, dbGroup.Description, dbGroup.InviteCode, dbGroup.InviteCodeExpiresAt, dbGroup.RequireAdminApproval, dbGroup.CreatedBy, dbGroup.CreatedAt, dbGroup.UpdatedAt, dbGroup.ArchivedAt), nil
+	return mapGroupFields(dbGroup.ID, dbGroup.Name, dbGroup.Description, dbGroup.InviteCode, dbGroup.InviteCodeExpiresAt, dbGroup.RequireAdminApproval, dbGroup.CreatedBy, dbGroup.CreatedAt, dbGroup.UpdatedAt, dbGroup.ArchivedAt, dbGroup.IconUrl), nil
 }
 
 // GetPreviewByInviteCode retrieves preview details of a group using its invite code.
@@ -193,7 +193,7 @@ func (r *DBRepository) ResetInviteCode(ctx context.Context, groupID, newInviteCo
 		return nil, fmt.Errorf("reset group invite code: %w", err)
 	}
 
-	return mapGroupFields(dbGroup.ID, dbGroup.Name, dbGroup.Description, dbGroup.InviteCode, dbGroup.InviteCodeExpiresAt, dbGroup.RequireAdminApproval, dbGroup.CreatedBy, dbGroup.CreatedAt, dbGroup.UpdatedAt, dbGroup.ArchivedAt), nil
+	return mapGroupFields(dbGroup.ID, dbGroup.Name, dbGroup.Description, dbGroup.InviteCode, dbGroup.InviteCodeExpiresAt, dbGroup.RequireAdminApproval, dbGroup.CreatedBy, dbGroup.CreatedAt, dbGroup.UpdatedAt, dbGroup.ArchivedAt, dbGroup.IconUrl), nil
 }
 
 // Archive soft-deletes a group by setting its archived_at timestamp.
@@ -441,7 +441,7 @@ func (r *DBRepository) ListUserGroupsWithMembers(ctx context.Context, userID str
 
 	result := make([]domain.GroupWithMembers, 0, len(rows))
 	for _, row := range rows {
-		g := mapGroupFields(row.ID, row.Name, row.Description, row.InviteCode, row.InviteCodeExpiresAt, row.RequireAdminApproval, row.CreatedBy, row.CreatedAt, row.UpdatedAt, row.ArchivedAt)
+		g := mapGroupFields(row.ID, row.Name, row.Description, row.InviteCode, row.InviteCodeExpiresAt, row.RequireAdminApproval, row.CreatedBy, row.CreatedAt, row.UpdatedAt, row.ArchivedAt, row.IconUrl)
 
 		var members []domain.Member
 		if err := json.Unmarshal(row.Members, &members); err != nil {
@@ -451,6 +451,30 @@ func (r *DBRepository) ListUserGroupsWithMembers(ctx context.Context, userID str
 		result = append(result, domain.GroupWithMembers{Group: *g, Members: members})
 	}
 	return result, nil
+}
+
+// UpdateIcon updates the group icon URL.
+func (r *DBRepository) UpdateIcon(ctx context.Context, groupID string, iconURL string) (*domain.Group, error) {
+	parsedGroupID, err := uuid.Parse(groupID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid group uuid: %w", err)
+	}
+
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+
+	dbGroup, err := q.UpdateGroupIcon(ctx, dbgen.UpdateGroupIconParams{
+		ID:      parsedGroupID,
+		IconUrl: pgtype.Text{String: iconURL, Valid: iconURL != ""},
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrGroupNotFound
+		}
+		return nil, fmt.Errorf("update group icon: %w", err)
+	}
+
+	return mapGroupFields(dbGroup.ID, dbGroup.Name, dbGroup.Description, dbGroup.InviteCode, dbGroup.InviteCodeExpiresAt, dbGroup.RequireAdminApproval, dbGroup.CreatedBy, dbGroup.CreatedAt, dbGroup.UpdatedAt, dbGroup.ArchivedAt, dbGroup.IconUrl), nil
 }
 
 // SyncGroupsBySequence retrieves groups updated or created after lastVersion for a user.

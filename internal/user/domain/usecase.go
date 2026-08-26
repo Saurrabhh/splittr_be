@@ -2,21 +2,25 @@ package domain
 
 import (
 	"context"
+	"io"
 
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/response"
+	"github.com/Saurrabhh/splittr_be/internal/storage"
 	"github.com/google/uuid"
 )
 
 // UseCase handles business operations for users, settings, and friendships.
 type UseCase struct {
-	repo Repository
+	repo    Repository
+	storage storage.Service
 }
 
 // NewUseCase creates a new UseCase instance.
-func NewUseCase(repo Repository) *UseCase {
+func NewUseCase(repo Repository, storageSvc storage.Service) *UseCase {
 	return &UseCase{
-		repo: repo,
+		repo:    repo,
+		storage: storageSvc,
 	}
 }
 
@@ -438,4 +442,41 @@ func (u *UseCase) SyncFriends(ctx context.Context, lastVersion int64, userID str
 		NewVersion: maxVersion,
 		Friends:    records,
 	}, nil
+}
+
+// UploadAvatar streams the user avatar image to storage provider and updates avatar URL in DB.
+func (u *UseCase) UploadAvatar(ctx context.Context, userID string, file io.Reader, fileName, contentType string) (*User, error) {
+	if u.storage == nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "Storage service not initialized",
+		}
+	}
+
+	res, err := u.storage.Upload(ctx, storage.UploadParams{
+		File:        file,
+		FileName:    fileName,
+		ContentType: contentType,
+		Folder:      "splittr/users/" + userID,
+		Width:       500,
+		Height:      500,
+	})
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "Failed to upload avatar image to storage provider",
+			Err:     err,
+		}
+	}
+
+	updatedUser, err := u.repo.UpdateAvatar(ctx, userID, res.URL)
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "Failed to update user avatar URL in database",
+			Err:     err,
+		}
+	}
+
+	return updatedUser, nil
 }

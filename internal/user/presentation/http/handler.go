@@ -32,6 +32,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, authMiddleware func(http.Handler)
 			r.Use(h.UserContext)
 			r.Get("/me", h.GetMe)
 			r.Put("/me", h.UpdateMe)
+			r.Post("/me/avatar", h.UploadAvatar)
 			r.Get("/me/settings", h.GetSettings)
 			r.Put("/me/settings", h.UpdateSettings)
 		})
@@ -328,4 +329,48 @@ func (h *Handler) SyncFriends(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusOK, res)
+}
+
+// UploadAvatar handles uploading a profile avatar image for the authenticated user.
+// @Summary      Upload profile avatar
+// @Description  Upload an image file (JPEG, PNG, WEBP, max 2MB) as user avatar.
+// @Tags         users
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        file formData file true "Image File"
+// @Success      200 {object} domain.User
+// @Failure      400 {object} response.ErrorResponse
+// @Failure      401 {object} response.ErrorResponse
+// @Failure      500 {object} response.ErrorResponse
+// @Router       /users/me/avatar [post]
+// @Security     BearerAuth
+func (h *Handler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
+	currUser := MustFrom(r.Context())
+
+	r.Body = http.MaxBytesReader(w, r.Body, 2*1024*1024)
+	if err := r.ParseMultipartForm(2 * 1024 * 1024); err != nil {
+		response.BadRequest(w, "File size exceeds 2MB limit")
+		return
+	}
+
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		response.BadRequest(w, "Missing file in request")
+		return
+	}
+	defer file.Close()
+
+	contentType := header.Header.Get("Content-Type")
+	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/webp" {
+		response.BadRequest(w, "Invalid file type. Only JPEG, PNG, WEBP allowed")
+		return
+	}
+
+	updatedUser, err := h.uc.UploadAvatar(r.Context(), currUser.ID, file, header.Filename, contentType)
+	if err != nil {
+		response.HandleError(w, err)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, updatedUser)
 }

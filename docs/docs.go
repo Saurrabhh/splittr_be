@@ -742,6 +742,9 @@ const docTemplate = `{
                     "description": {
                         "type": "string"
                     },
+                    "iconUrl": {
+                        "type": "string"
+                    },
                     "id": {
                         "type": "string"
                     },
@@ -1096,6 +1099,9 @@ const docTemplate = `{
                     "actionUserId": {
                         "type": "string"
                     },
+                    "avatarUrl": {
+                        "type": "string"
+                    },
                     "createdAt": {
                         "type": "string"
                     },
@@ -1201,6 +1207,9 @@ const docTemplate = `{
             },
             "User.User": {
                 "properties": {
+                    "avatarUrl": {
+                        "type": "string"
+                    },
                     "createdAt": {
                         "type": "string"
                     },
@@ -2958,6 +2967,90 @@ const docTemplate = `{
                 ]
             }
         },
+        "/groups/{id}/icon": {
+            "post": {
+                "description": "Upload an image file (JPEG, PNG, WEBP, max 2MB) as group icon.",
+                "parameters": [
+                    {
+                        "description": "Group ID",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "title": "file",
+                                "type": "file"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "description": "Image File",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Group.Group"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Upload group icon",
+                "tags": [
+                    "groups"
+                ]
+            }
+        },
         "/groups/{id}/invite-code/reset": {
             "post": {
                 "description": "Generate a new invite code with a 7-day expiration timestamp. Admin privileges required.",
@@ -3840,6 +3933,79 @@ const docTemplate = `{
                     }
                 ],
                 "summary": "Update user profile",
+                "tags": [
+                    "users"
+                ]
+            }
+        },
+        "/users/me/avatar": {
+            "post": {
+                "description": "Upload an image file (JPEG, PNG, WEBP, max 2MB) as user avatar.",
+                "requestBody": {
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "title": "file",
+                                "type": "file"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "description": "Image File",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User.User"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Upload profile avatar",
                 "tags": [
                     "users"
                 ]

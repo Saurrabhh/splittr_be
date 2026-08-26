@@ -12,6 +12,8 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/group"
 	"github.com/Saurrabhh/splittr_be/internal/notification"
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
+	"github.com/Saurrabhh/splittr_be/internal/storage"
+	"github.com/Saurrabhh/splittr_be/internal/storage/cloudinary"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 )
 
@@ -68,9 +70,23 @@ func initDependencies(ctx context.Context, app *Application) (*dependencies, err
 	appConfigUseCase := appconfig.NewUsecase(appConfigRepo)
 	appConfigHandler := appconfig.NewHandler(appConfigUseCase)
 
+	// Storage service wiring
+	var storageSvc storage.Service
+	if app.Config.CloudinaryCloudName != "" && app.Config.CloudinaryAPIKey != "" && app.Config.CloudinaryAPISecret != "" {
+		cldProvider, err := cloudinary.New(app.Config.CloudinaryCloudName, app.Config.CloudinaryAPIKey, app.Config.CloudinaryAPISecret)
+		if err != nil {
+			app.Logger.Warn(fmt.Sprintf("failed to initialize cloudinary storage provider: %v", err))
+		} else {
+			storageSvc = cldProvider
+			app.Logger.Info("cloudinary storage provider initialized successfully")
+		}
+	} else {
+		app.Logger.Warn("cloudinary credentials not configured; image uploads disabled")
+	}
+
 	// User domain wiring
 	userRepo := user.NewRepository(app.DB, tm)
-	userUseCase := user.NewUseCase(userRepo)
+	userUseCase := user.NewUseCase(userRepo, storageSvc)
 	userHandler := user.NewHandler(userUseCase)
 
 	// Activity domain wiring
@@ -85,7 +101,7 @@ func initDependencies(ctx context.Context, app *Application) (*dependencies, err
 
 	// Group domain wiring
 	groupRepo := group.NewRepository(app.DB, tm)
-	groupUseCase := group.NewUseCase(groupRepo, tm, activityLoggerAdapter{activityUseCase}, notificationSenderAdapter{notificationUseCase})
+	groupUseCase := group.NewUseCase(groupRepo, tm, activityLoggerAdapter{activityUseCase}, notificationSenderAdapter{notificationUseCase}, storageSvc)
 	groupHandler := group.NewHandler(groupUseCase)
 
 	// Expense domain wiring

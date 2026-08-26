@@ -15,6 +15,9 @@ type Config struct {
 	DatabaseURL     string `env:"DATABASE_URL,required"`
 	SwaggerUser     string `env:"SWAGGER_USER" envDefault:"admin"`
 	SwaggerPassword string `env:"SWAGGER_PASSWORD" envDefault:"admin"`
+	CloudinaryCloudName string `env:"CLOUDINARY_CLOUD_NAME"`
+	CloudinaryAPIKey    string `env:"CLOUDINARY_API_KEY"`
+	CloudinaryAPISecret string `env:"CLOUDINARY_API_SECRET"`
 }
 
 // Load reads config from environment variables.

@@ -32,7 +32,29 @@ The User module manages authentication identity mapping (Firebase UID to local u
   ```
 - **Response** (`200 OK`): Updated `User` object.
 
-### 4. Get User Settings
+### 4. Upload Profile Avatar
+- **POST** `/users/me/avatar`
+- **Authentication**: Required (`BearerAuth`)
+- **Content-Type**: `multipart/form-data`
+- **Description**: Upload an image file (JPEG, PNG, WEBP, max 2MB) as user avatar. Automatically resizes/stores in Cloudinary and updates `avatarUrl`.
+- **Form Data**:
+  - `file` (file, required): Binary image file.
+- **Response** (`200 OK`):
+  ```json
+  {
+    "id": "usr-uuid-1",
+    "name": "Alice Vance",
+    "email": "alice@example.com",
+    "phone": "+1234567890",
+    "defaultCurrency": "EUR",
+    "avatarUrl": "https://res.cloudinary.com/.../avatar.jpg",
+    "createdAt": "2026-08-02T12:00:00Z",
+    "updatedAt": "2026-08-14T12:00:00Z"
+  }
+  ```
+- **Errors**: `400 Bad Request` (unsupported type/missing file), `401 Unauthorized`, `500 Internal Server Error`.
+
+### 5. Get User Settings
 - **GET** `/users/me/settings`
 - **Description**: Retrieve privacy and application preferences for the current user.
 - **Response** (`200 OK`):

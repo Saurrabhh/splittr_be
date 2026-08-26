@@ -29,7 +29,19 @@ type CreateActivityParams struct {
 	Metadata    []byte
 }
 
-func (q *Queries) CreateActivity(ctx context.Context, arg CreateActivityParams) (Activity, error) {
+type CreateActivityRow struct {
+	ID          uuid.UUID
+	GroupID     pgtype.UUID
+	ActorID     pgtype.UUID
+	ActionType  string
+	Description string
+	EntityType  string
+	EntityID    pgtype.UUID
+	Metadata    []byte
+	CreatedAt   pgtype.Timestamptz
+}
+
+func (q *Queries) CreateActivity(ctx context.Context, arg CreateActivityParams) (CreateActivityRow, error) {
 	row := q.db.QueryRow(ctx, createActivity,
 		arg.ID,
 		arg.GroupID,
@@ -40,7 +52,7 @@ func (q *Queries) CreateActivity(ctx context.Context, arg CreateActivityParams) 
 		arg.EntityID,
 		arg.Metadata,
 	)
-	var i Activity
+	var i CreateActivityRow
 	err := row.Scan(
 		&i.ID,
 		&i.GroupID,

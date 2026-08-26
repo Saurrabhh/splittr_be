@@ -1,6 +1,11 @@
 package domain
 
-import "time"
+import (
+	"errors"
+	"time"
+)
+
+var ErrGroupNotFound = errors.New("group not found")
 
 type MemberStatus string // @name Group.MemberStatus
 
@@ -29,6 +34,7 @@ type Group struct {
 	CreatedAt            time.Time  `json:"createdAt"`
 	UpdatedAt            time.Time  `json:"updatedAt"`
 	ArchivedAt           *time.Time `json:"archivedAt,omitempty"`
+	IconURL              *string    `json:"iconUrl,omitempty"`
 	SyncVersion          int64      `json:"syncVersion"`
 	Members              []Member   `json:"members,omitempty"`
 } // @name Group.Group

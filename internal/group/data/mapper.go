@@ -10,7 +10,7 @@ import (
 )
 
 
-func mapGroupFields(id uuid.UUID, name string, description pgtype.Text, inviteCode pgtype.Text, inviteCodeExpiresAt pgtype.Timestamptz, requireAdminApproval bool, createdBy pgtype.UUID, createdAt pgtype.Timestamptz, updatedAt pgtype.Timestamptz, archivedAt pgtype.Timestamptz) *domain.Group {
+func mapGroupFields(id uuid.UUID, name string, description pgtype.Text, inviteCode pgtype.Text, inviteCodeExpiresAt pgtype.Timestamptz, requireAdminApproval bool, createdBy pgtype.UUID, createdAt pgtype.Timestamptz, updatedAt pgtype.Timestamptz, archivedAt pgtype.Timestamptz, iconUrl pgtype.Text) *domain.Group {
 	var createdByStr *string
 	if createdBy.Valid {
 		s := uuid.UUID(createdBy.Bytes).String()
@@ -38,6 +38,7 @@ func mapGroupFields(id uuid.UUID, name string, description pgtype.Text, inviteCo
 		CreatedAt:            createdAt.Time,
 		UpdatedAt:            updatedAt.Time,
 		ArchivedAt:           archivedAtTime,
+		IconURL:              textToPtr(iconUrl),
 	}
 }
 
@@ -65,7 +66,7 @@ func uuidToPg(s *string, u uuid.UUID) pgtype.UUID {
 func toGroupsFromSyncBySequence(rows []dbgen.Group) []domain.Group {
 	groups := make([]domain.Group, 0, len(rows))
 	for _, r := range rows {
-		g := mapGroupFields(r.ID, r.Name, r.Description, r.InviteCode, r.InviteCodeExpiresAt, r.RequireAdminApproval, r.CreatedBy, r.CreatedAt, r.UpdatedAt, r.ArchivedAt)
+		g := mapGroupFields(r.ID, r.Name, r.Description, r.InviteCode, r.InviteCodeExpiresAt, r.RequireAdminApproval, r.CreatedBy, r.CreatedAt, r.UpdatedAt, r.ArchivedAt, r.IconUrl)
 		g.SyncVersion = r.SyncVersion
 		groups = append(groups, *g)
 	}

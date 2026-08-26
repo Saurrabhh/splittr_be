@@ -5,6 +5,7 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/group/data"
 	"github.com/Saurrabhh/splittr_be/internal/group/domain"
 	"github.com/Saurrabhh/splittr_be/internal/group/presentation/http"
+	"github.com/Saurrabhh/splittr_be/internal/storage"
 )
 
 // Domain Type Aliases
@@ -51,8 +52,9 @@ func NewUseCase(
 	tx db.Transactor,
 	activitySvc ActivityLogger,
 	notificationSvc NotificationSender,
+	storageSvc storage.Service,
 ) *UseCase {
-	return domain.NewUseCase(repo, tx, activitySvc, notificationSvc)
+	return domain.NewUseCase(repo, tx, activitySvc, notificationSvc, storageSvc)
 }
 
 func NewHandler(uc *UseCase) *Handler {

@@ -49,7 +49,7 @@ func (q *Queries) ArchiveGroup(ctx context.Context, id uuid.UUID) error {
 const createGroup = `-- name: CreateGroup :one
 INSERT INTO groups (id, name, description, invite_code, invite_code_expires_at, require_admin_approval, created_by, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
-RETURNING id, name, description, invite_code, invite_code_expires_at, require_admin_approval, created_by, created_at, updated_at, archived_at
+RETURNING id, name, description, invite_code, invite_code_expires_at, require_admin_approval, created_by, created_at, updated_at, archived_at, icon_url
 `
 
 type CreateGroupParams struct {
@@ -73,6 +73,7 @@ type CreateGroupRow struct {
 	CreatedAt            pgtype.Timestamptz
 	UpdatedAt            pgtype.Timestamptz
 	ArchivedAt           pgtype.Timestamptz
+	IconUrl              pgtype.Text
 }
 
 func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (CreateGroupRow, error) {
@@ -97,12 +98,13 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Creat
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ArchivedAt,
+		&i.IconUrl,
 	)
 	return i, err
 }
 
 const getGroupByID = `-- name: GetGroupByID :one
-SELECT id, name, description, invite_code, invite_code_expires_at, require_admin_approval, created_by, created_at, updated_at, archived_at
+SELECT id, name, description, invite_code, invite_code_expires_at, require_admin_approval, created_by, created_at, updated_at, archived_at, icon_url
 FROM groups
 WHERE id = $1 AND archived_at IS NULL
 `
@@ -118,6 +120,7 @@ type GetGroupByIDRow struct {
 	CreatedAt            pgtype.Timestamptz
 	UpdatedAt            pgtype.Timestamptz
 	ArchivedAt           pgtype.Timestamptz
+	IconUrl              pgtype.Text
 }
 
 func (q *Queries) GetGroupByID(ctx context.Context, id uuid.UUID) (GetGroupByIDRow, error) {
@@ -134,12 +137,13 @@ func (q *Queries) GetGroupByID(ctx context.Context, id uuid.UUID) (GetGroupByIDR
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ArchivedAt,
+		&i.IconUrl,
 	)
 	return i, err
 }
 
 const getGroupByInviteCode = `-- name: GetGroupByInviteCode :one
-SELECT id, name, description, invite_code, invite_code_expires_at, require_admin_approval, created_by, created_at, updated_at, archived_at
+SELECT id, name, description, invite_code, invite_code_expires_at, require_admin_approval, created_by, created_at, updated_at, archived_at, icon_url
 FROM groups
 WHERE invite_code = $1 AND archived_at IS NULL
 `
@@ -155,6 +159,7 @@ type GetGroupByInviteCodeRow struct {
 	CreatedAt            pgtype.Timestamptz
 	UpdatedAt            pgtype.Timestamptz
 	ArchivedAt           pgtype.Timestamptz
+	IconUrl              pgtype.Text
 }
 
 func (q *Queries) GetGroupByInviteCode(ctx context.Context, inviteCode pgtype.Text) (GetGroupByInviteCodeRow, error) {
@@ -171,6 +176,7 @@ func (q *Queries) GetGroupByInviteCode(ctx context.Context, inviteCode pgtype.Te
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ArchivedAt,
+		&i.IconUrl,
 	)
 	return i, err
 }
@@ -284,7 +290,7 @@ func (q *Queries) ListGroupMembers(ctx context.Context, arg ListGroupMembersPara
 }
 
 const listUserGroups = `-- name: ListUserGroups :many
-SELECT g.id, g.name, g.description, g.invite_code, g.invite_code_expires_at, g.require_admin_approval, g.created_by, g.created_at, g.updated_at, g.archived_at
+SELECT g.id, g.name, g.description, g.invite_code, g.invite_code_expires_at, g.require_admin_approval, g.created_by, g.created_at, g.updated_at, g.archived_at, g.icon_url
 FROM groups g
 JOIN group_members gm ON g.id = gm.group_id
 WHERE gm.user_id = $1 AND gm.status = 'ACTIVE' AND g.archived_at IS NULL
@@ -301,6 +307,7 @@ type ListUserGroupsRow struct {
 	CreatedAt            pgtype.Timestamptz
 	UpdatedAt            pgtype.Timestamptz
 	ArchivedAt           pgtype.Timestamptz
+	IconUrl              pgtype.Text
 }
 
 func (q *Queries) ListUserGroups(ctx context.Context, userID uuid.UUID) ([]ListUserGroupsRow, error) {
@@ -323,6 +330,7 @@ func (q *Queries) ListUserGroups(ctx context.Context, userID uuid.UUID) ([]ListU
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.ArchivedAt,
+			&i.IconUrl,
 		); err != nil {
 			return nil, err
 		}
@@ -337,7 +345,7 @@ func (q *Queries) ListUserGroups(ctx context.Context, userID uuid.UUID) ([]ListU
 const listUserGroupsWithMembers = `-- name: ListUserGroupsWithMembers :many
 SELECT
     g.id, g.name, g.description, g.invite_code, g.invite_code_expires_at, g.require_admin_approval, g.created_by,
-    g.created_at, g.updated_at, g.archived_at,
+    g.created_at, g.updated_at, g.archived_at, g.icon_url,
     COALESCE(
         json_agg(
             json_build_object(
@@ -373,6 +381,7 @@ type ListUserGroupsWithMembersRow struct {
 	CreatedAt            pgtype.Timestamptz
 	UpdatedAt            pgtype.Timestamptz
 	ArchivedAt           pgtype.Timestamptz
+	IconUrl              pgtype.Text
 	Members              []byte
 }
 
@@ -396,6 +405,7 @@ func (q *Queries) ListUserGroupsWithMembers(ctx context.Context, userID uuid.UUI
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.ArchivedAt,
+			&i.IconUrl,
 			&i.Members,
 		); err != nil {
 			return nil, err
@@ -411,7 +421,7 @@ func (q *Queries) ListUserGroupsWithMembers(ctx context.Context, userID uuid.UUI
 const listUserGroupsWithMembersPaginated = `-- name: ListUserGroupsWithMembersPaginated :many
 SELECT
     g.id, g.name, g.description, g.invite_code, g.invite_code_expires_at, g.require_admin_approval, g.created_by,
-    g.created_at, g.updated_at, g.archived_at,
+    g.created_at, g.updated_at, g.archived_at, g.icon_url,
     COALESCE(
         json_agg(
             json_build_object(
@@ -460,6 +470,7 @@ type ListUserGroupsWithMembersPaginatedRow struct {
 	CreatedAt            pgtype.Timestamptz
 	UpdatedAt            pgtype.Timestamptz
 	ArchivedAt           pgtype.Timestamptz
+	IconUrl              pgtype.Text
 	Members              []byte
 }
 
@@ -488,6 +499,7 @@ func (q *Queries) ListUserGroupsWithMembersPaginated(ctx context.Context, arg Li
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.ArchivedAt,
+			&i.IconUrl,
 			&i.Members,
 		); err != nil {
 			return nil, err
@@ -519,7 +531,7 @@ const resetGroupInviteCode = `-- name: ResetGroupInviteCode :one
 UPDATE groups
 SET invite_code = $2, invite_code_expires_at = $3, updated_at = NOW()
 WHERE id = $1 AND archived_at IS NULL
-RETURNING id, name, description, invite_code, invite_code_expires_at, require_admin_approval, created_by, created_at, updated_at, archived_at
+RETURNING id, name, description, invite_code, invite_code_expires_at, require_admin_approval, created_by, created_at, updated_at, archived_at, icon_url
 `
 
 type ResetGroupInviteCodeParams struct {
@@ -539,6 +551,7 @@ type ResetGroupInviteCodeRow struct {
 	CreatedAt            pgtype.Timestamptz
 	UpdatedAt            pgtype.Timestamptz
 	ArchivedAt           pgtype.Timestamptz
+	IconUrl              pgtype.Text
 }
 
 func (q *Queries) ResetGroupInviteCode(ctx context.Context, arg ResetGroupInviteCodeParams) (ResetGroupInviteCodeRow, error) {
@@ -555,12 +568,13 @@ func (q *Queries) ResetGroupInviteCode(ctx context.Context, arg ResetGroupInvite
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ArchivedAt,
+		&i.IconUrl,
 	)
 	return i, err
 }
 
 const syncGroupsBySequence = `-- name: SyncGroupsBySequence :many
-SELECT g.id, g.name, g.description, g.invite_code, g.invite_code_expires_at, g.require_admin_approval, g.created_by, g.created_at, g.updated_at, g.archived_at, g.sync_version
+SELECT g.id, g.name, g.description, g.invite_code, g.invite_code_expires_at, g.require_admin_approval, g.created_by, g.created_at, g.updated_at, g.archived_at, g.icon_url, g.sync_version
 FROM groups g
 JOIN group_members gm ON g.id = gm.group_id
 WHERE g.sync_version > $1
@@ -595,6 +609,7 @@ func (q *Queries) SyncGroupsBySequence(ctx context.Context, arg SyncGroupsBySequ
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.ArchivedAt,
+			&i.IconUrl,
 			&i.SyncVersion,
 		); err != nil {
 			return nil, err
@@ -611,7 +626,7 @@ const updateGroup = `-- name: UpdateGroup :one
 UPDATE groups
 SET name = $2, description = $3, require_admin_approval = $4, updated_at = NOW()
 WHERE id = $1 AND archived_at IS NULL
-RETURNING id, name, description, invite_code, invite_code_expires_at, require_admin_approval, created_by, created_at, updated_at, archived_at
+RETURNING id, name, description, invite_code, invite_code_expires_at, require_admin_approval, created_by, created_at, updated_at, archived_at, icon_url
 `
 
 type UpdateGroupParams struct {
@@ -632,6 +647,7 @@ type UpdateGroupRow struct {
 	CreatedAt            pgtype.Timestamptz
 	UpdatedAt            pgtype.Timestamptz
 	ArchivedAt           pgtype.Timestamptz
+	IconUrl              pgtype.Text
 }
 
 func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) (UpdateGroupRow, error) {
@@ -653,6 +669,52 @@ func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Updat
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ArchivedAt,
+		&i.IconUrl,
+	)
+	return i, err
+}
+
+const updateGroupIcon = `-- name: UpdateGroupIcon :one
+UPDATE groups
+SET icon_url = $2, updated_at = NOW()
+WHERE id = $1 AND archived_at IS NULL
+RETURNING id, name, description, invite_code, invite_code_expires_at, require_admin_approval, created_by, created_at, updated_at, archived_at, icon_url
+`
+
+type UpdateGroupIconParams struct {
+	ID      uuid.UUID
+	IconUrl pgtype.Text
+}
+
+type UpdateGroupIconRow struct {
+	ID                   uuid.UUID
+	Name                 string
+	Description          pgtype.Text
+	InviteCode           pgtype.Text
+	InviteCodeExpiresAt  pgtype.Timestamptz
+	RequireAdminApproval bool
+	CreatedBy            pgtype.UUID
+	CreatedAt            pgtype.Timestamptz
+	UpdatedAt            pgtype.Timestamptz
+	ArchivedAt           pgtype.Timestamptz
+	IconUrl              pgtype.Text
+}
+
+func (q *Queries) UpdateGroupIcon(ctx context.Context, arg UpdateGroupIconParams) (UpdateGroupIconRow, error) {
+	row := q.db.QueryRow(ctx, updateGroupIcon, arg.ID, arg.IconUrl)
+	var i UpdateGroupIconRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.InviteCode,
+		&i.InviteCodeExpiresAt,
+		&i.RequireAdminApproval,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ArchivedAt,
+		&i.IconUrl,
 	)
 	return i, err
 }

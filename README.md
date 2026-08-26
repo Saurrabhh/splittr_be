@@ -142,8 +142,8 @@ Authorization: Bearer <FIREBASE_ID_TOKEN>
 
 ### Core API Groups
 - ⚙️ **App Config (`/v1/app-config`)**: App startup remote config, force-update rules, maintenance status, expense categories, currencies, limits, feature flags, legal URLs (supports optional auth & ETag caching).
-- 👤 **Users & Friends (`/v1/users`, `/v1/friends`)**: Register profile, fetch current user info, search & add friends, remove friendships.
-- 👥 **Groups (`/v1/groups`)**: Create & join bill splitting groups via 7-day expirable invite codes, optional admin approval workflow (`requireAdminApproval`), member status filtering (`GET /groups/{id}/members?status=PENDING`), join request decision (`POST /groups/{id}/members/{userId}/decision`), and invite code reset (`POST /groups/{id}/invite-code/reset`).
+- 👤 **Users & Friends (`/v1/users`, `/v1/friends`)**: Register profile, fetch current user info, upload avatar image (`POST /v1/users/me/avatar`), search & add friends, remove friendships.
+- 👥 **Groups (`/v1/groups`)**: Create & join bill splitting groups via 7-day expirable invite codes, upload optional group icon (`POST /v1/groups/{id}/icon`), optional admin approval workflow (`requireAdminApproval`), member status filtering (`GET /groups/{id}/members?status=PENDING`), join request decision (`POST /groups/{id}/members/{userId}/decision`), and invite code reset (`POST /groups/{id}/invite-code/reset`).
 - 💸 **Expenses & Balances (`/v1/expenses`, `/v1/balances`)**: Create splits (equal/exact/percentage), settle debts, fetch global or group-simplified balances.
 - 📊 **Activities (`/v1/activities`)**: Browse group activity logs and audit trails.
 - 🔔 **Notifications (`/v1/notifications`)**: Retrieve personal notifications, mark items as read.

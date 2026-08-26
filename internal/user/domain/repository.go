@@ -11,6 +11,7 @@ type Repository interface {
 	GetByFirebaseUID(ctx context.Context, firebaseUID string) (*User, error)
 	Create(ctx context.Context, u *User) error
 	UpdateUser(ctx context.Context, u *User) error
+	UpdateAvatar(ctx context.Context, userID string, avatarURL string) (*User, error)
 	GetByEmailOrPhone(ctx context.Context, email, phone string) (*User, error)
 	GetByEmailOrPhoneWithSettings(ctx context.Context, email, phone string) (*UserWithSettings, error)
 

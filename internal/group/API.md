@@ -16,6 +16,7 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
   "inviteCodeExpiresAt": "2026-08-09T12:00:00Z",
   "requireAdminApproval": true,
   "createdBy": "usr-creator-uuid",
+  "iconUrl": "https://res.cloudinary.com/.../icon.jpg",
   "createdAt": "2026-08-02T12:00:00Z",
   "updatedAt": "2026-08-02T12:00:00Z",
   "archivedAt": null
@@ -309,4 +310,19 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
   }
   ```
 - **Errors**: `401 Unauthorized`, `500 Internal Server Error`.
+
+---
+
+### 15. Upload Group Icon
+- **POST** `/groups/{id}/icon`
+- **Authentication**: Required (`BearerAuth`)
+- **Content-Type**: `multipart/form-data`
+- **Description**: Upload an image file (JPEG, PNG, WEBP, max 2MB) as group icon. Automatically resizes/stores in Cloudinary and updates `groups.icon_url`. Requester must be an active group member.
+- **Path Parameters**:
+  - `id` (string, required): Group UUID.
+- **Form Data**:
+  - `file` (file, required): Binary image file.
+- **Response** (`200 OK`): Updated `Group` object.
+- **Errors**: `400 Bad Request` (invalid format/missing file), `401 Unauthorized`, `403 Forbidden` (not an active group member), `500 Internal Server Error`.
+
 

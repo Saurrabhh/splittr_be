@@ -1,6 +1,11 @@
 package domain
 
-import "time"
+import (
+	"errors"
+	"time"
+)
+
+var ErrUserNotFound = errors.New("user not found")
 
 // FriendshipStatus represents the state of a friendship relation.
 type FriendshipStatus string // @name User.FriendshipStatus
@@ -20,6 +25,7 @@ type User struct {
 	Phone           *string   `json:"phone,omitempty"`
 	Name            string    `json:"name"`
 	DefaultCurrency string    `json:"defaultCurrency"`
+	AvatarURL       *string   `json:"avatarUrl,omitempty"`
 	CreatedAt       time.Time `json:"createdAt"`
 	UpdatedAt       time.Time `json:"updatedAt"`
 } // @name User.User

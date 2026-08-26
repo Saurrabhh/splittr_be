@@ -42,6 +42,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 			r.Get("/", h.GetDetails)
 			r.Delete("/", h.Archive)
 			r.Get("/feed", h.GetFeed)
+			r.Post("/icon", h.UploadIcon)
 			r.Post("/invite-code/reset", h.ResetInviteCode)
 
 			r.Route("/members", func(r chi.Router) {
@@ -463,5 +464,51 @@ func (h *Handler) Sync(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusOK, res)
+}
+
+// UploadIcon handles multipart image upload for a group icon.
+// @Summary      Upload group icon
+// @Description  Upload an image file (JPEG, PNG, WEBP, max 2MB) as group icon.
+// @Tags         groups
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        id path string true "Group ID"
+// @Param        file formData file true "Image File"
+// @Success      200 {object} domain.Group
+// @Failure      400 {object} response.ErrorResponse
+// @Failure      403 {object} response.ErrorResponse
+// @Failure      500 {object} response.ErrorResponse
+// @Router       /groups/{id}/icon [post]
+// @Security     BearerAuth
+func (h *Handler) UploadIcon(w http.ResponseWriter, r *http.Request) {
+	currUser := user.MustFrom(r.Context())
+	groupID := chi.URLParam(r, "id")
+
+	r.Body = http.MaxBytesReader(w, r.Body, 2*1024*1024)
+	if err := r.ParseMultipartForm(2 * 1024 * 1024); err != nil {
+		response.BadRequest(w, "File size exceeds 2MB limit")
+		return
+	}
+
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		response.BadRequest(w, "Missing file in request")
+		return
+	}
+	defer file.Close()
+
+	contentType := header.Header.Get("Content-Type")
+	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/webp" {
+		response.BadRequest(w, "Invalid file type. Only JPEG, PNG, WEBP allowed")
+		return
+	}
+
+	updatedGroup, err := h.uc.UploadGroupIcon(r.Context(), groupID, currUser.ID, file, header.Filename, contentType)
+	if err != nil {
+		response.HandleError(w, err)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, updatedGroup)
 }
 

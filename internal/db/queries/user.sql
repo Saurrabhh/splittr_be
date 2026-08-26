@@ -1,26 +1,26 @@
 -- name: GetUserByID :one
-SELECT id, firebase_uid, email, phone, name, default_currency, created_at, updated_at
+SELECT id, firebase_uid, email, phone, name, default_currency, avatar_url, created_at, updated_at
 FROM users
 WHERE id = $1;
 
 -- name: GetUserByFirebaseUID :one
-SELECT id, firebase_uid, email, phone, name, default_currency, created_at, updated_at
+SELECT id, firebase_uid, email, phone, name, default_currency, avatar_url, created_at, updated_at
 FROM users
 WHERE firebase_uid = $1;
 
 -- name: CreateUser :one
 INSERT INTO users (id, firebase_uid, email, phone, name, default_currency, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-RETURNING id, firebase_uid, email, phone, name, default_currency, created_at, updated_at;
+RETURNING id, firebase_uid, email, phone, name, default_currency, avatar_url, created_at, updated_at;
 
 -- name: UpdateUser :one
 UPDATE users
 SET name = $2, default_currency = $3, updated_at = NOW()
 WHERE id = $1
-RETURNING id, firebase_uid, email, phone, name, default_currency, created_at, updated_at;
+RETURNING id, firebase_uid, email, phone, name, default_currency, avatar_url, created_at, updated_at;
 
 -- name: GetUserByEmailOrPhone :one
-SELECT id, firebase_uid, email, phone, name, default_currency, created_at, updated_at
+SELECT id, firebase_uid, email, phone, name, default_currency, avatar_url, created_at, updated_at
 FROM users
 WHERE email = $1 OR phone = $2;
 
@@ -96,3 +96,10 @@ WHERE f.sync_version > $1
   AND (f.user_id = $2 OR f.friend_id = $2)
 ORDER BY f.sync_version ASC
 LIMIT $3;
+
+-- name: UpdateUserAvatar :one
+UPDATE users
+SET avatar_url = $2, updated_at = NOW()
+WHERE id = $1
+RETURNING id, firebase_uid, email, phone, name, default_currency, avatar_url, created_at, updated_at;
+

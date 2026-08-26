@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Saurrabhh/splittr_be/internal/db"
+	"github.com/Saurrabhh/splittr_be/internal/storage"
 	"github.com/Saurrabhh/splittr_be/internal/user/data"
 	"github.com/Saurrabhh/splittr_be/internal/user/domain"
 	"github.com/Saurrabhh/splittr_be/internal/user/presentation/http"
@@ -36,8 +37,8 @@ func NewRepository(database *db.DB, tm *db.TransactionManager) *DBRepository {
 	return data.NewRepository(database, tm)
 }
 
-func NewUseCase(repo Repository) *UseCase {
-	return domain.NewUseCase(repo)
+func NewUseCase(repo Repository, storageSvc storage.Service) *UseCase {
+	return domain.NewUseCase(repo, storageSvc)
 }
 
 func NewHandler(uc *UseCase) *Handler {

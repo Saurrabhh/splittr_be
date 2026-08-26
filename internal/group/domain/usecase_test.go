@@ -28,6 +28,14 @@ func (m *mockGroupRepository) GetByID(ctx context.Context, id string) (*domain.G
 	return args.Get(0).(*domain.Group), args.Error(1)
 }
 
+func (m *mockGroupRepository) UpdateIcon(ctx context.Context, groupID, iconURL string) (*domain.Group, error) {
+	args := m.Called(ctx, groupID, iconURL)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Group), args.Error(1)
+}
+
 func (m *mockGroupRepository) GetByInviteCode(ctx context.Context, inviteCode string) (*domain.Group, error) {
 	args := m.Called(ctx, inviteCode)
 	if args.Get(0) == nil {
@@ -184,7 +192,7 @@ func TestCreateGroup_Success(t *testing.T) {
 		mock.Anything, creatorID, mock.Anything, ([]string)(nil), mock.Anything,
 	).Return(nil)
 
-	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif, nil)
 	g, err := uc.CreateGroup(ctx, groupName, groupDesc, false, creatorID)
 
 	require.NoError(t, err)
@@ -205,7 +213,7 @@ func TestCreateGroup_EmptyName(t *testing.T) {
 	mockTx := &mockTransactor{}
 	ctx := context.Background()
 
-	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif, nil)
 	_, err := uc.CreateGroup(ctx, "", "desc", false, "usr-1")
 
 	require.Error(t, err)
@@ -234,7 +242,7 @@ func TestGetGroupDetails_Success(t *testing.T) {
 	mockRepo.On("GetByID", ctx, groupID).Return(expectedGroup, nil)
 	mockRepo.On("ListGroupMembers", ctx, groupID, domain.MemberStatusActive).Return(expectedMembers, nil)
 
-	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif, nil)
 	g, err := uc.GetGroupDetails(ctx, groupID, userID)
 
 	require.NoError(t, err)
@@ -257,7 +265,7 @@ func TestGetGroupDetails_NotActiveMember_Forbidden(t *testing.T) {
 	pendingMember := &domain.Member{GroupID: groupID, UserID: userID, Role: domain.MemberRoleMember, Status: domain.MemberStatusPending}
 	mockRepo.On("GetGroupMember", ctx, groupID, userID).Return(pendingMember, nil)
 
-	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif, nil)
 	_, err := uc.GetGroupDetails(ctx, groupID, userID)
 
 	require.Error(t, err)
@@ -292,7 +300,7 @@ func TestJoinGroup_NewMember_Success(t *testing.T) {
 		ctx, userID, &groupID, ([]string)(nil), mock.Anything,
 	).Return(nil)
 
-	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif, nil)
 	resp, err := uc.JoinGroup(ctx, inviteCode, userID)
 
 	require.NoError(t, err)
@@ -316,7 +324,7 @@ func TestJoinGroup_ExpiredInviteCode(t *testing.T) {
 
 	mockRepo.On("GetByInviteCode", ctx, inviteCode).Return(g, nil)
 
-	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif, nil)
 	_, err := uc.JoinGroup(ctx, inviteCode, "usr-1")
 
 	require.Error(t, err)
@@ -350,7 +358,7 @@ func TestJoinGroup_RequireAdminApproval_Pending(t *testing.T) {
 
 	mockNotif.On("CreateAlert", ctx, adminID, &userID, (*string)(nil), mock.Anything).Return(nil)
 
-	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif, nil)
 	resp, err := uc.JoinGroup(ctx, inviteCode, userID)
 
 	require.NoError(t, err)
@@ -385,7 +393,7 @@ func TestDecideJoinRequest_Approve(t *testing.T) {
 
 	mockNotif.On("CreateAlert", ctx, targetUserID, &adminUserID, (*string)(nil), mock.Anything).Return(nil)
 
-	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif, nil)
 	res, err := uc.DecideJoinRequest(ctx, groupID, targetUserID, "APPROVE", adminUserID)
 
 	require.NoError(t, err)
@@ -412,7 +420,7 @@ func TestResetInviteCode_Success(t *testing.T) {
 	mockRepo.On("GetGroupMember", ctx, groupID, adminUserID).Return(adminMember, nil)
 	mockRepo.On("ResetInviteCode", ctx, groupID, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(updatedGroup, nil)
 
-	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif)
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, mockNotif, nil)
 	res, err := uc.ResetInviteCode(ctx, groupID, adminUserID)
 
 	require.NoError(t, err)
