@@ -167,6 +167,47 @@ func (q *Queries) GetExpenseByID(ctx context.Context, id uuid.UUID) (GetExpenseB
 	return i, err
 }
 
+const getExpenseTombstonesBySequence = `-- name: GetExpenseTombstonesBySequence :many
+SELECT entity_id, sync_version
+FROM entity_tombstones
+WHERE entity_type = 'EXPENSE'
+  AND user_id = $1
+  AND sync_version > $2
+ORDER BY sync_version ASC
+LIMIT $3
+`
+
+type GetExpenseTombstonesBySequenceParams struct {
+	UserID      uuid.UUID
+	SyncVersion int64
+	Limit       int32
+}
+
+type GetExpenseTombstonesBySequenceRow struct {
+	EntityID    uuid.UUID
+	SyncVersion int64
+}
+
+func (q *Queries) GetExpenseTombstonesBySequence(ctx context.Context, arg GetExpenseTombstonesBySequenceParams) ([]GetExpenseTombstonesBySequenceRow, error) {
+	rows, err := q.db.Query(ctx, getExpenseTombstonesBySequence, arg.UserID, arg.SyncVersion, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetExpenseTombstonesBySequenceRow
+	for rows.Next() {
+		var i GetExpenseTombstonesBySequenceRow
+		if err := rows.Scan(&i.EntityID, &i.SyncVersion); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getFriendBalances = `-- name: GetFriendBalances :many
 SELECT 
     friend.id AS friend_id,

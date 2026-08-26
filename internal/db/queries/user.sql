@@ -97,9 +97,19 @@ WHERE f.sync_version > $1
 ORDER BY f.sync_version ASC
 LIMIT $3;
 
+-- name: GetFriendTombstonesBySequence :many
+SELECT entity_id, sync_version
+FROM entity_tombstones
+WHERE entity_type = 'FRIENDSHIP'
+  AND user_id = $1
+  AND sync_version > $2
+ORDER BY sync_version ASC
+LIMIT $3;
+
 -- name: UpdateUserAvatar :one
 UPDATE users
 SET avatar_url = $2, updated_at = NOW()
 WHERE id = $1
 RETURNING id, firebase_uid, email, phone, name, default_currency, avatar_url, created_at, updated_at;
+
 

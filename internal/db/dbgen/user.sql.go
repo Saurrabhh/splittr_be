@@ -104,6 +104,47 @@ func (q *Queries) DeleteFriendship(ctx context.Context, arg DeleteFriendshipPara
 	return err
 }
 
+const getFriendTombstonesBySequence = `-- name: GetFriendTombstonesBySequence :many
+SELECT entity_id, sync_version
+FROM entity_tombstones
+WHERE entity_type = 'FRIENDSHIP'
+  AND user_id = $1
+  AND sync_version > $2
+ORDER BY sync_version ASC
+LIMIT $3
+`
+
+type GetFriendTombstonesBySequenceParams struct {
+	UserID      uuid.UUID
+	SyncVersion int64
+	Limit       int32
+}
+
+type GetFriendTombstonesBySequenceRow struct {
+	EntityID    uuid.UUID
+	SyncVersion int64
+}
+
+func (q *Queries) GetFriendTombstonesBySequence(ctx context.Context, arg GetFriendTombstonesBySequenceParams) ([]GetFriendTombstonesBySequenceRow, error) {
+	rows, err := q.db.Query(ctx, getFriendTombstonesBySequence, arg.UserID, arg.SyncVersion, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetFriendTombstonesBySequenceRow
+	for rows.Next() {
+		var i GetFriendTombstonesBySequenceRow
+		if err := rows.Scan(&i.EntityID, &i.SyncVersion); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getFriendship = `-- name: GetFriendship :one
 SELECT user_id, friend_id, status, action_user_id, created_at, updated_at
 FROM friendships

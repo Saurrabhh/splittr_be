@@ -237,6 +237,47 @@ func (q *Queries) GetGroupPreviewByInviteCode(ctx context.Context, inviteCode pg
 	return i, err
 }
 
+const getGroupTombstonesBySequence = `-- name: GetGroupTombstonesBySequence :many
+SELECT entity_id, sync_version
+FROM entity_tombstones
+WHERE entity_type = 'GROUP'
+  AND user_id = $1
+  AND sync_version > $2
+ORDER BY sync_version ASC
+LIMIT $3
+`
+
+type GetGroupTombstonesBySequenceParams struct {
+	UserID      uuid.UUID
+	SyncVersion int64
+	Limit       int32
+}
+
+type GetGroupTombstonesBySequenceRow struct {
+	EntityID    uuid.UUID
+	SyncVersion int64
+}
+
+func (q *Queries) GetGroupTombstonesBySequence(ctx context.Context, arg GetGroupTombstonesBySequenceParams) ([]GetGroupTombstonesBySequenceRow, error) {
+	rows, err := q.db.Query(ctx, getGroupTombstonesBySequence, arg.UserID, arg.SyncVersion, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetGroupTombstonesBySequenceRow
+	for rows.Next() {
+		var i GetGroupTombstonesBySequenceRow
+		if err := rows.Scan(&i.EntityID, &i.SyncVersion); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listGroupMembers = `-- name: ListGroupMembers :many
 SELECT gm.group_id, gm.user_id, gm.role, gm.status, gm.joined_at, u.name, u.email, u.phone
 FROM group_members gm
@@ -574,11 +615,30 @@ func (q *Queries) ResetGroupInviteCode(ctx context.Context, arg ResetGroupInvite
 }
 
 const syncGroupsBySequence = `-- name: SyncGroupsBySequence :many
-SELECT g.id, g.name, g.description, g.invite_code, g.invite_code_expires_at, g.require_admin_approval, g.created_by, g.created_at, g.updated_at, g.archived_at, g.icon_url, g.sync_version
+SELECT 
+    g.id, g.name, g.description, g.invite_code, g.invite_code_expires_at, g.require_admin_approval, g.created_by, 
+    g.created_at, g.updated_at, g.archived_at, g.icon_url, g.sync_version,
+    COALESCE(
+        json_agg(
+            json_build_object(
+                'groupId',  gm2.group_id,
+                'userId',   gm2.user_id,
+                'role',     gm2.role,
+                'status',   gm2.status,
+                'joinedAt', gm2.joined_at,
+                'name',     u.name,
+                'email',    u.email,
+                'phone',    u.phone
+            ) ORDER BY gm2.joined_at
+        ) FILTER (WHERE gm2.user_id IS NOT NULL),
+        '[]'
+    )::jsonb AS members
 FROM groups g
-JOIN group_members gm ON g.id = gm.group_id
+JOIN group_members gm ON g.id = gm.group_id AND gm.user_id = $2
+LEFT JOIN group_members gm2 ON gm2.group_id = g.id
+LEFT JOIN users u ON u.id = gm2.user_id
 WHERE g.sync_version > $1
-  AND gm.user_id = $2
+GROUP BY g.id
 ORDER BY g.sync_version ASC
 LIMIT $3
 `
@@ -602,6 +662,7 @@ type SyncGroupsBySequenceRow struct {
 	ArchivedAt           pgtype.Timestamptz
 	IconUrl              pgtype.Text
 	SyncVersion          int64
+	Members              []byte
 }
 
 func (q *Queries) SyncGroupsBySequence(ctx context.Context, arg SyncGroupsBySequenceParams) ([]SyncGroupsBySequenceRow, error) {
@@ -626,6 +687,7 @@ func (q *Queries) SyncGroupsBySequence(ctx context.Context, arg SyncGroupsBySequ
 			&i.ArchivedAt,
 			&i.IconUrl,
 			&i.SyncVersion,
+			&i.Members,
 		); err != nil {
 			return nil, err
 		}

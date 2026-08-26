@@ -52,6 +52,15 @@ type Currency struct {
 	IsActive      bool
 }
 
+type EntityTombstone struct {
+	ID          uuid.UUID
+	EntityType  string
+	EntityID    uuid.UUID
+	UserID      uuid.UUID
+	SyncVersion int64
+	DeletedAt   pgtype.Timestamptz
+}
+
 type Expense struct {
 	ID          uuid.UUID
 	Description string

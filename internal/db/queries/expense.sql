@@ -159,4 +159,14 @@ RETURNING id, description, amount, currency, category, group_id, paid_by, create
 DELETE FROM expense_splits
 WHERE expense_id = $1;
 
+-- name: GetExpenseTombstonesBySequence :many
+SELECT entity_id, sync_version
+FROM entity_tombstones
+WHERE entity_type = 'EXPENSE'
+  AND user_id = $1
+  AND sync_version > $2
+ORDER BY sync_version ASC
+LIMIT $3;
+
+
 
