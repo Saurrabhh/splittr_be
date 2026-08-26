@@ -21,7 +21,7 @@ The User module manages authentication identity mapping (Firebase UID to local u
 - **Response** (`200 OK`): `User` object.
 
 ### 3. Update User Profile
-- **PUT** `/users/me`
+- **PATCH** `/users/me`
 - **Description**: Update the name or default currency of the current user.
 - **Request Body**:
   ```json
@@ -65,7 +65,7 @@ The User module manages authentication identity mapping (Firebase UID to local u
   ```
 
 ### 5. Update User Settings
-- **PUT** `/users/me/settings`
+- **PATCH** `/users/me/settings`
 - **Description**: Update user preferences (e.g. toggle auto-accept for incoming friend requests).
 - **Request Body**:
   ```json

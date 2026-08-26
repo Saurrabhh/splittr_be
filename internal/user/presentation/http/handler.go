@@ -31,10 +31,10 @@ func (h *Handler) RegisterRoutes(r chi.Router, authMiddleware func(http.Handler)
 		r.Group(func(r chi.Router) {
 			r.Use(h.UserContext)
 			r.Get("/me", h.GetMe)
-			r.Put("/me", h.UpdateMe)
+			r.Patch("/me", h.UpdateMe)
 			r.Post("/me/avatar", h.UploadAvatar)
 			r.Get("/me/settings", h.GetSettings)
-			r.Put("/me/settings", h.UpdateSettings)
+			r.Patch("/me/settings", h.UpdateSettings)
 		})
 	})
 
@@ -120,7 +120,7 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
-// @Router       /users/me [put]
+// @Router       /users/me [patch]
 // @Security     BearerAuth
 func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	currUser := MustFrom(r.Context())
@@ -163,7 +163,7 @@ func (h *Handler) GetSettings(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
-// @Router       /users/me/settings [put]
+// @Router       /users/me/settings [patch]
 // @Security     BearerAuth
 func (h *Handler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	currUser := MustFrom(r.Context())

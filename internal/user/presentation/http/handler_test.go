@@ -191,7 +191,36 @@ func TestHandler_Register_Success(t *testing.T) {
 	assert.Equal(t, expectedUser.Name, respUser.Name)
 }
 
-// --- GET/PUT /users/me/settings Tests ---
+// --- GET/PATCH /users/me Tests ---
+
+func TestHandler_UpdateMe_Success(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	identity := &auth.Identity{UserID: "fb-123"}
+	currentUser := &domain.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice", DefaultCurrency: "USD"}
+
+	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-123").Return(currentUser, nil)
+	mockRepo.On("GetByID", mock.Anything, "usr-1").Return(currentUser, nil)
+	mockRepo.On("UpdateUser", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
+
+	uc := domain.NewUseCase(mockRepo, nil)
+	router := setupHandlerTestRouter(uc, identity)
+
+	body, _ := json.Marshal(map[string]string{"name": "Alice Updated", "defaultCurrency": "EUR"})
+	req := httptest.NewRequest(http.MethodPatch, "/users/me", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	var resp domain.User
+	err := json.Unmarshal(rr.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	assert.Equal(t, "Alice Updated", resp.Name)
+	assert.Equal(t, "EUR", resp.DefaultCurrency)
+}
+
+// --- GET/PATCH /users/me/settings Tests ---
 
 func TestHandler_GetSettings_Success(t *testing.T) {
 	mockRepo := new(mockUserRepository)
@@ -228,7 +257,7 @@ func TestHandler_UpdateSettings_Success(t *testing.T) {
 	router := setupHandlerTestRouter(uc, identity)
 
 	body, _ := json.Marshal(map[string]bool{"autoAcceptFriendRequests": true})
-	req := httptest.NewRequest(http.MethodPut, "/users/me/settings", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPatch, "/users/me/settings", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
