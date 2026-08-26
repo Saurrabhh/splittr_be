@@ -1,851 +1,820 @@
-components:
-  schemas:
-    Activity:
-      properties:
-        actionType:
-          $ref: '#/components/schemas/Activity.ActionType'
-        actor:
-          $ref: '#/components/schemas/Activity.ActorInfo'
-        createdAt:
-          type: string
-        description:
-          type: string
-        entityId:
-          type: string
-        entityType:
-          $ref: '#/components/schemas/Activity.EntityType'
-        groupId:
-          type: string
-        id:
-          type: string
-        payload:
-          type: object
-      type: object
-    Activity.ActionType:
-      enum:
-      - EXPENSE_CREATED
-      - SETTLEMENT
-      - MEMBER_ADDED
-      - MEMBER_LEFT
-      - MEMBER_KICKED
-      - MEMBER_ROLE_UPDATED
-      - GROUP_CREATED
-      - GROUP_UPDATED
-      - GROUP_ARCHIVED
-      - MEMBER_JOINED
-      - MEMBER_KICKED
-      type: string
-      x-enum-varnames:
-      - ActionTypeExpenseCreated
-      - ActionTypeSettlementCreated
-      - ActionTypeMemberAdded
-      - ActionTypeMemberLeft
-      - ActionTypeMemberKicked
-      - ActionTypeMemberRoleUpdated
-      - ActionTypeGroupCreated
-      - ActionTypeGroupUpdated
-      - ActionTypeGroupArchived
-      - ActionTypeMemberJoined
-      - ActionTypeMemberRemoved
-    Activity.Activity:
-      properties:
-        actionType:
-          $ref: '#/components/schemas/Activity.ActionType'
-        actor:
-          $ref: '#/components/schemas/Activity.ActorInfo'
-        createdAt:
-          type: string
-        description:
-          type: string
-        entityId:
-          type: string
-        entityType:
-          $ref: '#/components/schemas/Activity.EntityType'
-        groupId:
-          type: string
-        id:
-          type: string
-        payload:
-          type: object
-      type: object
-    Activity.ActorInfo:
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-      type: object
-    Activity.EntityType:
-      enum:
-      - EXPENSE
-      - SETTLEMENT
-      - MEMBER
-      - GROUP
-      type: string
-      x-enum-varnames:
-      - EntityTypeExpense
-      - EntityTypeSettlement
-      - EntityTypeMember
-      - EntityTypeGroup
-    AppConfig.AppConfigData:
-      properties:
-        domain:
-          $ref: '#/components/schemas/AppConfig.DomainConfig'
-        featureFlags:
-          additionalProperties:
-            type: boolean
-          type: object
-        legal:
-          $ref: '#/components/schemas/AppConfig.LegalConfig'
-        system:
-          $ref: '#/components/schemas/AppConfig.SystemConfig'
-        userContext:
-          $ref: '#/components/schemas/AppConfig.UserContext'
-      type: object
-    AppConfig.AppConfigMeta:
-      properties:
-        configVersion:
-          type: string
-        serverTime:
-          type: string
-      type: object
-    AppConfig.AppConfigResponse:
-      properties:
-        data:
-          $ref: '#/components/schemas/AppConfig.AppConfigData'
-        meta:
-          $ref: '#/components/schemas/AppConfig.AppConfigMeta'
-      type: object
-    AppConfig.AppVersion:
-      properties:
-        forceUpdate:
+definitions:
+  Activity:
+    properties:
+      actionType:
+        $ref: '#/definitions/Activity.ActionType'
+      actor:
+        $ref: '#/definitions/Activity.ActorInfo'
+      createdAt:
+        type: string
+      description:
+        type: string
+      entityId:
+        type: string
+      entityType:
+        $ref: '#/definitions/Activity.EntityType'
+      groupId:
+        type: string
+      id:
+        type: string
+      payload:
+        type: object
+    type: object
+  Activity.ActionType:
+    enum:
+    - EXPENSE_CREATED
+    - SETTLEMENT
+    - MEMBER_ADDED
+    - MEMBER_LEFT
+    - MEMBER_KICKED
+    - MEMBER_ROLE_UPDATED
+    - GROUP_CREATED
+    - GROUP_UPDATED
+    - GROUP_ARCHIVED
+    - MEMBER_JOINED
+    - MEMBER_KICKED
+    type: string
+    x-enum-varnames:
+    - ActionTypeExpenseCreated
+    - ActionTypeSettlementCreated
+    - ActionTypeMemberAdded
+    - ActionTypeMemberLeft
+    - ActionTypeMemberKicked
+    - ActionTypeMemberRoleUpdated
+    - ActionTypeGroupCreated
+    - ActionTypeGroupUpdated
+    - ActionTypeGroupArchived
+    - ActionTypeMemberJoined
+    - ActionTypeMemberRemoved
+  Activity.Activity:
+    properties:
+      actionType:
+        $ref: '#/definitions/Activity.ActionType'
+      actor:
+        $ref: '#/definitions/Activity.ActorInfo'
+      createdAt:
+        type: string
+      description:
+        type: string
+      entityId:
+        type: string
+      entityType:
+        $ref: '#/definitions/Activity.EntityType'
+      groupId:
+        type: string
+      id:
+        type: string
+      payload:
+        type: object
+    type: object
+  Activity.ActorInfo:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  Activity.EntityType:
+    enum:
+    - EXPENSE
+    - SETTLEMENT
+    - MEMBER
+    - GROUP
+    type: string
+    x-enum-varnames:
+    - EntityTypeExpense
+    - EntityTypeSettlement
+    - EntityTypeMember
+    - EntityTypeGroup
+  AppConfig.AppConfigData:
+    properties:
+      domain:
+        $ref: '#/definitions/AppConfig.DomainConfig'
+      featureFlags:
+        additionalProperties:
           type: boolean
-        latestVersion:
-          type: string
-        minSupportedVersion:
-          type: string
-        updateMessage:
-          type: string
-        updateUrl:
-          additionalProperties:
-            type: string
-          type: object
-      type: object
-    AppConfig.Category:
-      properties:
-        iconUrl:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-      type: object
-    AppConfig.Currency:
-      properties:
-        code:
-          type: string
-        decimalPlaces:
-          type: integer
-        isDefault:
-          type: boolean
-        name:
-          type: string
-        symbol:
-          type: string
-      type: object
-    AppConfig.DomainConfig:
-      properties:
-        categories:
-          items:
-            $ref: '#/components/schemas/AppConfig.Category'
-          type: array
-          uniqueItems: false
-        currencies:
-          items:
-            $ref: '#/components/schemas/AppConfig.Currency'
-          type: array
-          uniqueItems: false
-        limits:
-          $ref: '#/components/schemas/AppConfig.LimitsConfig'
-        paymentIntegrations:
-          items:
-            $ref: '#/components/schemas/AppConfig.PaymentIntegration'
-          type: array
-          uniqueItems: false
-        splitTypes:
-          items:
-            $ref: '#/components/schemas/AppConfig.SplitTypeConfig'
-          type: array
-          uniqueItems: false
-      type: object
-    AppConfig.LegalConfig:
-      properties:
-        faqUrl:
-          type: string
-        privacyPolicyUrl:
-          type: string
-        supportEmail:
-          type: string
-        termsOfServiceUrl:
-          type: string
-      type: object
-    AppConfig.LimitsConfig:
-      properties:
-        allowedReceiptMimeTypes:
-          items:
-            type: string
-          type: array
-          uniqueItems: false
-        maxExpenseAmount:
-          type: number
-        maxGroupMembers:
-          type: integer
-        maxReceiptSizeMb:
-          type: integer
-        maxSplitParticipants:
-          type: integer
-      type: object
-    AppConfig.MaintenanceConfig:
-      properties:
-        estimatedEndTime:
-          type: string
-        inMaintenance:
-          type: boolean
-        message:
-          type: string
-        readOnlyMode:
-          type: boolean
-      type: object
-    AppConfig.PaymentIntegration:
-      properties:
-        deepLinkScheme:
-          type: string
-        enabled:
-          type: boolean
-        id:
-          type: string
-        name:
-          type: string
-      type: object
-    AppConfig.SplitTypeConfig:
-      properties:
-        code:
-          type: string
-        description:
-          type: string
-        label:
-          type: string
-      type: object
-    AppConfig.SystemConfig:
-      properties:
-        appVersion:
-          $ref: '#/components/schemas/AppConfig.AppVersion'
-        maintenance:
-          $ref: '#/components/schemas/AppConfig.MaintenanceConfig'
-      type: object
-    AppConfig.UserContext:
-      properties:
-        isAuthenticated:
-          type: boolean
-        userFeatureFlags:
-          additionalProperties: {}
-          type: object
-        userPreferredCurrency:
-          type: string
-      type: object
-    Common.ErrorCode:
-      enum:
-      - BAD_REQUEST
-      - UNAUTHORIZED
-      - FORBIDDEN
-      - NOT_FOUND
-      - INTERNAL_SERVER_ERROR
-      - INVALID_BODY
-      - USER_NOT_FOUND
-      type: string
-      x-enum-varnames:
-      - ErrBadRequest
-      - ErrUnauthorized
-      - ErrForbidden
-      - ErrNotFound
-      - ErrInternalServerError
-      - ErrInvalidBody
-      - ErrUserNotFound
-    Common.ErrorResponse:
-      properties:
-        code:
-          $ref: '#/components/schemas/Common.ErrorCode'
-        message:
-          type: string
-      type: object
-    Common.MessageResponse:
-      properties:
-        message:
-          type: string
-      type: object
-    Expense.BalanceResponse:
-      properties:
-        balances:
-          items:
-            $ref: '#/components/schemas/Expense.UserBalance'
-          type: array
-          uniqueItems: false
-        settlements:
-          items:
-            $ref: '#/components/schemas/Expense.Settlement'
-          type: array
-          uniqueItems: false
-      type: object
-    Expense.CreateRequest:
-      properties:
-        amount:
-          type: number
-        category:
-          type: string
-        currency:
-          type: string
-        description:
-          type: string
-        groupId:
-          type: string
-        paidBy:
-          type: string
-        splitType:
-          $ref: '#/components/schemas/Expense.SplitType'
-        splits:
-          items:
-            $ref: '#/components/schemas/Expense.InputSplit'
-          type: array
-          uniqueItems: false
-      type: object
-    Expense.ExpenseSyncResponse:
-      properties:
-        deletedIds:
-          items:
-            type: string
-          type: array
-          uniqueItems: false
-        newVersion:
-          type: integer
-        updated:
-          items:
-            $ref: '#/components/schemas/Expense.ExpenseWithSplits'
-          type: array
-          uniqueItems: false
-      type: object
-    Expense.ExpenseWithSplits:
-      properties:
-        amount:
-          type: number
-        category:
-          type: string
-        createdAt:
-          type: string
-        createdBy:
-          type: string
-        currency:
-          type: string
-        deletedAt:
-          type: string
-        description:
-          type: string
-        groupId:
-          type: string
-        id:
-          type: string
-        isPayment:
-          type: boolean
-        paidBy:
-          type: string
-        spentAt:
-          type: string
-        splits:
-          items:
-            $ref: '#/components/schemas/Expense.Split'
-          type: array
-          uniqueItems: false
-        syncVersion:
-          type: integer
-        updatedAt:
-          type: string
-      type: object
-    Expense.InputSplit:
-      properties:
-        amount:
-          description: Required if splitType is EXACT
-          type: number
-        percentage:
-          description: Required if splitType is PERCENTAGE
-          type: number
-        userId:
-          type: string
-      type: object
-    Expense.SettleRequest:
-      properties:
-        amount:
-          type: number
-        currency:
-          type: string
-        groupId:
-          type: string
-        paidBy:
-          type: string
-        receivedBy:
-          type: string
-      type: object
-    Expense.Settlement:
-      properties:
-        amount:
-          type: number
-        fromUserId:
-          type: string
-        fromUserName:
-          type: string
-        toUserId:
-          type: string
-        toUserName:
-          type: string
-      type: object
-    Expense.Split:
-      properties:
-        amount:
-          type: number
-        email:
-          type: string
-        expenseId:
-          type: string
-        name:
-          type: string
-        phone:
-          type: string
-        splitType:
-          $ref: '#/components/schemas/Expense.SplitType'
-        splitValue:
-          type: number
-        userId:
-          type: string
-      type: object
-    Expense.SplitType:
-      enum:
-      - EQUAL
-      - EXACT
-      - PERCENTAGE
-      type: string
-      x-enum-varnames:
-      - SplitTypeEqual
-      - SplitTypeExact
-      - SplitTypePercentage
-    Expense.UpdateRequest:
-      properties:
-        amount:
-          type: number
-        category:
-          type: string
-        currency:
-          type: string
-        description:
-          type: string
-        splitType:
-          $ref: '#/components/schemas/Expense.SplitType'
-        splits:
-          items:
-            $ref: '#/components/schemas/Expense.InputSplit'
-          type: array
-          uniqueItems: false
-      type: object
-    Expense.UserBalance:
-      properties:
-        netBalance:
-          type: number
-        userId:
-          type: string
-        userName:
-          type: string
-      type: object
-    Group.AddMembersRequest:
-      properties:
-        userIds:
-          items:
-            type: string
-          minItems: 1
-          type: array
-          uniqueItems: false
-      required:
-      - userIds
-      type: object
-    Group.CreateRequest:
-      properties:
-        description:
-          type: string
-        name:
-          type: string
-        requireAdminApproval:
-          type: boolean
-      required:
-      - name
-      type: object
-    Group.DecideJoinRequestPayload:
-      properties:
-        action:
-          $ref: '#/components/schemas/Group.JoinRequestAction'
-      type: object
-    Group.Group:
-      properties:
-        archivedAt:
-          type: string
-        createdAt:
-          type: string
-        createdBy:
-          type: string
-        description:
-          type: string
-        iconUrl:
-          type: string
-        id:
-          type: string
-        inviteCode:
-          type: string
-        inviteCodeExpiresAt:
-          type: string
-        members:
-          items:
-            $ref: '#/components/schemas/Group.Member'
-          type: array
-          uniqueItems: false
-        name:
-          type: string
-        requireAdminApproval:
-          type: boolean
-        syncVersion:
-          type: integer
-        updatedAt:
-          type: string
-      type: object
-    Group.GroupSyncResponse:
-      properties:
-        newVersion:
-          type: integer
-        removedGroupIds:
-          items:
-            type: string
-          type: array
-          uniqueItems: false
-        updated:
-          items:
-            $ref: '#/components/schemas/Group.Group'
-          type: array
-          uniqueItems: false
-      type: object
-    Group.JoinRequest:
-      properties:
-        inviteCode:
-          type: string
-      required:
-      - inviteCode
-      type: object
-    Group.JoinRequestAction:
-      enum:
-      - APPROVE
-      - REJECT
-      type: string
-      x-enum-varnames:
-      - JoinRequestActionApprove
-      - JoinRequestActionReject
-    Group.JoinResponse:
-      properties:
-        group:
-          $ref: '#/components/schemas/Group.Group'
-        message:
-          type: string
-        status:
-          $ref: '#/components/schemas/Group.MemberStatus'
-      type: object
-    Group.Member:
-      properties:
-        email:
-          type: string
-        groupId:
-          type: string
-        joinedAt:
-          type: string
-        name:
-          type: string
-        phone:
-          type: string
-        role:
-          $ref: '#/components/schemas/Group.MemberRole'
-        status:
-          $ref: '#/components/schemas/Group.MemberStatus'
-        userId:
-          type: string
-      type: object
-    Group.MemberRole:
-      enum:
-      - ADMIN
-      - MEMBER
-      type: string
-      x-enum-varnames:
-      - MemberRoleAdmin
-      - MemberRoleMember
-    Group.MemberStatus:
-      enum:
-      - ACTIVE
-      - PENDING
-      - REJECTED
-      type: string
-      x-enum-varnames:
-      - MemberStatusActive
-      - MemberStatusPending
-      - MemberStatusRejected
-    Group.Preview:
-      properties:
-        creatorName:
-          type: string
-        description:
-          type: string
-        memberCount:
-          type: integer
-        name:
-          type: string
-        requireAdminApproval:
-          type: boolean
-      type: object
-    Group.UpdateRoleRequest:
-      properties:
-        role:
-          $ref: '#/components/schemas/Group.MemberRole'
-      type: object
-    Meta:
-      properties:
-        hasMore:
-          type: boolean
-        nextCursor:
-          type: string
-      type: object
-    Notification.AlertType:
-      enum:
-      - EXPENSE_ADDED
-      - PAYMENT_RECEIVED
-      - JOIN_REQUEST_PENDING
-      - JOIN_REQUEST_APPROVED
-      - JOIN_REQUEST_REJECTED
-      type: string
-      x-enum-varnames:
-      - AlertTypeExpenseAdded
-      - AlertTypePaymentReceived
-      - AlertTypeJoinRequestPending
-      - AlertTypeJoinRequestApproved
-      - AlertTypeJoinRequestRejected
-    Notification.Notification:
-      properties:
-        activityId:
-          type: string
-        actorId:
-          type: string
-        actorName:
-          type: string
-        content:
-          type: string
-        createdAt:
-          type: string
-        id:
-          type: string
-        isRead:
-          type: boolean
-        title:
-          type: string
-        type:
-          $ref: '#/components/schemas/Notification.AlertType'
-        userId:
-          type: string
-      type: object
-    Page-Activity:
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/Activity'
-          type: array
-          uniqueItems: false
-        pagination:
-          $ref: '#/components/schemas/Meta'
-      type: object
-    Page-Activity_Activity:
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/Activity.Activity'
-          type: array
-          uniqueItems: false
-        pagination:
-          $ref: '#/components/schemas/Meta'
-      type: object
-    Page-Expense_ExpenseWithSplits:
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/Expense.ExpenseWithSplits'
-          type: array
-          uniqueItems: false
-        pagination:
-          $ref: '#/components/schemas/Meta'
-      type: object
-    Page-Group_Group:
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/Group.Group'
-          type: array
-          uniqueItems: false
-        pagination:
-          $ref: '#/components/schemas/Meta'
-      type: object
-    Page-Notification_Notification:
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/Notification.Notification'
-          type: array
-          uniqueItems: false
-        pagination:
-          $ref: '#/components/schemas/Meta'
-      type: object
-    Page-User_User:
-      properties:
-        data:
-          items:
-            $ref: '#/components/schemas/User.User'
-          type: array
-          uniqueItems: false
-        pagination:
-          $ref: '#/components/schemas/Meta'
-      type: object
-    User.AddFriendRequest:
-      properties:
-        friendEmail:
-          type: string
-        friendPhone:
-          type: string
-      type: object
-    User.FriendSyncResponse:
-      properties:
-        friends:
-          items:
-            $ref: '#/components/schemas/User.FriendshipSyncRecord'
-          type: array
-          uniqueItems: false
-        newVersion:
-          type: integer
-      type: object
-    User.FriendWithStatus:
-      properties:
-        actionUserId:
-          type: string
-        avatarUrl:
-          type: string
-        createdAt:
-          type: string
-        defaultCurrency:
-          type: string
-        email:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        phone:
-          type: string
-        status:
-          $ref: '#/components/schemas/User.FriendshipStatus'
-        updatedAt:
-          type: string
-      type: object
-    User.FriendshipStatus:
-      enum:
-      - PENDING
-      - ACCEPTED
-      - DECLINED
-      - BLOCKED
-      type: string
-      x-enum-varnames:
-      - Pending
-      - Accepted
-      - Declined
-      - Blocked
-    User.FriendshipSyncRecord:
-      properties:
-        actionUserId:
-          type: string
-        createdAt:
-          type: string
-        friendId:
-          type: string
-        status:
-          $ref: '#/components/schemas/User.FriendshipStatus'
-        syncVersion:
-          type: integer
-        updatedAt:
-          type: string
-        userId:
-          type: string
-      type: object
-    User.RegisterRequest:
-      properties:
-        name:
-          type: string
-      type: object
-    User.UpdateFriendStatusRequest:
-      properties:
-        status:
-          $ref: '#/components/schemas/User.FriendshipStatus'
-      type: object
-    User.UpdateProfileRequest:
-      properties:
-        defaultCurrency:
-          type: string
-        name:
-          type: string
-      type: object
-    User.UpdateUserSettingsRequest:
-      properties:
-        autoAcceptFriendRequests:
-          type: boolean
-      type: object
-    User.User:
-      properties:
-        avatarUrl:
-          type: string
-        createdAt:
-          type: string
-        defaultCurrency:
-          type: string
-        email:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        phone:
-          type: string
-        updatedAt:
-          type: string
-      type: object
-    User.UserSettingsResponse:
-      properties:
-        autoAcceptFriendRequests:
-          type: boolean
-      type: object
-  securitySchemes:
-    BearerAuth:
-      scheme: bearer
-      type: http
-externalDocs:
-  description: ""
-  url: ""
+        type: object
+      legal:
+        $ref: '#/definitions/AppConfig.LegalConfig'
+      system:
+        $ref: '#/definitions/AppConfig.SystemConfig'
+      userContext:
+        $ref: '#/definitions/AppConfig.UserContext'
+    type: object
+  AppConfig.AppConfigMeta:
+    properties:
+      configVersion:
+        type: string
+      serverTime:
+        type: string
+    type: object
+  AppConfig.AppConfigResponse:
+    properties:
+      data:
+        $ref: '#/definitions/AppConfig.AppConfigData'
+      meta:
+        $ref: '#/definitions/AppConfig.AppConfigMeta'
+    type: object
+  AppConfig.AppVersion:
+    properties:
+      forceUpdate:
+        type: boolean
+      latestVersion:
+        type: string
+      minSupportedVersion:
+        type: string
+      updateMessage:
+        type: string
+      updateUrl:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+  AppConfig.Category:
+    properties:
+      iconUrl:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  AppConfig.Currency:
+    properties:
+      code:
+        type: string
+      decimalPlaces:
+        type: integer
+      isDefault:
+        type: boolean
+      name:
+        type: string
+      symbol:
+        type: string
+    type: object
+  AppConfig.DomainConfig:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/AppConfig.Category'
+        type: array
+      currencies:
+        items:
+          $ref: '#/definitions/AppConfig.Currency'
+        type: array
+      limits:
+        $ref: '#/definitions/AppConfig.LimitsConfig'
+      paymentIntegrations:
+        items:
+          $ref: '#/definitions/AppConfig.PaymentIntegration'
+        type: array
+      splitTypes:
+        items:
+          $ref: '#/definitions/AppConfig.SplitTypeConfig'
+        type: array
+    type: object
+  AppConfig.LegalConfig:
+    properties:
+      faqUrl:
+        type: string
+      privacyPolicyUrl:
+        type: string
+      supportEmail:
+        type: string
+      termsOfServiceUrl:
+        type: string
+    type: object
+  AppConfig.LimitsConfig:
+    properties:
+      allowedReceiptMimeTypes:
+        items:
+          type: string
+        type: array
+      maxExpenseAmount:
+        type: number
+      maxGroupMembers:
+        type: integer
+      maxReceiptSizeMb:
+        type: integer
+      maxSplitParticipants:
+        type: integer
+    type: object
+  AppConfig.MaintenanceConfig:
+    properties:
+      estimatedEndTime:
+        type: string
+      inMaintenance:
+        type: boolean
+      message:
+        type: string
+      readOnlyMode:
+        type: boolean
+    type: object
+  AppConfig.PaymentIntegration:
+    properties:
+      deepLinkScheme:
+        type: string
+      enabled:
+        type: boolean
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  AppConfig.SplitTypeConfig:
+    properties:
+      code:
+        type: string
+      description:
+        type: string
+      label:
+        type: string
+    type: object
+  AppConfig.SystemConfig:
+    properties:
+      appVersion:
+        $ref: '#/definitions/AppConfig.AppVersion'
+      maintenance:
+        $ref: '#/definitions/AppConfig.MaintenanceConfig'
+    type: object
+  AppConfig.UserContext:
+    properties:
+      isAuthenticated:
+        type: boolean
+      userFeatureFlags:
+        additionalProperties: true
+        type: object
+      userPreferredCurrency:
+        type: string
+    type: object
+  Common.ErrorCode:
+    enum:
+    - BAD_REQUEST
+    - UNAUTHORIZED
+    - FORBIDDEN
+    - NOT_FOUND
+    - INTERNAL_SERVER_ERROR
+    - INVALID_BODY
+    - USER_NOT_FOUND
+    type: string
+    x-enum-varnames:
+    - ErrBadRequest
+    - ErrUnauthorized
+    - ErrForbidden
+    - ErrNotFound
+    - ErrInternalServerError
+    - ErrInvalidBody
+    - ErrUserNotFound
+  Common.ErrorResponse:
+    properties:
+      code:
+        $ref: '#/definitions/Common.ErrorCode'
+      message:
+        type: string
+    type: object
+  Common.MessageResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  Expense.BalanceResponse:
+    properties:
+      balances:
+        items:
+          $ref: '#/definitions/Expense.UserBalance'
+        type: array
+      settlements:
+        items:
+          $ref: '#/definitions/Expense.Settlement'
+        type: array
+    type: object
+  Expense.CreateRequest:
+    properties:
+      amount:
+        type: number
+      category:
+        type: string
+      currency:
+        type: string
+      description:
+        type: string
+      groupId:
+        type: string
+      paidBy:
+        type: string
+      splitType:
+        $ref: '#/definitions/Expense.SplitType'
+      splits:
+        items:
+          $ref: '#/definitions/Expense.InputSplit'
+        type: array
+    type: object
+  Expense.ExpenseSyncResponse:
+    properties:
+      deletedIds:
+        items:
+          type: string
+        type: array
+      newVersion:
+        type: integer
+      updated:
+        items:
+          $ref: '#/definitions/Expense.ExpenseWithSplits'
+        type: array
+    type: object
+  Expense.ExpenseWithSplits:
+    properties:
+      amount:
+        type: number
+      category:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: string
+      currency:
+        type: string
+      deletedAt:
+        type: string
+      description:
+        type: string
+      groupId:
+        type: string
+      id:
+        type: string
+      isPayment:
+        type: boolean
+      paidBy:
+        type: string
+      spentAt:
+        type: string
+      splits:
+        items:
+          $ref: '#/definitions/Expense.Split'
+        type: array
+      syncVersion:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  Expense.InputSplit:
+    properties:
+      amount:
+        description: Required if splitType is EXACT
+        type: number
+      percentage:
+        description: Required if splitType is PERCENTAGE
+        type: number
+      userId:
+        type: string
+    type: object
+  Expense.SettleRequest:
+    properties:
+      amount:
+        type: number
+      currency:
+        type: string
+      groupId:
+        type: string
+      paidBy:
+        type: string
+      receivedBy:
+        type: string
+    type: object
+  Expense.Settlement:
+    properties:
+      amount:
+        type: number
+      fromUserId:
+        type: string
+      fromUserName:
+        type: string
+      toUserId:
+        type: string
+      toUserName:
+        type: string
+    type: object
+  Expense.Split:
+    properties:
+      amount:
+        type: number
+      email:
+        type: string
+      expenseId:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      splitType:
+        $ref: '#/definitions/Expense.SplitType'
+      splitValue:
+        type: number
+      userId:
+        type: string
+    type: object
+  Expense.SplitType:
+    enum:
+    - EQUAL
+    - EXACT
+    - PERCENTAGE
+    type: string
+    x-enum-varnames:
+    - SplitTypeEqual
+    - SplitTypeExact
+    - SplitTypePercentage
+  Expense.UpdateRequest:
+    properties:
+      amount:
+        type: number
+      category:
+        type: string
+      currency:
+        type: string
+      description:
+        type: string
+      splitType:
+        $ref: '#/definitions/Expense.SplitType'
+      splits:
+        items:
+          $ref: '#/definitions/Expense.InputSplit'
+        type: array
+    type: object
+  Expense.UserBalance:
+    properties:
+      netBalance:
+        type: number
+      userId:
+        type: string
+      userName:
+        type: string
+    type: object
+  Group.AddMembersRequest:
+    properties:
+      userIds:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - userIds
+    type: object
+  Group.CreateRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      requireAdminApproval:
+        type: boolean
+    required:
+    - name
+    type: object
+  Group.DecideJoinRequestPayload:
+    properties:
+      action:
+        $ref: '#/definitions/Group.JoinRequestAction'
+    type: object
+  Group.Group:
+    properties:
+      archivedAt:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: string
+      description:
+        type: string
+      iconUrl:
+        type: string
+      id:
+        type: string
+      inviteCode:
+        type: string
+      inviteCodeExpiresAt:
+        type: string
+      members:
+        items:
+          $ref: '#/definitions/Group.Member'
+        type: array
+      name:
+        type: string
+      requireAdminApproval:
+        type: boolean
+      syncVersion:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  Group.GroupSyncResponse:
+    properties:
+      newVersion:
+        type: integer
+      removedGroupIds:
+        items:
+          type: string
+        type: array
+      updated:
+        items:
+          $ref: '#/definitions/Group.Group'
+        type: array
+    type: object
+  Group.JoinRequest:
+    properties:
+      inviteCode:
+        type: string
+    required:
+    - inviteCode
+    type: object
+  Group.JoinRequestAction:
+    enum:
+    - APPROVE
+    - REJECT
+    type: string
+    x-enum-varnames:
+    - JoinRequestActionApprove
+    - JoinRequestActionReject
+  Group.JoinResponse:
+    properties:
+      group:
+        $ref: '#/definitions/Group.Group'
+      message:
+        type: string
+      status:
+        $ref: '#/definitions/Group.MemberStatus'
+    type: object
+  Group.Member:
+    properties:
+      email:
+        type: string
+      groupId:
+        type: string
+      joinedAt:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      role:
+        $ref: '#/definitions/Group.MemberRole'
+      status:
+        $ref: '#/definitions/Group.MemberStatus'
+      userId:
+        type: string
+    type: object
+  Group.MemberRole:
+    enum:
+    - ADMIN
+    - MEMBER
+    type: string
+    x-enum-varnames:
+    - MemberRoleAdmin
+    - MemberRoleMember
+  Group.MemberStatus:
+    enum:
+    - ACTIVE
+    - PENDING
+    - REJECTED
+    type: string
+    x-enum-varnames:
+    - MemberStatusActive
+    - MemberStatusPending
+    - MemberStatusRejected
+  Group.Preview:
+    properties:
+      creatorName:
+        type: string
+      description:
+        type: string
+      memberCount:
+        type: integer
+      name:
+        type: string
+      requireAdminApproval:
+        type: boolean
+    type: object
+  Group.UpdateRoleRequest:
+    properties:
+      role:
+        $ref: '#/definitions/Group.MemberRole'
+    type: object
+  Meta:
+    properties:
+      hasMore:
+        type: boolean
+      nextCursor:
+        type: string
+    type: object
+  Notification.AlertType:
+    enum:
+    - EXPENSE_ADDED
+    - PAYMENT_RECEIVED
+    - JOIN_REQUEST_PENDING
+    - JOIN_REQUEST_APPROVED
+    - JOIN_REQUEST_REJECTED
+    type: string
+    x-enum-varnames:
+    - AlertTypeExpenseAdded
+    - AlertTypePaymentReceived
+    - AlertTypeJoinRequestPending
+    - AlertTypeJoinRequestApproved
+    - AlertTypeJoinRequestRejected
+  Notification.Notification:
+    properties:
+      activityId:
+        type: string
+      actorId:
+        type: string
+      actorName:
+        type: string
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      isRead:
+        type: boolean
+      title:
+        type: string
+      type:
+        $ref: '#/definitions/Notification.AlertType'
+      userId:
+        type: string
+    type: object
+  Page-Activity:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/Activity'
+        type: array
+      pagination:
+        $ref: '#/definitions/Meta'
+    type: object
+  Page-Activity_Activity:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/Activity.Activity'
+        type: array
+      pagination:
+        $ref: '#/definitions/Meta'
+    type: object
+  Page-Expense_ExpenseWithSplits:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/Expense.ExpenseWithSplits'
+        type: array
+      pagination:
+        $ref: '#/definitions/Meta'
+    type: object
+  Page-Group_Group:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/Group.Group'
+        type: array
+      pagination:
+        $ref: '#/definitions/Meta'
+    type: object
+  Page-Notification_Notification:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/Notification.Notification'
+        type: array
+      pagination:
+        $ref: '#/definitions/Meta'
+    type: object
+  Page-User_User:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/User.User'
+        type: array
+      pagination:
+        $ref: '#/definitions/Meta'
+    type: object
+  User.AddFriendRequest:
+    properties:
+      friendEmail:
+        type: string
+      friendPhone:
+        type: string
+    type: object
+  User.FriendSyncResponse:
+    properties:
+      friends:
+        items:
+          $ref: '#/definitions/User.FriendshipSyncRecord'
+        type: array
+      newVersion:
+        type: integer
+    type: object
+  User.FriendWithStatus:
+    properties:
+      actionUserId:
+        type: string
+      avatarUrl:
+        type: string
+      createdAt:
+        type: string
+      defaultCurrency:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      status:
+        $ref: '#/definitions/User.FriendshipStatus'
+      updatedAt:
+        type: string
+    type: object
+  User.FriendshipStatus:
+    enum:
+    - PENDING
+    - ACCEPTED
+    - DECLINED
+    - BLOCKED
+    type: string
+    x-enum-varnames:
+    - Pending
+    - Accepted
+    - Declined
+    - Blocked
+  User.FriendshipSyncRecord:
+    properties:
+      actionUserId:
+        type: string
+      createdAt:
+        type: string
+      friendId:
+        type: string
+      status:
+        $ref: '#/definitions/User.FriendshipStatus'
+      syncVersion:
+        type: integer
+      updatedAt:
+        type: string
+      userId:
+        type: string
+    type: object
+  User.RegisterRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  User.UpdateFriendStatusRequest:
+    properties:
+      status:
+        $ref: '#/definitions/User.FriendshipStatus'
+    type: object
+  User.UpdateProfileRequest:
+    properties:
+      defaultCurrency:
+        type: string
+      name:
+        type: string
+    type: object
+  User.UpdateUserSettingsRequest:
+    properties:
+      autoAcceptFriendRequests:
+        type: boolean
+    type: object
+  User.User:
+    properties:
+      avatarUrl:
+        type: string
+      createdAt:
+        type: string
+      defaultCurrency:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  User.UserSettingsResponse:
+    properties:
+      autoAcceptFriendRequests:
+        type: boolean
+    type: object
 info:
+  contact: {}
   description: Backend API service for Splittr bill splitting.
   title: Splittr API
   version: "1.0"
-openapi: 3.1.0
 paths:
   /activities:
     get:
@@ -855,32 +824,26 @@ paths:
       - description: Items per page (max 100, default 20)
         in: query
         name: limit
-        schema:
-          type: integer
+        type: integer
       - description: Opaque cursor token from a previous response
         in: query
         name: cursor
-        schema:
-          type: string
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Page-Activity_Activity'
           description: OK
+          schema:
+            $ref: '#/definitions/Page-Activity_Activity'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List activity feed
@@ -888,6 +851,8 @@ paths:
       - activities
   /app-config:
     get:
+      consumes:
+      - application/json
       description: Returns app version rules, maintenance status, expense categories,
         currencies, limits, feature flags, and legal links. Supports optional Bearer
         auth and ETag caching via If-None-Match.
@@ -895,28 +860,20 @@ paths:
       - description: ETag hash for cache validation
         in: header
         name: If-None-Match
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AppConfig.AppConfigResponse'
           description: OK
+          schema:
+            $ref: '#/definitions/AppConfig.AppConfigResponse'
         "304":
           description: Not Modified
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       summary: Fetch application startup configuration
       tags:
       - appConfig
@@ -927,38 +884,30 @@ paths:
       - description: Filter by Group ID. If omitted, returns global balances.
         in: query
         name: groupId
-        schema:
-          type: string
+        type: string
       - description: Simplify debts algorithm (true/false)
         in: query
         name: simplified
-        schema:
-          type: boolean
+        type: boolean
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expense.BalanceResponse'
           description: OK
+          schema:
+            $ref: '#/definitions/Expense.BalanceResponse'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get user balances
@@ -972,96 +921,77 @@ paths:
       - description: Filter by Group ID
         in: query
         name: groupId
-        schema:
-          type: string
+        type: string
       - description: Filter for personal only (true/false)
         in: query
         name: personal
-        schema:
-          type: boolean
+        type: boolean
       - description: Filter by Friend ID
         in: query
         name: friendId
-        schema:
-          type: string
+        type: string
       - description: Items per page (max 100, default 20)
         in: query
         name: limit
-        schema:
-          type: integer
+        type: integer
       - description: Opaque cursor token from a previous response
         in: query
         name: cursor
-        schema:
-          type: string
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Page-Expense_ExpenseWithSplits'
           description: OK
+          schema:
+            $ref: '#/definitions/Page-Expense_ExpenseWithSplits'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List expenses
       tags:
       - expenses
     post:
+      consumes:
+      - application/json
       description: Create a new expense with equal/exact/percentage splits.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-              - type: object
-              - $ref: '#/components/schemas/Expense.CreateRequest'
-                description: Expense details and splits structure
-                summary: request
-        description: Expense details and splits structure
+      parameters:
+      - description: Expense details and splits structure
+        in: body
+        name: request
         required: true
+        schema:
+          $ref: '#/definitions/Expense.CreateRequest'
+      produces:
+      - application/json
       responses:
         "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expense.ExpenseWithSplits'
           description: Created
+          schema:
+            $ref: '#/definitions/Expense.ExpenseWithSplits'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create expense
@@ -1075,41 +1005,30 @@ paths:
         in: path
         name: id
         required: true
-        schema:
-          type: string
+        type: string
       responses:
         "204":
           description: No Content
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Forbidden
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Not Found
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete expense
@@ -1122,51 +1041,42 @@ paths:
         in: path
         name: id
         required: true
-        schema:
-          type: string
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expense.ExpenseWithSplits'
           description: OK
+          schema:
+            $ref: '#/definitions/Expense.ExpenseWithSplits'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Forbidden
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Not Found
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get expense details
       tags:
       - expenses
     patch:
+      consumes:
+      - application/json
       description: Partially update description, amount, currency, category, or splits
         for an expense.
       parameters:
@@ -1174,56 +1084,40 @@ paths:
         in: path
         name: id
         required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-              - type: object
-              - $ref: '#/components/schemas/Expense.UpdateRequest'
-                description: Update Expense Payload
-                summary: body
-        description: Update Expense Payload
+        type: string
+      - description: Update Expense Payload
+        in: body
+        name: body
         required: true
+        schema:
+          $ref: '#/definitions/Expense.UpdateRequest'
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expense.ExpenseWithSplits'
           description: OK
+          schema:
+            $ref: '#/definitions/Expense.ExpenseWithSplits'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Forbidden
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Not Found
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update expense
@@ -1231,43 +1125,35 @@ paths:
       - expenses
   /expenses/settle:
     post:
+      consumes:
+      - application/json
       description: Create a settlement payment between two users.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-              - type: object
-              - $ref: '#/components/schemas/Expense.SettleRequest'
-                description: Settlement details
-                summary: request
-        description: Settlement details
+      parameters:
+      - description: Settlement details
+        in: body
+        name: request
         required: true
+        schema:
+          $ref: '#/definitions/Expense.SettleRequest'
+      produces:
+      - application/json
       responses:
         "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expense.ExpenseWithSplits'
           description: Created
+          schema:
+            $ref: '#/definitions/Expense.ExpenseWithSplits'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Settle balance
@@ -1281,32 +1167,26 @@ paths:
       - description: Last received sequence version
         in: query
         name: lastVersion
-        schema:
-          type: integer
+        type: integer
       - description: Maximum items to return (default 100)
         in: query
         name: limit
-        schema:
-          type: integer
+        type: integer
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expense.ExpenseSyncResponse'
           description: OK
+          schema:
+            $ref: '#/definitions/Expense.ExpenseSyncResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Sync expenses
@@ -1318,88 +1198,73 @@ paths:
         PENDING, or BLOCKED.
       parameters:
       - description: 'Filter by status: ACCEPTED, PENDING, BLOCKED'
+        enum:
+        - PENDING
+        - ACCEPTED
+        - DECLINED
+        - BLOCKED
         in: query
         name: status
-        schema:
-          enum:
-          - PENDING
-          - ACCEPTED
-          - DECLINED
-          - BLOCKED
-          type: string
+        type: string
       - description: Items per page (max 100, default 20)
         in: query
         name: limit
-        schema:
-          type: integer
+        type: integer
       - description: Opaque cursor token from a previous response
         in: query
         name: cursor
-        schema:
-          type: string
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Page-User_User'
           description: OK
+          schema:
+            $ref: '#/definitions/Page-User_User'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List friends
       tags:
       - friends
     post:
+      consumes:
+      - application/json
       description: Create a friendship link (PENDING or ACCEPTED based on target user
         settings) using email or phone.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-              - type: object
-              - $ref: '#/components/schemas/User.AddFriendRequest'
-                description: Friend email or phone
-                summary: request
-        description: Friend email or phone
+      parameters:
+      - description: Friend email or phone
+        in: body
+        name: request
         required: true
+        schema:
+          $ref: '#/definitions/User.AddFriendRequest'
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User.FriendWithStatus'
           description: OK
+          schema:
+            $ref: '#/definitions/User.FriendWithStatus'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Add friend or send friend request
@@ -1413,79 +1278,62 @@ paths:
         in: path
         name: friendId
         required: true
-        schema:
-          type: string
+        type: string
       responses:
         "204":
           description: No Content
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Remove friend
       tags:
       - friends
     patch:
+      consumes:
+      - application/json
       description: Accept, decline, or block a friend request / friendship.
       parameters:
       - description: Friend User ID
         in: path
         name: friendId
         required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-              - type: object
-              - $ref: '#/components/schemas/User.UpdateFriendStatusRequest'
-                description: New status (ACCEPTED, DECLINED, BLOCKED)
-                summary: request
-        description: New status (ACCEPTED, DECLINED, BLOCKED)
+        type: string
+      - description: New status (ACCEPTED, DECLINED, BLOCKED)
+        in: body
+        name: request
         required: true
+        schema:
+          $ref: '#/definitions/User.UpdateFriendStatusRequest'
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User.FriendWithStatus'
           description: OK
+          schema:
+            $ref: '#/definitions/User.FriendWithStatus'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update friendship status
@@ -1498,32 +1346,26 @@ paths:
       - description: Last received sequence version
         in: query
         name: lastVersion
-        schema:
-          type: integer
+        type: integer
       - description: Maximum items to return (default 100)
         in: query
         name: limit
-        schema:
-          type: integer
+        type: integer
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User.FriendSyncResponse'
           description: OK
+          schema:
+            $ref: '#/definitions/User.FriendSyncResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Sync friends
@@ -1537,76 +1379,62 @@ paths:
       - description: Items per page (max 100, default 20)
         in: query
         name: limit
-        schema:
-          type: integer
+        type: integer
       - description: Opaque cursor token from a previous response
         in: query
         name: cursor
-        schema:
-          type: string
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Page-Group_Group'
           description: OK
+          schema:
+            $ref: '#/definitions/Page-Group_Group'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List groups
       tags:
       - groups
     post:
+      consumes:
+      - application/json
       description: Create a new bill-splitting group with optional admin approval
         requirement.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-              - type: object
-              - $ref: '#/components/schemas/Group.CreateRequest'
-                description: Group creation data
-                summary: request
-        description: Group creation data
+      parameters:
+      - description: Group creation data
+        in: body
+        name: request
         required: true
+        schema:
+          $ref: '#/definitions/Group.CreateRequest'
+      produces:
+      - application/json
       responses:
         "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Group.Group'
           description: Created
+          schema:
+            $ref: '#/definitions/Group.Group'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create group
@@ -1620,29 +1448,24 @@ paths:
         in: path
         name: id
         required: true
-        schema:
-          type: string
+        type: string
+      produces:
+      - application/json
       responses:
         "204":
           description: No Content
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Archive group
@@ -1655,33 +1478,26 @@ paths:
         in: path
         name: id
         required: true
-        schema:
-          type: string
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Group.Group'
           description: OK
+          schema:
+            $ref: '#/definitions/Group.Group'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get group details
@@ -1695,43 +1511,34 @@ paths:
         in: path
         name: id
         required: true
-        schema:
-          type: string
+        type: string
       - description: Items per page (max 100, default 20)
         in: query
         name: limit
-        schema:
-          type: integer
+        type: integer
       - description: Opaque cursor token from previous response
         in: query
         name: cursor
-        schema:
-          type: string
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Page-Activity'
           description: OK
+          schema:
+            $ref: '#/definitions/Page-Activity'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Forbidden
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get group activity feed
@@ -1739,50 +1546,39 @@ paths:
       - groups
   /groups/{id}/icon:
     post:
+      consumes:
+      - multipart/form-data
       description: Upload an image file (JPEG, PNG, WEBP, max 2MB) as group icon.
       parameters:
       - description: Group ID
         in: path
         name: id
         required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              title: file
-              type: file
-          multipart/form-data:
-            schema:
-              type: object
-        description: Image File
+        type: string
+      - description: Image File
+        in: formData
+        name: file
         required: true
+        type: file
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Group.Group'
           description: OK
+          schema:
+            $ref: '#/definitions/Group.Group'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Forbidden
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Upload group icon
@@ -1797,33 +1593,26 @@ paths:
         in: path
         name: id
         required: true
-        schema:
-          type: string
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Group.Group'
           description: OK
+          schema:
+            $ref: '#/definitions/Group.Group'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Forbidden
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Reset group invite code
@@ -1838,46 +1627,40 @@ paths:
         in: path
         name: id
         required: true
-        schema:
-          type: string
+        type: string
       - description: 'Filter status: ACTIVE, PENDING, REJECTED, ALL'
         in: query
         name: status
-        schema:
-          type: string
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/Group.Member'
-                type: array
           description: OK
+          schema:
+            items:
+              $ref: '#/definitions/Group.Member'
+            type: array
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Forbidden
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List group members
       tags:
       - groups
     post:
+      consumes:
+      - application/json
       description: Add multiple users to a group by their User IDs. Only admins can
         add members.
       parameters:
@@ -1885,46 +1668,34 @@ paths:
         in: path
         name: id
         required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-              - type: object
-              - $ref: '#/components/schemas/Group.AddMembersRequest'
-                description: User IDs of members to add
-                summary: request
-        description: User IDs of members to add
+        type: string
+      - description: User IDs of members to add
+        in: body
+        name: request
         required: true
+        schema:
+          $ref: '#/definitions/Group.AddMembersRequest'
+      produces:
+      - application/json
       responses:
         "201":
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/Group.Member'
-                type: array
           description: Created
+          schema:
+            items:
+              $ref: '#/definitions/Group.Member'
+            type: array
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Add group members
@@ -1938,35 +1709,27 @@ paths:
         in: path
         name: id
         required: true
-        schema:
-          type: string
+        type: string
       - description: User ID of the member to remove
         in: path
         name: userId
         required: true
-        schema:
-          type: string
+        type: string
       responses:
         "204":
           description: No Content
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Remove group member / Leave group
@@ -1974,6 +1737,8 @@ paths:
       - groups
   /groups/{id}/members/{userId}/decision:
     post:
+      consumes:
+      - application/json
       description: Approve or reject a pending member join request. Admin privileges
         required.
       parameters:
@@ -1981,56 +1746,41 @@ paths:
         in: path
         name: id
         required: true
-        schema:
-          type: string
+        type: string
       - description: Target User ID
         in: path
         name: userId
         required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-              - type: object
-              - $ref: '#/components/schemas/Group.DecideJoinRequestPayload'
-                description: Action (APPROVE or REJECT)
-                summary: request
-        description: Action (APPROVE or REJECT)
+        type: string
+      - description: Action (APPROVE or REJECT)
+        in: body
+        name: request
         required: true
+        schema:
+          $ref: '#/definitions/Group.DecideJoinRequestPayload'
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Group.Member'
           description: OK
+          schema:
+            $ref: '#/definitions/Group.Member'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Forbidden
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Decide join request
@@ -2038,56 +1788,45 @@ paths:
       - groups
   /groups/{id}/members/{userId}/role:
     put:
+      consumes:
+      - application/json
       description: Update the role (e.g. ADMIN, MEMBER) of a user inside the group.
       parameters:
       - description: Group ID
         in: path
         name: id
         required: true
-        schema:
-          type: string
+        type: string
       - description: User ID of the member to update
         in: path
         name: userId
         required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-              - type: object
-              - $ref: '#/components/schemas/Group.UpdateRoleRequest'
-                description: New role value
-                summary: request
-        description: New role value
+        type: string
+      - description: New role value
+        in: body
+        name: request
         required: true
+        schema:
+          $ref: '#/definitions/Group.UpdateRoleRequest'
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Group.Member'
           description: OK
+          schema:
+            $ref: '#/definitions/Group.Member'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update member role
@@ -2095,55 +1834,43 @@ paths:
       - groups
   /groups/join:
     post:
+      consumes:
+      - application/json
       description: Join an existing group using its unique invite code.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-              - type: object
-              - $ref: '#/components/schemas/Group.JoinRequest'
-                description: Group join data
-                summary: request
-        description: Group join data
+      parameters:
+      - description: Group join data
+        in: body
+        name: request
         required: true
+        schema:
+          $ref: '#/definitions/Group.JoinRequest'
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Group.JoinResponse'
           description: OK
+          schema:
+            $ref: '#/definitions/Group.JoinResponse'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Forbidden
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Not Found
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Join group
@@ -2157,33 +1884,26 @@ paths:
         in: query
         name: inviteCode
         required: true
-        schema:
-          type: string
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Group.Preview'
           description: OK
+          schema:
+            $ref: '#/definitions/Group.Preview'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Not Found
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get group preview
@@ -2197,32 +1917,26 @@ paths:
       - description: Last received sequence version
         in: query
         name: lastVersion
-        schema:
-          type: integer
+        type: integer
       - description: Maximum items to return (default 100)
         in: query
         name: limit
-        schema:
-          type: integer
+        type: integer
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Group.GroupSyncResponse'
           description: OK
+          schema:
+            $ref: '#/definitions/Group.GroupSyncResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Sync groups
@@ -2235,32 +1949,26 @@ paths:
       - description: Items per page (max 100, default 20)
         in: query
         name: limit
-        schema:
-          type: integer
+        type: integer
       - description: Opaque cursor token from a previous response
         in: query
         name: cursor
-        schema:
-          type: string
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Page-Notification_Notification'
           description: OK
+          schema:
+            $ref: '#/definitions/Page-Notification_Notification'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List notifications
@@ -2274,39 +1982,30 @@ paths:
         in: path
         name: id
         required: true
-        schema:
-          type: string
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.MessageResponse'
           description: Success message
+          schema:
+            $ref: '#/definitions/Common.MessageResponse'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Not Found
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Mark notification as read
@@ -2315,25 +2014,21 @@ paths:
   /notifications/read-all:
     post:
       description: Mark all unread notifications as read for the current user.
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.MessageResponse'
           description: Success message
+          schema:
+            $ref: '#/definitions/Common.MessageResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Mark all notifications as read
@@ -2341,43 +2036,35 @@ paths:
       - notifications
   /users:
     post:
+      consumes:
+      - application/json
       description: Create a new user profile using Firebase identities.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-              - type: object
-              - $ref: '#/components/schemas/User.RegisterRequest'
-                description: Registration data
-                summary: request
-        description: Registration data
+      parameters:
+      - description: Registration data
+        in: body
+        name: request
         required: true
+        schema:
+          $ref: '#/definitions/User.RegisterRequest'
+      produces:
+      - application/json
       responses:
         "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User.User'
           description: Created
+          schema:
+            $ref: '#/definitions/User.User'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Register user
@@ -2386,68 +2073,56 @@ paths:
   /users/me:
     get:
       description: Retrieve the profile details of the logged-in user.
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User.User'
           description: OK
+          schema:
+            $ref: '#/definitions/User.User'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get current user profile
       tags:
       - users
     put:
+      consumes:
+      - application/json
       description: Update name or default currency for the current user.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-              - type: object
-              - $ref: '#/components/schemas/User.UpdateProfileRequest'
-                description: Profile details to update
-                summary: request
-        description: Profile details to update
+      parameters:
+      - description: Profile details to update
+        in: body
+        name: request
         required: true
+        schema:
+          $ref: '#/definitions/User.UpdateProfileRequest'
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User.User'
           description: OK
+          schema:
+            $ref: '#/definitions/User.User'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update user profile
@@ -2455,43 +2130,34 @@ paths:
       - users
   /users/me/avatar:
     post:
+      consumes:
+      - multipart/form-data
       description: Upload an image file (JPEG, PNG, WEBP, max 2MB) as user avatar.
-      requestBody:
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              title: file
-              type: file
-          multipart/form-data:
-            schema:
-              type: object
-        description: Image File
+      parameters:
+      - description: Image File
+        in: formData
+        name: file
         required: true
+        type: file
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User.User'
           description: OK
+          schema:
+            $ref: '#/definitions/User.User'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Upload profile avatar
@@ -2500,72 +2166,59 @@ paths:
   /users/me/settings:
     get:
       description: Retrieve privacy and app settings for the current user.
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User.UserSettingsResponse'
           description: OK
+          schema:
+            $ref: '#/definitions/User.UserSettingsResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get user settings
       tags:
       - users
     put:
+      consumes:
+      - application/json
       description: Update privacy preferences such as autoAcceptFriendRequests.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-              - type: object
-              - $ref: '#/components/schemas/User.UpdateUserSettingsRequest'
-                description: Settings to update
-                summary: request
-        description: Settings to update
+      parameters:
+      - description: Settings to update
+        in: body
+        name: request
         required: true
+        schema:
+          $ref: '#/definitions/User.UpdateUserSettingsRequest'
+      produces:
+      - application/json
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User.UserSettingsResponse'
           description: OK
+          schema:
+            $ref: '#/definitions/User.UserSettingsResponse'
         "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
         "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Common.ErrorResponse'
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update user settings
       tags:
       - users
-servers:
-- url: /v1
+swagger: "2.0"

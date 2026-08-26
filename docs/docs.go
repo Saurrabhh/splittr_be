@@ -6,1775 +6,483 @@ import "github.com/swaggo/swag/v2"
 
 const docTemplate = `{
     "schemes": {{ marshal .Schemes }},
-    "components": {
-        "schemas": {
-            "Activity": {
-                "properties": {
-                    "actionType": {
-                        "$ref": "#/components/schemas/Activity.ActionType"
-                    },
-                    "actor": {
-                        "$ref": "#/components/schemas/Activity.ActorInfo"
-                    },
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "entityId": {
-                        "type": "string"
-                    },
-                    "entityType": {
-                        "$ref": "#/components/schemas/Activity.EntityType"
-                    },
-                    "groupId": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "payload": {
-                        "type": "object"
-                    }
-                },
-                "type": "object"
-            },
-            "Activity.ActionType": {
-                "enum": [
-                    "EXPENSE_CREATED",
-                    "SETTLEMENT",
-                    "MEMBER_ADDED",
-                    "MEMBER_LEFT",
-                    "MEMBER_KICKED",
-                    "MEMBER_ROLE_UPDATED",
-                    "GROUP_CREATED",
-                    "GROUP_UPDATED",
-                    "GROUP_ARCHIVED",
-                    "MEMBER_JOINED",
-                    "MEMBER_KICKED"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "ActionTypeExpenseCreated",
-                    "ActionTypeSettlementCreated",
-                    "ActionTypeMemberAdded",
-                    "ActionTypeMemberLeft",
-                    "ActionTypeMemberKicked",
-                    "ActionTypeMemberRoleUpdated",
-                    "ActionTypeGroupCreated",
-                    "ActionTypeGroupUpdated",
-                    "ActionTypeGroupArchived",
-                    "ActionTypeMemberJoined",
-                    "ActionTypeMemberRemoved"
-                ]
-            },
-            "Activity.Activity": {
-                "properties": {
-                    "actionType": {
-                        "$ref": "#/components/schemas/Activity.ActionType"
-                    },
-                    "actor": {
-                        "$ref": "#/components/schemas/Activity.ActorInfo"
-                    },
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "entityId": {
-                        "type": "string"
-                    },
-                    "entityType": {
-                        "$ref": "#/components/schemas/Activity.EntityType"
-                    },
-                    "groupId": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "payload": {
-                        "type": "object"
-                    }
-                },
-                "type": "object"
-            },
-            "Activity.ActorInfo": {
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "Activity.EntityType": {
-                "enum": [
-                    "EXPENSE",
-                    "SETTLEMENT",
-                    "MEMBER",
-                    "GROUP"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "EntityTypeExpense",
-                    "EntityTypeSettlement",
-                    "EntityTypeMember",
-                    "EntityTypeGroup"
-                ]
-            },
-            "AppConfig.AppConfigData": {
-                "properties": {
-                    "domain": {
-                        "$ref": "#/components/schemas/AppConfig.DomainConfig"
-                    },
-                    "featureFlags": {
-                        "additionalProperties": {
-                            "type": "boolean"
-                        },
-                        "type": "object"
-                    },
-                    "legal": {
-                        "$ref": "#/components/schemas/AppConfig.LegalConfig"
-                    },
-                    "system": {
-                        "$ref": "#/components/schemas/AppConfig.SystemConfig"
-                    },
-                    "userContext": {
-                        "$ref": "#/components/schemas/AppConfig.UserContext"
-                    }
-                },
-                "type": "object"
-            },
-            "AppConfig.AppConfigMeta": {
-                "properties": {
-                    "configVersion": {
-                        "type": "string"
-                    },
-                    "serverTime": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "AppConfig.AppConfigResponse": {
-                "properties": {
-                    "data": {
-                        "$ref": "#/components/schemas/AppConfig.AppConfigData"
-                    },
-                    "meta": {
-                        "$ref": "#/components/schemas/AppConfig.AppConfigMeta"
-                    }
-                },
-                "type": "object"
-            },
-            "AppConfig.AppVersion": {
-                "properties": {
-                    "forceUpdate": {
-                        "type": "boolean"
-                    },
-                    "latestVersion": {
-                        "type": "string"
-                    },
-                    "minSupportedVersion": {
-                        "type": "string"
-                    },
-                    "updateMessage": {
-                        "type": "string"
-                    },
-                    "updateUrl": {
-                        "additionalProperties": {
-                            "type": "string"
-                        },
-                        "type": "object"
-                    }
-                },
-                "type": "object"
-            },
-            "AppConfig.Category": {
-                "properties": {
-                    "iconUrl": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "AppConfig.Currency": {
-                "properties": {
-                    "code": {
-                        "type": "string"
-                    },
-                    "decimalPlaces": {
-                        "type": "integer"
-                    },
-                    "isDefault": {
-                        "type": "boolean"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "symbol": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "AppConfig.DomainConfig": {
-                "properties": {
-                    "categories": {
-                        "items": {
-                            "$ref": "#/components/schemas/AppConfig.Category"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "currencies": {
-                        "items": {
-                            "$ref": "#/components/schemas/AppConfig.Currency"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "limits": {
-                        "$ref": "#/components/schemas/AppConfig.LimitsConfig"
-                    },
-                    "paymentIntegrations": {
-                        "items": {
-                            "$ref": "#/components/schemas/AppConfig.PaymentIntegration"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "splitTypes": {
-                        "items": {
-                            "$ref": "#/components/schemas/AppConfig.SplitTypeConfig"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
-            "AppConfig.LegalConfig": {
-                "properties": {
-                    "faqUrl": {
-                        "type": "string"
-                    },
-                    "privacyPolicyUrl": {
-                        "type": "string"
-                    },
-                    "supportEmail": {
-                        "type": "string"
-                    },
-                    "termsOfServiceUrl": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "AppConfig.LimitsConfig": {
-                "properties": {
-                    "allowedReceiptMimeTypes": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "maxExpenseAmount": {
-                        "type": "number"
-                    },
-                    "maxGroupMembers": {
-                        "type": "integer"
-                    },
-                    "maxReceiptSizeMb": {
-                        "type": "integer"
-                    },
-                    "maxSplitParticipants": {
-                        "type": "integer"
-                    }
-                },
-                "type": "object"
-            },
-            "AppConfig.MaintenanceConfig": {
-                "properties": {
-                    "estimatedEndTime": {
-                        "type": "string"
-                    },
-                    "inMaintenance": {
-                        "type": "boolean"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "readOnlyMode": {
-                        "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
-            "AppConfig.PaymentIntegration": {
-                "properties": {
-                    "deepLinkScheme": {
-                        "type": "string"
-                    },
-                    "enabled": {
-                        "type": "boolean"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "AppConfig.SplitTypeConfig": {
-                "properties": {
-                    "code": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "label": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "AppConfig.SystemConfig": {
-                "properties": {
-                    "appVersion": {
-                        "$ref": "#/components/schemas/AppConfig.AppVersion"
-                    },
-                    "maintenance": {
-                        "$ref": "#/components/schemas/AppConfig.MaintenanceConfig"
-                    }
-                },
-                "type": "object"
-            },
-            "AppConfig.UserContext": {
-                "properties": {
-                    "isAuthenticated": {
-                        "type": "boolean"
-                    },
-                    "userFeatureFlags": {
-                        "additionalProperties": {},
-                        "type": "object"
-                    },
-                    "userPreferredCurrency": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "Common.ErrorCode": {
-                "enum": [
-                    "BAD_REQUEST",
-                    "UNAUTHORIZED",
-                    "FORBIDDEN",
-                    "NOT_FOUND",
-                    "INTERNAL_SERVER_ERROR",
-                    "INVALID_BODY",
-                    "USER_NOT_FOUND"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "ErrBadRequest",
-                    "ErrUnauthorized",
-                    "ErrForbidden",
-                    "ErrNotFound",
-                    "ErrInternalServerError",
-                    "ErrInvalidBody",
-                    "ErrUserNotFound"
-                ]
-            },
-            "Common.ErrorResponse": {
-                "properties": {
-                    "code": {
-                        "$ref": "#/components/schemas/Common.ErrorCode"
-                    },
-                    "message": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "Common.MessageResponse": {
-                "properties": {
-                    "message": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "Expense.BalanceResponse": {
-                "properties": {
-                    "balances": {
-                        "items": {
-                            "$ref": "#/components/schemas/Expense.UserBalance"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "settlements": {
-                        "items": {
-                            "$ref": "#/components/schemas/Expense.Settlement"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
-            "Expense.CreateRequest": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "category": {
-                        "type": "string"
-                    },
-                    "currency": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "groupId": {
-                        "type": "string"
-                    },
-                    "paidBy": {
-                        "type": "string"
-                    },
-                    "splitType": {
-                        "$ref": "#/components/schemas/Expense.SplitType"
-                    },
-                    "splits": {
-                        "items": {
-                            "$ref": "#/components/schemas/Expense.InputSplit"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
-            "Expense.ExpenseSyncResponse": {
-                "properties": {
-                    "deletedIds": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "newVersion": {
-                        "type": "integer"
-                    },
-                    "updated": {
-                        "items": {
-                            "$ref": "#/components/schemas/Expense.ExpenseWithSplits"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
-            "Expense.ExpenseWithSplits": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "category": {
-                        "type": "string"
-                    },
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "createdBy": {
-                        "type": "string"
-                    },
-                    "currency": {
-                        "type": "string"
-                    },
-                    "deletedAt": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "groupId": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "isPayment": {
-                        "type": "boolean"
-                    },
-                    "paidBy": {
-                        "type": "string"
-                    },
-                    "spentAt": {
-                        "type": "string"
-                    },
-                    "splits": {
-                        "items": {
-                            "$ref": "#/components/schemas/Expense.Split"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "syncVersion": {
-                        "type": "integer"
-                    },
-                    "updatedAt": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "Expense.InputSplit": {
-                "properties": {
-                    "amount": {
-                        "description": "Required if splitType is EXACT",
-                        "type": "number"
-                    },
-                    "percentage": {
-                        "description": "Required if splitType is PERCENTAGE",
-                        "type": "number"
-                    },
-                    "userId": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "Expense.SettleRequest": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "currency": {
-                        "type": "string"
-                    },
-                    "groupId": {
-                        "type": "string"
-                    },
-                    "paidBy": {
-                        "type": "string"
-                    },
-                    "receivedBy": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "Expense.Settlement": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "fromUserId": {
-                        "type": "string"
-                    },
-                    "fromUserName": {
-                        "type": "string"
-                    },
-                    "toUserId": {
-                        "type": "string"
-                    },
-                    "toUserName": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "Expense.Split": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "email": {
-                        "type": "string"
-                    },
-                    "expenseId": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "phone": {
-                        "type": "string"
-                    },
-                    "splitType": {
-                        "$ref": "#/components/schemas/Expense.SplitType"
-                    },
-                    "splitValue": {
-                        "type": "number"
-                    },
-                    "userId": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "Expense.SplitType": {
-                "enum": [
-                    "EQUAL",
-                    "EXACT",
-                    "PERCENTAGE"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "SplitTypeEqual",
-                    "SplitTypeExact",
-                    "SplitTypePercentage"
-                ]
-            },
-            "Expense.UpdateRequest": {
-                "properties": {
-                    "amount": {
-                        "type": "number"
-                    },
-                    "category": {
-                        "type": "string"
-                    },
-                    "currency": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "splitType": {
-                        "$ref": "#/components/schemas/Expense.SplitType"
-                    },
-                    "splits": {
-                        "items": {
-                            "$ref": "#/components/schemas/Expense.InputSplit"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
-            "Expense.UserBalance": {
-                "properties": {
-                    "netBalance": {
-                        "type": "number"
-                    },
-                    "userId": {
-                        "type": "string"
-                    },
-                    "userName": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "Group.AddMembersRequest": {
-                "properties": {
-                    "userIds": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "minItems": 1,
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "required": [
-                    "userIds"
-                ],
-                "type": "object"
-            },
-            "Group.CreateRequest": {
-                "properties": {
-                    "description": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "requireAdminApproval": {
-                        "type": "boolean"
-                    }
-                },
-                "required": [
-                    "name"
-                ],
-                "type": "object"
-            },
-            "Group.DecideJoinRequestPayload": {
-                "properties": {
-                    "action": {
-                        "$ref": "#/components/schemas/Group.JoinRequestAction"
-                    }
-                },
-                "type": "object"
-            },
-            "Group.Group": {
-                "properties": {
-                    "archivedAt": {
-                        "type": "string"
-                    },
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "createdBy": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "iconUrl": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "inviteCode": {
-                        "type": "string"
-                    },
-                    "inviteCodeExpiresAt": {
-                        "type": "string"
-                    },
-                    "members": {
-                        "items": {
-                            "$ref": "#/components/schemas/Group.Member"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "requireAdminApproval": {
-                        "type": "boolean"
-                    },
-                    "syncVersion": {
-                        "type": "integer"
-                    },
-                    "updatedAt": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "Group.GroupSyncResponse": {
-                "properties": {
-                    "newVersion": {
-                        "type": "integer"
-                    },
-                    "removedGroupIds": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "updated": {
-                        "items": {
-                            "$ref": "#/components/schemas/Group.Group"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    }
-                },
-                "type": "object"
-            },
-            "Group.JoinRequest": {
-                "properties": {
-                    "inviteCode": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "inviteCode"
-                ],
-                "type": "object"
-            },
-            "Group.JoinRequestAction": {
-                "enum": [
-                    "APPROVE",
-                    "REJECT"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "JoinRequestActionApprove",
-                    "JoinRequestActionReject"
-                ]
-            },
-            "Group.JoinResponse": {
-                "properties": {
-                    "group": {
-                        "$ref": "#/components/schemas/Group.Group"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "$ref": "#/components/schemas/Group.MemberStatus"
-                    }
-                },
-                "type": "object"
-            },
-            "Group.Member": {
-                "properties": {
-                    "email": {
-                        "type": "string"
-                    },
-                    "groupId": {
-                        "type": "string"
-                    },
-                    "joinedAt": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "phone": {
-                        "type": "string"
-                    },
-                    "role": {
-                        "$ref": "#/components/schemas/Group.MemberRole"
-                    },
-                    "status": {
-                        "$ref": "#/components/schemas/Group.MemberStatus"
-                    },
-                    "userId": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "Group.MemberRole": {
-                "enum": [
-                    "ADMIN",
-                    "MEMBER"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "MemberRoleAdmin",
-                    "MemberRoleMember"
-                ]
-            },
-            "Group.MemberStatus": {
-                "enum": [
-                    "ACTIVE",
-                    "PENDING",
-                    "REJECTED"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "MemberStatusActive",
-                    "MemberStatusPending",
-                    "MemberStatusRejected"
-                ]
-            },
-            "Group.Preview": {
-                "properties": {
-                    "creatorName": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "memberCount": {
-                        "type": "integer"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "requireAdminApproval": {
-                        "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
-            "Group.UpdateRoleRequest": {
-                "properties": {
-                    "role": {
-                        "$ref": "#/components/schemas/Group.MemberRole"
-                    }
-                },
-                "type": "object"
-            },
-            "Meta": {
-                "properties": {
-                    "hasMore": {
-                        "type": "boolean"
-                    },
-                    "nextCursor": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "Notification.AlertType": {
-                "enum": [
-                    "EXPENSE_ADDED",
-                    "PAYMENT_RECEIVED",
-                    "JOIN_REQUEST_PENDING",
-                    "JOIN_REQUEST_APPROVED",
-                    "JOIN_REQUEST_REJECTED"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "AlertTypeExpenseAdded",
-                    "AlertTypePaymentReceived",
-                    "AlertTypeJoinRequestPending",
-                    "AlertTypeJoinRequestApproved",
-                    "AlertTypeJoinRequestRejected"
-                ]
-            },
-            "Notification.Notification": {
-                "properties": {
-                    "activityId": {
-                        "type": "string"
-                    },
-                    "actorId": {
-                        "type": "string"
-                    },
-                    "actorName": {
-                        "type": "string"
-                    },
-                    "content": {
-                        "type": "string"
-                    },
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "isRead": {
-                        "type": "boolean"
-                    },
-                    "title": {
-                        "type": "string"
-                    },
-                    "type": {
-                        "$ref": "#/components/schemas/Notification.AlertType"
-                    },
-                    "userId": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "Page-Activity": {
-                "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/Activity"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "pagination": {
-                        "$ref": "#/components/schemas/Meta"
-                    }
-                },
-                "type": "object"
-            },
-            "Page-Activity_Activity": {
-                "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/Activity.Activity"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "pagination": {
-                        "$ref": "#/components/schemas/Meta"
-                    }
-                },
-                "type": "object"
-            },
-            "Page-Expense_ExpenseWithSplits": {
-                "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/Expense.ExpenseWithSplits"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "pagination": {
-                        "$ref": "#/components/schemas/Meta"
-                    }
-                },
-                "type": "object"
-            },
-            "Page-Group_Group": {
-                "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/Group.Group"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "pagination": {
-                        "$ref": "#/components/schemas/Meta"
-                    }
-                },
-                "type": "object"
-            },
-            "Page-Notification_Notification": {
-                "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/Notification.Notification"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "pagination": {
-                        "$ref": "#/components/schemas/Meta"
-                    }
-                },
-                "type": "object"
-            },
-            "Page-User_User": {
-                "properties": {
-                    "data": {
-                        "items": {
-                            "$ref": "#/components/schemas/User.User"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "pagination": {
-                        "$ref": "#/components/schemas/Meta"
-                    }
-                },
-                "type": "object"
-            },
-            "User.AddFriendRequest": {
-                "properties": {
-                    "friendEmail": {
-                        "type": "string"
-                    },
-                    "friendPhone": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "User.FriendSyncResponse": {
-                "properties": {
-                    "friends": {
-                        "items": {
-                            "$ref": "#/components/schemas/User.FriendshipSyncRecord"
-                        },
-                        "type": "array",
-                        "uniqueItems": false
-                    },
-                    "newVersion": {
-                        "type": "integer"
-                    }
-                },
-                "type": "object"
-            },
-            "User.FriendWithStatus": {
-                "properties": {
-                    "actionUserId": {
-                        "type": "string"
-                    },
-                    "avatarUrl": {
-                        "type": "string"
-                    },
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "defaultCurrency": {
-                        "type": "string"
-                    },
-                    "email": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "phone": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "$ref": "#/components/schemas/User.FriendshipStatus"
-                    },
-                    "updatedAt": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "User.FriendshipStatus": {
-                "enum": [
-                    "PENDING",
-                    "ACCEPTED",
-                    "DECLINED",
-                    "BLOCKED"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "Pending",
-                    "Accepted",
-                    "Declined",
-                    "Blocked"
-                ]
-            },
-            "User.FriendshipSyncRecord": {
-                "properties": {
-                    "actionUserId": {
-                        "type": "string"
-                    },
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "friendId": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "$ref": "#/components/schemas/User.FriendshipStatus"
-                    },
-                    "syncVersion": {
-                        "type": "integer"
-                    },
-                    "updatedAt": {
-                        "type": "string"
-                    },
-                    "userId": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "User.RegisterRequest": {
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "User.UpdateFriendStatusRequest": {
-                "properties": {
-                    "status": {
-                        "$ref": "#/components/schemas/User.FriendshipStatus"
-                    }
-                },
-                "type": "object"
-            },
-            "User.UpdateProfileRequest": {
-                "properties": {
-                    "defaultCurrency": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "User.UpdateUserSettingsRequest": {
-                "properties": {
-                    "autoAcceptFriendRequests": {
-                        "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
-            "User.User": {
-                "properties": {
-                    "avatarUrl": {
-                        "type": "string"
-                    },
-                    "createdAt": {
-                        "type": "string"
-                    },
-                    "defaultCurrency": {
-                        "type": "string"
-                    },
-                    "email": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "string"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "phone": {
-                        "type": "string"
-                    },
-                    "updatedAt": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "User.UserSettingsResponse": {
-                "properties": {
-                    "autoAcceptFriendRequests": {
-                        "type": "boolean"
-                    }
-                },
-                "type": "object"
-            }
-        },
-        "securitySchemes": {
-            "BearerAuth": {
-                "scheme": "bearer",
-                "type": "http"
-            }
-        }
-    },
+    "swagger": "2.0",
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
+        "contact": {},
         "version": "{{.Version}}"
     },
-    "externalDocs": {
-        "description": "",
-        "url": ""
-    },
+    "host": "{{.Host}}",
+    "basePath": "{{.BasePath}}",
     "paths": {
         "/activities": {
             "get": {
-                "description": "Get a cursor-paginated list of activities visible to the current user.",
-                "parameters": [
-                    {
-                        "description": "Items per page (max 100, default 20)",
-                        "in": "query",
-                        "name": "limit",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "description": "Opaque cursor token from a previous response",
-                        "in": "query",
-                        "name": "cursor",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Page-Activity_Activity"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "List activity feed",
+                "description": "Get a cursor-paginated list of activities visible to the current user.",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "activities"
-                ]
+                ],
+                "summary": "List activity feed",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Items per page (max 100, default 20)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Opaque cursor token from a previous response",
+                        "name": "cursor",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Page-Activity_Activity"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/app-config": {
             "get": {
                 "description": "Returns app version rules, maintenance status, expense categories, currencies, limits, feature flags, and legal links. Supports optional Bearer auth and ETag caching via If-None-Match.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "appConfig"
+                ],
+                "summary": "Fetch application startup configuration",
                 "parameters": [
                     {
+                        "type": "string",
                         "description": "ETag hash for cache validation",
-                        "in": "header",
                         "name": "If-None-Match",
-                        "schema": {
-                            "type": "string"
-                        }
+                        "in": "header"
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AppConfig.AppConfigResponse"
-                                }
-                            }
-                        },
-                        "description": "OK"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AppConfig.AppConfigResponse"
+                        }
                     },
                     "304": {
                         "description": "Not Modified"
                     },
                     "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     }
-                },
-                "summary": "Fetch application startup configuration",
-                "tags": [
-                    "appConfig"
-                ]
+                }
             }
         },
         "/balances": {
             "get": {
-                "description": "Calculate net balances and recommended settlement transactions.",
-                "parameters": [
-                    {
-                        "description": "Filter by Group ID. If omitted, returns global balances.",
-                        "in": "query",
-                        "name": "groupId",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "Simplify debts algorithm (true/false)",
-                        "in": "query",
-                        "name": "simplified",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Expense.BalanceResponse"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Get user balances",
+                "description": "Calculate net balances and recommended settlement transactions.",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "expenses"
-                ]
+                ],
+                "summary": "Get user balances",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by Group ID. If omitted, returns global balances.",
+                        "name": "groupId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Simplify debts algorithm (true/false)",
+                        "name": "simplified",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Expense.BalanceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/expenses": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve a cursor-paginated list of expenses with splits, filtered by group, personal=true, or friendId.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "expenses"
+                ],
+                "summary": "List expenses",
                 "parameters": [
                     {
+                        "type": "string",
                         "description": "Filter by Group ID",
-                        "in": "query",
                         "name": "groupId",
-                        "schema": {
-                            "type": "string"
-                        }
+                        "in": "query"
                     },
                     {
+                        "type": "boolean",
                         "description": "Filter for personal only (true/false)",
-                        "in": "query",
                         "name": "personal",
-                        "schema": {
-                            "type": "boolean"
-                        }
+                        "in": "query"
                     },
                     {
+                        "type": "string",
                         "description": "Filter by Friend ID",
-                        "in": "query",
                         "name": "friendId",
-                        "schema": {
-                            "type": "string"
-                        }
+                        "in": "query"
                     },
                     {
+                        "type": "integer",
                         "description": "Items per page (max 100, default 20)",
-                        "in": "query",
                         "name": "limit",
-                        "schema": {
-                            "type": "integer"
-                        }
+                        "in": "query"
                     },
                     {
+                        "type": "string",
                         "description": "Opaque cursor token from a previous response",
-                        "in": "query",
                         "name": "cursor",
-                        "schema": {
-                            "type": "string"
-                        }
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Page-Expense_ExpenseWithSplits"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "summary": "List expenses",
-                "tags": [
-                    "expenses"
-                ]
-            },
-            "post": {
-                "description": "Create a new expense with equal/exact/percentage splits.",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
-                                    {
-                                        "$ref": "#/components/schemas/Expense.CreateRequest",
-                                        "summary": "request",
-                                        "description": "Expense details and splits structure"
-                                    }
-                                ]
-                            }
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Page-Expense_ExpenseWithSplits"
                         }
                     },
-                    "description": "Expense details and splits structure",
-                    "required": true
-                },
-                "responses": {
-                    "201": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Expense.ExpenseWithSplits"
-                                }
-                            }
-                        },
-                        "description": "Created"
-                    },
                     "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     }
-                },
+                }
+            },
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Create expense",
+                "description": "Create a new expense with equal/exact/percentage splits.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "expenses"
-                ]
+                ],
+                "summary": "Create expense",
+                "parameters": [
+                    {
+                        "description": "Expense details and splits structure",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Expense.CreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/Expense.ExpenseWithSplits"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/expenses/settle": {
             "post": {
-                "description": "Create a settlement payment between two users.",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
-                                    {
-                                        "$ref": "#/components/schemas/Expense.SettleRequest",
-                                        "summary": "request",
-                                        "description": "Settlement details"
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "description": "Settlement details",
-                    "required": true
-                },
-                "responses": {
-                    "201": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Expense.ExpenseWithSplits"
-                                }
-                            }
-                        },
-                        "description": "Created"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Settle balance",
+                "description": "Create a settlement payment between two users.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "expenses"
-                ]
+                ],
+                "summary": "Settle balance",
+                "parameters": [
+                    {
+                        "description": "Settlement details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Expense.SettleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/Expense.ExpenseWithSplits"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/expenses/sync": {
             "get": {
-                "description": "Retrieve active and deleted expenses modified after a given sequence version.",
-                "parameters": [
-                    {
-                        "description": "Last received sequence version",
-                        "in": "query",
-                        "name": "lastVersion",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "description": "Maximum items to return (default 100)",
-                        "in": "query",
-                        "name": "limit",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Expense.ExpenseSyncResponse"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Sync expenses",
+                "description": "Retrieve active and deleted expenses modified after a given sequence version.",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "expenses"
-                ]
+                ],
+                "summary": "Sync expenses",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Last received sequence version",
+                        "name": "lastVersion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Maximum items to return (default 100)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Expense.ExpenseSyncResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/expenses/{id}": {
-            "delete": {
-                "description": "Soft-delete an expense by ID.",
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a specific expense's details including all splits.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "expenses"
+                ],
+                "summary": "Get expense details",
                 "parameters": [
                     {
+                        "type": "string",
                         "description": "Expense ID",
-                        "in": "path",
                         "name": "id",
-                        "required": true,
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/Expense.ExpenseWithSplits"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Soft-delete an expense by ID.",
+                "tags": [
+                    "expenses"
+                ],
+                "summary": "Delete expense",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Expense ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1782,485 +490,300 @@ const docTemplate = `{
                         "description": "No Content"
                     },
                     "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "403": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Forbidden"
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "404": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Not Found"
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "summary": "Delete expense",
-                "tags": [
-                    "expenses"
-                ]
-            },
-            "get": {
-                "description": "Get a specific expense's details including all splits.",
-                "parameters": [
-                    {
-                        "description": "Expense ID",
-                        "in": "path",
-                        "name": "id",
-                        "required": true,
+                        "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/Common.ErrorResponse"
                         }
                     }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Expense.ExpenseWithSplits"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "403": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Forbidden"
-                    },
-                    "404": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Not Found"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "summary": "Get expense details",
-                "tags": [
-                    "expenses"
-                ]
+                }
             },
             "patch": {
-                "description": "Partially update description, amount, currency, category, or splits for an expense.",
-                "parameters": [
-                    {
-                        "description": "Expense UUID",
-                        "in": "path",
-                        "name": "id",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
-                                    {
-                                        "$ref": "#/components/schemas/Expense.UpdateRequest",
-                                        "summary": "body",
-                                        "description": "Update Expense Payload"
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "description": "Update Expense Payload",
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Expense.ExpenseWithSplits"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "403": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Forbidden"
-                    },
-                    "404": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Not Found"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Update expense",
+                "description": "Partially update description, amount, currency, category, or splits for an expense.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "expenses"
-                ]
+                ],
+                "summary": "Update expense",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Expense UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update Expense Payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Expense.UpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Expense.ExpenseWithSplits"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/friends": {
             "get": {
-                "description": "Get friends list. Use optional status parameter to filter by ACCEPTED, PENDING, or BLOCKED.",
-                "parameters": [
-                    {
-                        "description": "Filter by status: ACCEPTED, PENDING, BLOCKED",
-                        "in": "query",
-                        "name": "status",
-                        "schema": {
-                            "enum": [
-                                "PENDING",
-                                "ACCEPTED",
-                                "DECLINED",
-                                "BLOCKED"
-                            ],
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "Items per page (max 100, default 20)",
-                        "in": "query",
-                        "name": "limit",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "description": "Opaque cursor token from a previous response",
-                        "in": "query",
-                        "name": "cursor",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Page-User_User"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
+                ],
+                "description": "Get friends list. Use optional status parameter to filter by ACCEPTED, PENDING, or BLOCKED.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "friends"
                 ],
                 "summary": "List friends",
-                "tags": [
-                    "friends"
-                ]
-            },
-            "post": {
-                "description": "Create a friendship link (PENDING or ACCEPTED based on target user settings) using email or phone.",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
-                                    {
-                                        "$ref": "#/components/schemas/User.AddFriendRequest",
-                                        "summary": "request",
-                                        "description": "Friend email or phone"
-                                    }
-                                ]
-                            }
-                        }
+                "parameters": [
+                    {
+                        "enum": [
+                            "PENDING",
+                            "ACCEPTED",
+                            "DECLINED",
+                            "BLOCKED"
+                        ],
+                        "type": "string",
+                        "description": "Filter by status: ACCEPTED, PENDING, BLOCKED",
+                        "name": "status",
+                        "in": "query"
                     },
-                    "description": "Friend email or phone",
-                    "required": true
-                },
+                    {
+                        "type": "integer",
+                        "description": "Items per page (max 100, default 20)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Opaque cursor token from a previous response",
+                        "name": "cursor",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/User.FriendWithStatus"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Page-User_User"
+                        }
                     },
                     "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     }
-                },
+                }
+            },
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Add friend or send friend request",
+                "description": "Create a friendship link (PENDING or ACCEPTED based on target user settings) using email or phone.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "friends"
-                ]
+                ],
+                "summary": "Add friend or send friend request",
+                "parameters": [
+                    {
+                        "description": "Friend email or phone",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/User.AddFriendRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/User.FriendWithStatus"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/friends/sync": {
             "get": {
-                "description": "Retrieve friendship changes modified after a given sequence version.",
-                "parameters": [
-                    {
-                        "description": "Last received sequence version",
-                        "in": "query",
-                        "name": "lastVersion",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "description": "Maximum items to return (default 100)",
-                        "in": "query",
-                        "name": "limit",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/User.FriendSyncResponse"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Sync friends",
+                "description": "Retrieve friendship changes modified after a given sequence version.",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "friends"
-                ]
+                ],
+                "summary": "Sync friends",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Last received sequence version",
+                        "name": "lastVersion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Maximum items to return (default 100)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/User.FriendSyncResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/friends/{friendId}": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Delete a friendship link by friend ID.",
+                "tags": [
+                    "friends"
+                ],
+                "summary": "Remove friend",
                 "parameters": [
                     {
+                        "type": "string",
                         "description": "Friend ID",
-                        "in": "path",
                         "name": "friendId",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -2268,509 +791,438 @@ const docTemplate = `{
                         "description": "No Content"
                     },
                     "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "summary": "Remove friend",
-                "tags": [
-                    "friends"
-                ]
+                }
             },
             "patch": {
-                "description": "Accept, decline, or block a friend request / friendship.",
-                "parameters": [
-                    {
-                        "description": "Friend User ID",
-                        "in": "path",
-                        "name": "friendId",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
-                                    {
-                                        "$ref": "#/components/schemas/User.UpdateFriendStatusRequest",
-                                        "summary": "request",
-                                        "description": "New status (ACCEPTED, DECLINED, BLOCKED)"
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "description": "New status (ACCEPTED, DECLINED, BLOCKED)",
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/User.FriendWithStatus"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Update friendship status",
+                "description": "Accept, decline, or block a friend request / friendship.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "friends"
-                ]
+                ],
+                "summary": "Update friendship status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Friend User ID",
+                        "name": "friendId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New status (ACCEPTED, DECLINED, BLOCKED)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/User.UpdateFriendStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/User.FriendWithStatus"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/groups": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve a cursor-paginated list of groups the current user belongs to.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "List groups",
                 "parameters": [
                     {
+                        "type": "integer",
                         "description": "Items per page (max 100, default 20)",
-                        "in": "query",
                         "name": "limit",
-                        "schema": {
-                            "type": "integer"
-                        }
+                        "in": "query"
                     },
                     {
+                        "type": "string",
                         "description": "Opaque cursor token from a previous response",
-                        "in": "query",
                         "name": "cursor",
-                        "schema": {
-                            "type": "string"
-                        }
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Page-Group_Group"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "summary": "List groups",
-                "tags": [
-                    "groups"
-                ]
-            },
-            "post": {
-                "description": "Create a new bill-splitting group with optional admin approval requirement.",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
-                                    {
-                                        "$ref": "#/components/schemas/Group.CreateRequest",
-                                        "summary": "request",
-                                        "description": "Group creation data"
-                                    }
-                                ]
-                            }
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Page-Group_Group"
                         }
                     },
-                    "description": "Group creation data",
-                    "required": true
-                },
-                "responses": {
-                    "201": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Group.Group"
-                                }
-                            }
-                        },
-                        "description": "Created"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
                     "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     }
-                },
+                }
+            },
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Create group",
+                "description": "Create a new bill-splitting group with optional admin approval requirement.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "groups"
-                ]
+                ],
+                "summary": "Create group",
+                "parameters": [
+                    {
+                        "description": "Group creation data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Group.CreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/Group.Group"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/groups/join": {
             "post": {
-                "description": "Join an existing group using its unique invite code.",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
-                                    {
-                                        "$ref": "#/components/schemas/Group.JoinRequest",
-                                        "summary": "request",
-                                        "description": "Group join data"
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "description": "Group join data",
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Group.JoinResponse"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "403": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Forbidden"
-                    },
-                    "404": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Not Found"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Join group",
+                "description": "Join an existing group using its unique invite code.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "groups"
-                ]
+                ],
+                "summary": "Join group",
+                "parameters": [
+                    {
+                        "description": "Group join data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Group.JoinRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Group.JoinResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/groups/preview": {
             "get": {
-                "description": "Get group details using invite code.",
-                "parameters": [
-                    {
-                        "description": "Group invite code",
-                        "in": "query",
-                        "name": "inviteCode",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Group.Preview"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
-                    "404": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Not Found"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Get group preview",
+                "description": "Get group details using invite code.",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "groups"
-                ]
+                ],
+                "summary": "Get group preview",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group invite code",
+                        "name": "inviteCode",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Group.Preview"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/groups/sync": {
             "get": {
-                "description": "Retrieve active and archived groups modified after a given sequence version.",
-                "parameters": [
-                    {
-                        "description": "Last received sequence version",
-                        "in": "query",
-                        "name": "lastVersion",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "description": "Maximum items to return (default 100)",
-                        "in": "query",
-                        "name": "limit",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Group.GroupSyncResponse"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Sync groups",
+                "description": "Retrieve active and archived groups modified after a given sequence version.",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "groups"
-                ]
+                ],
+                "summary": "Sync groups",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Last received sequence version",
+                        "name": "lastVersion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Maximum items to return (default 100)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Group.GroupSyncResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/groups/{id}": {
-            "delete": {
-                "description": "Soft-delete a bill splitting group. Only group creators can archive.",
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a group's metadata and a list of all its members.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Get group details",
                 "parameters": [
                     {
+                        "type": "string",
                         "description": "Group ID",
-                        "in": "path",
                         "name": "id",
-                        "required": true,
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/Group.Group"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Soft-delete a bill splitting group. Only group creators can archive.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Archive group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -2778,533 +1230,356 @@ const docTemplate = `{
                         "description": "No Content"
                     },
                     "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "summary": "Archive group",
-                "tags": [
-                    "groups"
-                ]
-            },
-            "get": {
-                "description": "Get a group's metadata and a list of all its members.",
-                "parameters": [
-                    {
-                        "description": "Group ID",
-                        "in": "path",
-                        "name": "id",
-                        "required": true,
+                        "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/Common.ErrorResponse"
                         }
                     }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Group.Group"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "summary": "Get group details",
-                "tags": [
-                    "groups"
-                ]
+                }
             }
         },
         "/groups/{id}/feed": {
             "get": {
-                "description": "Get a cursor-paginated timeline of events inside a group.",
-                "parameters": [
-                    {
-                        "description": "Group ID",
-                        "in": "path",
-                        "name": "id",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "Items per page (max 100, default 20)",
-                        "in": "query",
-                        "name": "limit",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "description": "Opaque cursor token from previous response",
-                        "in": "query",
-                        "name": "cursor",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Page-Activity"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "403": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Forbidden"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Get group activity feed",
+                "description": "Get a cursor-paginated timeline of events inside a group.",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "groups"
-                ]
+                ],
+                "summary": "Get group activity feed",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page (max 100, default 20)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Opaque cursor token from previous response",
+                        "name": "cursor",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Page-Activity"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/groups/{id}/icon": {
             "post": {
-                "description": "Upload an image file (JPEG, PNG, WEBP, max 2MB) as group icon.",
-                "parameters": [
-                    {
-                        "description": "Group ID",
-                        "in": "path",
-                        "name": "id",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "title": "file",
-                                "type": "file"
-                            }
-                        },
-                        "multipart/form-data": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    },
-                    "description": "Image File",
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Group.Group"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
-                    "403": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Forbidden"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Upload group icon",
+                "description": "Upload an image file (JPEG, PNG, WEBP, max 2MB) as group icon.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "groups"
-                ]
+                ],
+                "summary": "Upload group icon",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image File",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Group.Group"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/groups/{id}/invite-code/reset": {
             "post": {
-                "description": "Generate a new invite code with a 7-day expiration timestamp. Admin privileges required.",
-                "parameters": [
-                    {
-                        "description": "Group ID",
-                        "in": "path",
-                        "name": "id",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Group.Group"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "403": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Forbidden"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Reset group invite code",
+                "description": "Generate a new invite code with a 7-day expiration timestamp. Admin privileges required.",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "groups"
-                ]
+                ],
+                "summary": "Reset group invite code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Group.Group"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/groups/{id}/members": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve group members. Query status=PENDING or REJECTED requires admin privileges.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "List group members",
                 "parameters": [
                     {
+                        "type": "string",
                         "description": "Group ID",
-                        "in": "path",
                         "name": "id",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
+                        "in": "path",
+                        "required": true
                     },
                     {
+                        "type": "string",
                         "description": "Filter status: ACTIVE, PENDING, REJECTED, ALL",
-                        "in": "query",
                         "name": "status",
-                        "schema": {
-                            "type": "string"
-                        }
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "items": {
-                                        "$ref": "#/components/schemas/Group.Member"
-                                    },
-                                    "type": "array"
-                                }
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Group.Member"
                             }
-                        },
-                        "description": "OK"
+                        }
                     },
                     "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "403": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Forbidden"
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "summary": "List group members",
-                "tags": [
-                    "groups"
-                ]
+                }
             },
             "post": {
-                "description": "Add multiple users to a group by their User IDs. Only admins can add members.",
-                "parameters": [
-                    {
-                        "description": "Group ID",
-                        "in": "path",
-                        "name": "id",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
-                                    {
-                                        "$ref": "#/components/schemas/Group.AddMembersRequest",
-                                        "summary": "request",
-                                        "description": "User IDs of members to add"
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "description": "User IDs of members to add",
-                    "required": true
-                },
-                "responses": {
-                    "201": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "items": {
-                                        "$ref": "#/components/schemas/Group.Member"
-                                    },
-                                    "type": "array"
-                                }
-                            }
-                        },
-                        "description": "Created"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Add group members",
+                "description": "Add multiple users to a group by their User IDs. Only admins can add members.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "groups"
-                ]
+                ],
+                "summary": "Add group members",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User IDs of members to add",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Group.AddMembersRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Group.Member"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/groups/{id}/members/{userId}": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Remove a user from a group, or leave the group if removing yourself.",
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Remove group member / Leave group",
                 "parameters": [
                     {
+                        "type": "string",
                         "description": "Group ID",
-                        "in": "path",
                         "name": "id",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
+                        "in": "path",
+                        "required": true
                     },
                     {
+                        "type": "string",
                         "description": "User ID of the member to remove",
-                        "in": "path",
                         "name": "userId",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -3312,837 +1587,1838 @@ const docTemplate = `{
                         "description": "No Content"
                     },
                     "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "summary": "Remove group member / Leave group",
-                "tags": [
-                    "groups"
-                ]
+                }
             }
         },
         "/groups/{id}/members/{userId}/decision": {
             "post": {
-                "description": "Approve or reject a pending member join request. Admin privileges required.",
-                "parameters": [
-                    {
-                        "description": "Group ID",
-                        "in": "path",
-                        "name": "id",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "Target User ID",
-                        "in": "path",
-                        "name": "userId",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
-                                    {
-                                        "$ref": "#/components/schemas/Group.DecideJoinRequestPayload",
-                                        "summary": "request",
-                                        "description": "Action (APPROVE or REJECT)"
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "description": "Action (APPROVE or REJECT)",
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Group.Member"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "403": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Forbidden"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Decide join request",
+                "description": "Approve or reject a pending member join request. Admin privileges required.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "groups"
-                ]
+                ],
+                "summary": "Decide join request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Target User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Action (APPROVE or REJECT)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Group.DecideJoinRequestPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Group.Member"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/groups/{id}/members/{userId}/role": {
             "put": {
-                "description": "Update the role (e.g. ADMIN, MEMBER) of a user inside the group.",
-                "parameters": [
-                    {
-                        "description": "Group ID",
-                        "in": "path",
-                        "name": "id",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "User ID of the member to update",
-                        "in": "path",
-                        "name": "userId",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
-                                    {
-                                        "$ref": "#/components/schemas/Group.UpdateRoleRequest",
-                                        "summary": "request",
-                                        "description": "New role value"
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "description": "New role value",
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Group.Member"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Update member role",
+                "description": "Update the role (e.g. ADMIN, MEMBER) of a user inside the group.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "groups"
-                ]
+                ],
+                "summary": "Update member role",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User ID of the member to update",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New role value",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Group.UpdateRoleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Group.Member"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/notifications": {
             "get": {
-                "description": "Get a cursor-paginated list of notifications for the current user.",
-                "parameters": [
-                    {
-                        "description": "Items per page (max 100, default 20)",
-                        "in": "query",
-                        "name": "limit",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "description": "Opaque cursor token from a previous response",
-                        "in": "query",
-                        "name": "cursor",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Page-Notification_Notification"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "List notifications",
+                "description": "Get a cursor-paginated list of notifications for the current user.",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "notifications"
-                ]
+                ],
+                "summary": "List notifications",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Items per page (max 100, default 20)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Opaque cursor token from a previous response",
+                        "name": "cursor",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Page-Notification_Notification"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/notifications/read-all": {
             "post": {
-                "description": "Mark all unread notifications as read for the current user.",
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.MessageResponse"
-                                }
-                            }
-                        },
-                        "description": "Success message"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Mark all notifications as read",
+                "description": "Mark all unread notifications as read for the current user.",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "notifications"
-                ]
+                ],
+                "summary": "Mark all notifications as read",
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "$ref": "#/definitions/Common.MessageResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/notifications/{id}/read": {
             "post": {
-                "description": "Mark a specific notification as read by ID.",
-                "parameters": [
-                    {
-                        "description": "Notification ID",
-                        "in": "path",
-                        "name": "id",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.MessageResponse"
-                                }
-                            }
-                        },
-                        "description": "Success message"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "404": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Not Found"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Mark notification as read",
+                "description": "Mark a specific notification as read by ID.",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "notifications"
-                ]
+                ],
+                "summary": "Mark notification as read",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Notification ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "$ref": "#/definitions/Common.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/users": {
             "post": {
-                "description": "Create a new user profile using Firebase identities.",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
-                                    {
-                                        "$ref": "#/components/schemas/User.RegisterRequest",
-                                        "summary": "request",
-                                        "description": "Registration data"
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "description": "Registration data",
-                    "required": true
-                },
-                "responses": {
-                    "201": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/User.User"
-                                }
-                            }
-                        },
-                        "description": "Created"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Register user",
+                "description": "Create a new user profile using Firebase identities.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "users"
-                ]
+                ],
+                "summary": "Register user",
+                "parameters": [
+                    {
+                        "description": "Registration data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/User.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/User.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/users/me": {
             "get": {
-                "description": "Retrieve the profile details of the logged-in user.",
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/User.User"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
+                ],
+                "description": "Retrieve the profile details of the logged-in user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
                 ],
                 "summary": "Get current user profile",
-                "tags": [
-                    "users"
-                ]
-            },
-            "put": {
-                "description": "Update name or default currency for the current user.",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
-                                    {
-                                        "$ref": "#/components/schemas/User.UpdateProfileRequest",
-                                        "summary": "request",
-                                        "description": "Profile details to update"
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "description": "Profile details to update",
-                    "required": true
-                },
                 "responses": {
                     "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/User.User"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/User.User"
+                        }
                     },
                     "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     }
-                },
+                }
+            },
+            "put": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Update user profile",
+                "description": "Update name or default currency for the current user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "users"
-                ]
+                ],
+                "summary": "Update user profile",
+                "parameters": [
+                    {
+                        "description": "Profile details to update",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/User.UpdateProfileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/User.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/users/me/avatar": {
             "post": {
-                "description": "Upload an image file (JPEG, PNG, WEBP, max 2MB) as user avatar.",
-                "requestBody": {
-                    "content": {
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "title": "file",
-                                "type": "file"
-                            }
-                        },
-                        "multipart/form-data": {
-                            "schema": {
-                                "type": "object"
-                            }
-                        }
-                    },
-                    "description": "Image File",
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/User.User"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Upload profile avatar",
+                "description": "Upload an image file (JPEG, PNG, WEBP, max 2MB) as user avatar.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "users"
-                ]
+                ],
+                "summary": "Upload profile avatar",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Image File",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/User.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/users/me/settings": {
             "get": {
-                "description": "Retrieve privacy and app settings for the current user.",
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/User.UserSettingsResponse"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
                 "security": [
                     {
                         "BearerAuth": []
                     }
+                ],
+                "description": "Retrieve privacy and app settings for the current user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
                 ],
                 "summary": "Get user settings",
-                "tags": [
-                    "users"
-                ]
-            },
-            "put": {
-                "description": "Update privacy preferences such as autoAcceptFriendRequests.",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "oneOf": [
-                                    {
-                                        "type": "object"
-                                    },
-                                    {
-                                        "$ref": "#/components/schemas/User.UpdateUserSettingsRequest",
-                                        "summary": "request",
-                                        "description": "Settings to update"
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "description": "Settings to update",
-                    "required": true
-                },
                 "responses": {
                     "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/User.UserSettingsResponse"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/User.UserSettingsResponse"
+                        }
                     },
                     "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     },
                     "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Common.ErrorResponse"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
                     }
-                },
+                }
+            },
+            "put": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Update user settings",
+                "description": "Update privacy preferences such as autoAcceptFriendRequests.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "users"
-                ]
+                ],
+                "summary": "Update user settings",
+                "parameters": [
+                    {
+                        "description": "Settings to update",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/User.UpdateUserSettingsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/User.UserSettingsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         }
     },
-    "openapi": "3.1.0",
-    "servers": [
-        {
-            "url": "/v1"
+    "definitions": {
+        "Activity": {
+            "type": "object",
+            "properties": {
+                "actionType": {
+                    "$ref": "#/definitions/Activity.ActionType"
+                },
+                "actor": {
+                    "$ref": "#/definitions/Activity.ActorInfo"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "entityId": {
+                    "type": "string"
+                },
+                "entityType": {
+                    "$ref": "#/definitions/Activity.EntityType"
+                },
+                "groupId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "payload": {
+                    "type": "object"
+                }
+            }
+        },
+        "Activity.ActionType": {
+            "type": "string",
+            "enum": [
+                "EXPENSE_CREATED",
+                "SETTLEMENT",
+                "MEMBER_ADDED",
+                "MEMBER_LEFT",
+                "MEMBER_KICKED",
+                "MEMBER_ROLE_UPDATED",
+                "GROUP_CREATED",
+                "GROUP_UPDATED",
+                "GROUP_ARCHIVED",
+                "MEMBER_JOINED",
+                "MEMBER_KICKED"
+            ],
+            "x-enum-varnames": [
+                "ActionTypeExpenseCreated",
+                "ActionTypeSettlementCreated",
+                "ActionTypeMemberAdded",
+                "ActionTypeMemberLeft",
+                "ActionTypeMemberKicked",
+                "ActionTypeMemberRoleUpdated",
+                "ActionTypeGroupCreated",
+                "ActionTypeGroupUpdated",
+                "ActionTypeGroupArchived",
+                "ActionTypeMemberJoined",
+                "ActionTypeMemberRemoved"
+            ]
+        },
+        "Activity.Activity": {
+            "type": "object",
+            "properties": {
+                "actionType": {
+                    "$ref": "#/definitions/Activity.ActionType"
+                },
+                "actor": {
+                    "$ref": "#/definitions/Activity.ActorInfo"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "entityId": {
+                    "type": "string"
+                },
+                "entityType": {
+                    "$ref": "#/definitions/Activity.EntityType"
+                },
+                "groupId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "payload": {
+                    "type": "object"
+                }
+            }
+        },
+        "Activity.ActorInfo": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "Activity.EntityType": {
+            "type": "string",
+            "enum": [
+                "EXPENSE",
+                "SETTLEMENT",
+                "MEMBER",
+                "GROUP"
+            ],
+            "x-enum-varnames": [
+                "EntityTypeExpense",
+                "EntityTypeSettlement",
+                "EntityTypeMember",
+                "EntityTypeGroup"
+            ]
+        },
+        "AppConfig.AppConfigData": {
+            "type": "object",
+            "properties": {
+                "domain": {
+                    "$ref": "#/definitions/AppConfig.DomainConfig"
+                },
+                "featureFlags": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "boolean"
+                    }
+                },
+                "legal": {
+                    "$ref": "#/definitions/AppConfig.LegalConfig"
+                },
+                "system": {
+                    "$ref": "#/definitions/AppConfig.SystemConfig"
+                },
+                "userContext": {
+                    "$ref": "#/definitions/AppConfig.UserContext"
+                }
+            }
+        },
+        "AppConfig.AppConfigMeta": {
+            "type": "object",
+            "properties": {
+                "configVersion": {
+                    "type": "string"
+                },
+                "serverTime": {
+                    "type": "string"
+                }
+            }
+        },
+        "AppConfig.AppConfigResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/AppConfig.AppConfigData"
+                },
+                "meta": {
+                    "$ref": "#/definitions/AppConfig.AppConfigMeta"
+                }
+            }
+        },
+        "AppConfig.AppVersion": {
+            "type": "object",
+            "properties": {
+                "forceUpdate": {
+                    "type": "boolean"
+                },
+                "latestVersion": {
+                    "type": "string"
+                },
+                "minSupportedVersion": {
+                    "type": "string"
+                },
+                "updateMessage": {
+                    "type": "string"
+                },
+                "updateUrl": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "AppConfig.Category": {
+            "type": "object",
+            "properties": {
+                "iconUrl": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "AppConfig.Currency": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "decimalPlaces": {
+                    "type": "integer"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "symbol": {
+                    "type": "string"
+                }
+            }
+        },
+        "AppConfig.DomainConfig": {
+            "type": "object",
+            "properties": {
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppConfig.Category"
+                    }
+                },
+                "currencies": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppConfig.Currency"
+                    }
+                },
+                "limits": {
+                    "$ref": "#/definitions/AppConfig.LimitsConfig"
+                },
+                "paymentIntegrations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppConfig.PaymentIntegration"
+                    }
+                },
+                "splitTypes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppConfig.SplitTypeConfig"
+                    }
+                }
+            }
+        },
+        "AppConfig.LegalConfig": {
+            "type": "object",
+            "properties": {
+                "faqUrl": {
+                    "type": "string"
+                },
+                "privacyPolicyUrl": {
+                    "type": "string"
+                },
+                "supportEmail": {
+                    "type": "string"
+                },
+                "termsOfServiceUrl": {
+                    "type": "string"
+                }
+            }
+        },
+        "AppConfig.LimitsConfig": {
+            "type": "object",
+            "properties": {
+                "allowedReceiptMimeTypes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "maxExpenseAmount": {
+                    "type": "number"
+                },
+                "maxGroupMembers": {
+                    "type": "integer"
+                },
+                "maxReceiptSizeMb": {
+                    "type": "integer"
+                },
+                "maxSplitParticipants": {
+                    "type": "integer"
+                }
+            }
+        },
+        "AppConfig.MaintenanceConfig": {
+            "type": "object",
+            "properties": {
+                "estimatedEndTime": {
+                    "type": "string"
+                },
+                "inMaintenance": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "readOnlyMode": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "AppConfig.PaymentIntegration": {
+            "type": "object",
+            "properties": {
+                "deepLinkScheme": {
+                    "type": "string"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "AppConfig.SplitTypeConfig": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                }
+            }
+        },
+        "AppConfig.SystemConfig": {
+            "type": "object",
+            "properties": {
+                "appVersion": {
+                    "$ref": "#/definitions/AppConfig.AppVersion"
+                },
+                "maintenance": {
+                    "$ref": "#/definitions/AppConfig.MaintenanceConfig"
+                }
+            }
+        },
+        "AppConfig.UserContext": {
+            "type": "object",
+            "properties": {
+                "isAuthenticated": {
+                    "type": "boolean"
+                },
+                "userFeatureFlags": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "userPreferredCurrency": {
+                    "type": "string"
+                }
+            }
+        },
+        "Common.ErrorCode": {
+            "type": "string",
+            "enum": [
+                "BAD_REQUEST",
+                "UNAUTHORIZED",
+                "FORBIDDEN",
+                "NOT_FOUND",
+                "INTERNAL_SERVER_ERROR",
+                "INVALID_BODY",
+                "USER_NOT_FOUND"
+            ],
+            "x-enum-varnames": [
+                "ErrBadRequest",
+                "ErrUnauthorized",
+                "ErrForbidden",
+                "ErrNotFound",
+                "ErrInternalServerError",
+                "ErrInvalidBody",
+                "ErrUserNotFound"
+            ]
+        },
+        "Common.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/Common.ErrorCode"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "Common.MessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "Expense.BalanceResponse": {
+            "type": "object",
+            "properties": {
+                "balances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Expense.UserBalance"
+                    }
+                },
+                "settlements": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Expense.Settlement"
+                    }
+                }
+            }
+        },
+        "Expense.CreateRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "groupId": {
+                    "type": "string"
+                },
+                "paidBy": {
+                    "type": "string"
+                },
+                "splitType": {
+                    "$ref": "#/definitions/Expense.SplitType"
+                },
+                "splits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Expense.InputSplit"
+                    }
+                }
+            }
+        },
+        "Expense.ExpenseSyncResponse": {
+            "type": "object",
+            "properties": {
+                "deletedIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "newVersion": {
+                    "type": "integer"
+                },
+                "updated": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Expense.ExpenseWithSplits"
+                    }
+                }
+            }
+        },
+        "Expense.ExpenseWithSplits": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "groupId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isPayment": {
+                    "type": "boolean"
+                },
+                "paidBy": {
+                    "type": "string"
+                },
+                "spentAt": {
+                    "type": "string"
+                },
+                "splits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Expense.Split"
+                    }
+                },
+                "syncVersion": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "Expense.InputSplit": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "description": "Required if splitType is EXACT",
+                    "type": "number"
+                },
+                "percentage": {
+                    "description": "Required if splitType is PERCENTAGE",
+                    "type": "number"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "Expense.SettleRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "groupId": {
+                    "type": "string"
+                },
+                "paidBy": {
+                    "type": "string"
+                },
+                "receivedBy": {
+                    "type": "string"
+                }
+            }
+        },
+        "Expense.Settlement": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "fromUserId": {
+                    "type": "string"
+                },
+                "fromUserName": {
+                    "type": "string"
+                },
+                "toUserId": {
+                    "type": "string"
+                },
+                "toUserName": {
+                    "type": "string"
+                }
+            }
+        },
+        "Expense.Split": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "expenseId": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "splitType": {
+                    "$ref": "#/definitions/Expense.SplitType"
+                },
+                "splitValue": {
+                    "type": "number"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "Expense.SplitType": {
+            "type": "string",
+            "enum": [
+                "EQUAL",
+                "EXACT",
+                "PERCENTAGE"
+            ],
+            "x-enum-varnames": [
+                "SplitTypeEqual",
+                "SplitTypeExact",
+                "SplitTypePercentage"
+            ]
+        },
+        "Expense.UpdateRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "splitType": {
+                    "$ref": "#/definitions/Expense.SplitType"
+                },
+                "splits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Expense.InputSplit"
+                    }
+                }
+            }
+        },
+        "Expense.UserBalance": {
+            "type": "object",
+            "properties": {
+                "netBalance": {
+                    "type": "number"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "userName": {
+                    "type": "string"
+                }
+            }
+        },
+        "Group.AddMembersRequest": {
+            "type": "object",
+            "required": [
+                "userIds"
+            ],
+            "properties": {
+                "userIds": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "Group.CreateRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "requireAdminApproval": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "Group.DecideJoinRequestPayload": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "$ref": "#/definitions/Group.JoinRequestAction"
+                }
+            }
+        },
+        "Group.Group": {
+            "type": "object",
+            "properties": {
+                "archivedAt": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "iconUrl": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "inviteCode": {
+                    "type": "string"
+                },
+                "inviteCodeExpiresAt": {
+                    "type": "string"
+                },
+                "members": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Group.Member"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "requireAdminApproval": {
+                    "type": "boolean"
+                },
+                "syncVersion": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "Group.GroupSyncResponse": {
+            "type": "object",
+            "properties": {
+                "newVersion": {
+                    "type": "integer"
+                },
+                "removedGroupIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "updated": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Group.Group"
+                    }
+                }
+            }
+        },
+        "Group.JoinRequest": {
+            "type": "object",
+            "required": [
+                "inviteCode"
+            ],
+            "properties": {
+                "inviteCode": {
+                    "type": "string"
+                }
+            }
+        },
+        "Group.JoinRequestAction": {
+            "type": "string",
+            "enum": [
+                "APPROVE",
+                "REJECT"
+            ],
+            "x-enum-varnames": [
+                "JoinRequestActionApprove",
+                "JoinRequestActionReject"
+            ]
+        },
+        "Group.JoinResponse": {
+            "type": "object",
+            "properties": {
+                "group": {
+                    "$ref": "#/definitions/Group.Group"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/Group.MemberStatus"
+                }
+            }
+        },
+        "Group.Member": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "groupId": {
+                    "type": "string"
+                },
+                "joinedAt": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/Group.MemberRole"
+                },
+                "status": {
+                    "$ref": "#/definitions/Group.MemberStatus"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "Group.MemberRole": {
+            "type": "string",
+            "enum": [
+                "ADMIN",
+                "MEMBER"
+            ],
+            "x-enum-varnames": [
+                "MemberRoleAdmin",
+                "MemberRoleMember"
+            ]
+        },
+        "Group.MemberStatus": {
+            "type": "string",
+            "enum": [
+                "ACTIVE",
+                "PENDING",
+                "REJECTED"
+            ],
+            "x-enum-varnames": [
+                "MemberStatusActive",
+                "MemberStatusPending",
+                "MemberStatusRejected"
+            ]
+        },
+        "Group.Preview": {
+            "type": "object",
+            "properties": {
+                "creatorName": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "memberCount": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "requireAdminApproval": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "Group.UpdateRoleRequest": {
+            "type": "object",
+            "properties": {
+                "role": {
+                    "$ref": "#/definitions/Group.MemberRole"
+                }
+            }
+        },
+        "Meta": {
+            "type": "object",
+            "properties": {
+                "hasMore": {
+                    "type": "boolean"
+                },
+                "nextCursor": {
+                    "type": "string"
+                }
+            }
+        },
+        "Notification.AlertType": {
+            "type": "string",
+            "enum": [
+                "EXPENSE_ADDED",
+                "PAYMENT_RECEIVED",
+                "JOIN_REQUEST_PENDING",
+                "JOIN_REQUEST_APPROVED",
+                "JOIN_REQUEST_REJECTED"
+            ],
+            "x-enum-varnames": [
+                "AlertTypeExpenseAdded",
+                "AlertTypePaymentReceived",
+                "AlertTypeJoinRequestPending",
+                "AlertTypeJoinRequestApproved",
+                "AlertTypeJoinRequestRejected"
+            ]
+        },
+        "Notification.Notification": {
+            "type": "object",
+            "properties": {
+                "activityId": {
+                    "type": "string"
+                },
+                "actorId": {
+                    "type": "string"
+                },
+                "actorName": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isRead": {
+                    "type": "boolean"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/Notification.AlertType"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "Page-Activity": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Activity"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/Meta"
+                }
+            }
+        },
+        "Page-Activity_Activity": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Activity.Activity"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/Meta"
+                }
+            }
+        },
+        "Page-Expense_ExpenseWithSplits": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Expense.ExpenseWithSplits"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/Meta"
+                }
+            }
+        },
+        "Page-Group_Group": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Group.Group"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/Meta"
+                }
+            }
+        },
+        "Page-Notification_Notification": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Notification.Notification"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/Meta"
+                }
+            }
+        },
+        "Page-User_User": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/User.User"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/Meta"
+                }
+            }
+        },
+        "User.AddFriendRequest": {
+            "type": "object",
+            "properties": {
+                "friendEmail": {
+                    "type": "string"
+                },
+                "friendPhone": {
+                    "type": "string"
+                }
+            }
+        },
+        "User.FriendSyncResponse": {
+            "type": "object",
+            "properties": {
+                "friends": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/User.FriendshipSyncRecord"
+                    }
+                },
+                "newVersion": {
+                    "type": "integer"
+                }
+            }
+        },
+        "User.FriendWithStatus": {
+            "type": "object",
+            "properties": {
+                "actionUserId": {
+                    "type": "string"
+                },
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "defaultCurrency": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/User.FriendshipStatus"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "User.FriendshipStatus": {
+            "type": "string",
+            "enum": [
+                "PENDING",
+                "ACCEPTED",
+                "DECLINED",
+                "BLOCKED"
+            ],
+            "x-enum-varnames": [
+                "Pending",
+                "Accepted",
+                "Declined",
+                "Blocked"
+            ]
+        },
+        "User.FriendshipSyncRecord": {
+            "type": "object",
+            "properties": {
+                "actionUserId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "friendId": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/User.FriendshipStatus"
+                },
+                "syncVersion": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "User.RegisterRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "User.UpdateFriendStatusRequest": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "$ref": "#/definitions/User.FriendshipStatus"
+                }
+            }
+        },
+        "User.UpdateProfileRequest": {
+            "type": "object",
+            "properties": {
+                "defaultCurrency": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "User.UpdateUserSettingsRequest": {
+            "type": "object",
+            "properties": {
+                "autoAcceptFriendRequests": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "User.User": {
+            "type": "object",
+            "properties": {
+                "avatarUrl": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "defaultCurrency": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "User.UserSettingsResponse": {
+            "type": "object",
+            "properties": {
+                "autoAcceptFriendRequests": {
+                    "type": "boolean"
+                }
+            }
         }
-    ]
+    }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
+	Host:             "",
+	BasePath:         "",
+	Schemes:          []string{},
 	Title:            "Splittr API",
 	Description:      "Backend API service for Splittr bill splitting.",
 	InfoInstanceName: "swagger",
