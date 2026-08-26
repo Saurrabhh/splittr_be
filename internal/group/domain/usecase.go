@@ -1024,7 +1024,7 @@ func (u *UseCase) SyncGroups(ctx context.Context, lastVersion int64, userID stri
 		limit = 100
 	}
 
-	groups, err := u.repo.SyncGroupsBySequence(ctx, lastVersion, userID, limit)
+	groupsWithMembers, err := u.repo.SyncGroupsBySequence(ctx, lastVersion, userID, limit)
 	if err != nil {
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
@@ -1033,19 +1033,42 @@ func (u *UseCase) SyncGroups(ctx context.Context, lastVersion int64, userID stri
 		}
 	}
 
+	tombstones, err := u.repo.GetGroupTombstonesBySequence(ctx, lastVersion, userID, limit)
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "Failed to get group tombstones",
+			Err:     err,
+		}
+	}
+
 	var activeGroups []Group
-	var removedIDs []string
+	removedIDMap := make(map[string]bool)
 	var maxVersion int64 = lastVersion
 
-	for _, g := range groups {
+	for _, gwm := range groupsWithMembers {
+		g := gwm.Group
+		g.Members = gwm.Members
 		if g.SyncVersion > maxVersion {
 			maxVersion = g.SyncVersion
 		}
 		if g.ArchivedAt != nil {
-			removedIDs = append(removedIDs, g.ID)
+			removedIDMap[g.ID] = true
 		} else {
 			activeGroups = append(activeGroups, g)
 		}
+	}
+
+	for _, ts := range tombstones {
+		if ts.SyncVersion > maxVersion {
+			maxVersion = ts.SyncVersion
+		}
+		removedIDMap[ts.EntityID] = true
+	}
+
+	removedIDs := make([]string, 0, len(removedIDMap))
+	for id := range removedIDMap {
+		removedIDs = append(removedIDs, id)
 	}
 
 	if activeGroups == nil {

@@ -124,13 +124,22 @@ func (m *mockGroupRepository) UpdateGroupMemberRole(ctx context.Context, groupID
 	return m.Called(ctx, groupID, userID, role).Error(0)
 }
 
-func (m *mockGroupRepository) SyncGroupsBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]domain.Group, error) {
+func (m *mockGroupRepository) SyncGroupsBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]domain.GroupWithMembers, error) {
 	args := m.Called(ctx, lastVersion, userID, limit)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]domain.Group), args.Error(1)
+	return args.Get(0).([]domain.GroupWithMembers), args.Error(1)
 }
+
+func (m *mockGroupRepository) GetGroupTombstonesBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]domain.Tombstone, error) {
+	args := m.Called(ctx, lastVersion, userID, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Tombstone), args.Error(1)
+}
+
 
 
 type mockActivityLogger struct {
@@ -1101,10 +1110,11 @@ func TestHandler_SyncGroups_Success(t *testing.T) {
 	currentUser := &user.User{ID: "usr-1"}
 
 	now := time.Now()
-	mockRepo.On("SyncGroupsBySequence", mock.Anything, int64(10), currentUser.ID, int32(100)).Return([]domain.Group{
-		{ID: "grp-1", Name: "Trip", SyncVersion: 11},
-		{ID: "grp-2", Name: "Flat", SyncVersion: 12, ArchivedAt: &now},
+	mockRepo.On("SyncGroupsBySequence", mock.Anything, int64(10), currentUser.ID, int32(100)).Return([]domain.GroupWithMembers{
+		{Group: domain.Group{ID: "grp-1", Name: "Trip", SyncVersion: 11}},
+		{Group: domain.Group{ID: "grp-2", Name: "Flat", SyncVersion: 12, ArchivedAt: &now}},
 	}, nil)
+	mockRepo.On("GetGroupTombstonesBySequence", mock.Anything, int64(10), currentUser.ID, int32(100)).Return([]domain.Tombstone{}, nil)
 
 	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
 	router := setupHandlerTestRouter(uc, currentUser)
@@ -1123,4 +1133,5 @@ func TestHandler_SyncGroups_Success(t *testing.T) {
 	assert.Equal(t, "grp-1", resp.Updated[0].ID)
 	assert.Equal(t, []string{"grp-2"}, resp.RemovedGroupIDs)
 }
+
 

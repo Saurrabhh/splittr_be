@@ -1,6 +1,8 @@
 package data
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/Saurrabhh/splittr_be/internal/db/dbgen"
@@ -8,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
-
 
 func mapGroupFields(id uuid.UUID, name string, description pgtype.Text, inviteCode pgtype.Text, inviteCodeExpiresAt pgtype.Timestamptz, requireAdminApproval bool, createdBy pgtype.UUID, createdAt pgtype.Timestamptz, updatedAt pgtype.Timestamptz, archivedAt pgtype.Timestamptz, iconUrl pgtype.Text) *domain.Group {
 	var createdByStr *string
@@ -63,14 +64,29 @@ func uuidToPg(s *string, u uuid.UUID) pgtype.UUID {
 	return pgtype.UUID{Bytes: u, Valid: true}
 }
 
-func toGroupsFromSyncBySequence(rows []dbgen.SyncGroupsBySequenceRow) []domain.Group {
-	groups := make([]domain.Group, 0, len(rows))
+func toGroupsWithMembersFromSyncBySequence(rows []dbgen.SyncGroupsBySequenceRow) ([]domain.GroupWithMembers, error) {
+	result := make([]domain.GroupWithMembers, 0, len(rows))
 	for _, r := range rows {
 		g := mapGroupFields(r.ID, r.Name, r.Description, r.InviteCode, r.InviteCodeExpiresAt, r.RequireAdminApproval, r.CreatedBy, r.CreatedAt, r.UpdatedAt, r.ArchivedAt, r.IconUrl)
 		g.SyncVersion = r.SyncVersion
-		groups = append(groups, *g)
+
+		var members []domain.Member
+		if len(r.Members) > 0 {
+			if err := json.Unmarshal(r.Members, &members); err != nil {
+				return nil, fmt.Errorf("decode members json for group %s: %w", r.ID, err)
+			}
+		}
+		if members == nil {
+			members = []domain.Member{}
+		}
+
+		result = append(result, domain.GroupWithMembers{
+			Group:   *g,
+			Members: members,
+		})
 	}
-	return groups
+	return result, nil
 }
+
 
 

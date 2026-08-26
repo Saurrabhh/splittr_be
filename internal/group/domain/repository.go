@@ -22,12 +22,20 @@ type Repository interface {
 	UpdateMemberStatus(ctx context.Context, groupID, userID string, status MemberStatus) error
 	RemoveGroupMember(ctx context.Context, groupID, userID string) error
 	UpdateGroupMemberRole(ctx context.Context, groupID, userID string, role MemberRole) error
-	SyncGroupsBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]Group, error)
-}
+	SyncGroupsBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]GroupWithMembers, error)
 
+	GetGroupTombstonesBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]Tombstone, error)
+}
 
 // GroupWithMembers wraps a Group entity with its active members.
 type GroupWithMembers struct {
 	Group   Group
 	Members []Member
 }
+
+// Tombstone represents a deleted entity for sync.
+type Tombstone struct {
+	EntityID    string
+	SyncVersion int64
+}
+

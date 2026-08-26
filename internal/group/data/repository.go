@@ -478,7 +478,7 @@ func (r *DBRepository) UpdateIcon(ctx context.Context, groupID string, iconURL s
 }
 
 // SyncGroupsBySequence retrieves groups updated or created after lastVersion for a user.
-func (r *DBRepository) SyncGroupsBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]domain.Group, error) {
+func (r *DBRepository) SyncGroupsBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]domain.GroupWithMembers, error) {
 	parsedUserID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid uuid: %w", err)
@@ -496,6 +496,36 @@ func (r *DBRepository) SyncGroupsBySequence(ctx context.Context, lastVersion int
 		return nil, fmt.Errorf("sync groups by sequence: %w", err)
 	}
 
-	return toGroupsFromSyncBySequence(rows), nil
+	return toGroupsWithMembersFromSyncBySequence(rows)
 }
+
+// GetGroupTombstonesBySequence retrieves deleted group tombstones after lastVersion for a user.
+func (r *DBRepository) GetGroupTombstonesBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]domain.Tombstone, error) {
+	parsedUserID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid uuid: %w", err)
+	}
+
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+
+	rows, err := q.GetGroupTombstonesBySequence(ctx, dbgen.GetGroupTombstonesBySequenceParams{
+		UserID:      parsedUserID,
+		SyncVersion: lastVersion,
+		Limit:       limit,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get group tombstones: %w", err)
+	}
+
+	tombstones := make([]domain.Tombstone, 0, len(rows))
+	for _, row := range rows {
+		tombstones = append(tombstones, domain.Tombstone{
+			EntityID:    row.EntityID.String(),
+			SyncVersion: row.SyncVersion,
+		})
+	}
+	return tombstones, nil
+}
+
 
