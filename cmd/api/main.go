@@ -13,7 +13,7 @@ import (
 // @title           Splittr API
 // @version         1.0
 // @description     Backend API service for Splittr bill splitting.
-// @servers.url     /v1
+// @BasePath        /v1
 //
 // @securitydefinitions.bearerauth BearerAuth
 func main() {
