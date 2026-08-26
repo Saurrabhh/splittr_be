@@ -130,6 +130,15 @@ func (m *mockUserRepository) SyncFriendsBySequence(ctx context.Context, lastVers
 	return args.Get(0).([]domain.FriendshipSyncRecord), args.Error(1)
 }
 
+func (m *mockUserRepository) GetFriendTombstonesBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]domain.Tombstone, error) {
+	args := m.Called(ctx, lastVersion, userID, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Tombstone), args.Error(1)
+}
+
+
 func setupHandlerTestRouter(uc *domain.UseCase, identity *auth.Identity) chi.Router {
 	r := chi.NewRouter()
 	h := userhttp.NewHandler(uc)
@@ -325,3 +334,34 @@ func TestHandler_RemoveFriend_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusNoContent, rr.Code)
 }
+
+func TestHandler_SyncFriends_Success(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	identity := &auth.Identity{UserID: "fb-123"}
+	currentUser := &domain.User{ID: "usr-1", FirebaseUID: "fb-123", Name: "Alice"}
+
+	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-123").Return(currentUser, nil)
+	mockRepo.On("SyncFriendsBySequence", mock.Anything, int64(10), currentUser.ID, int32(100)).Return([]domain.FriendshipSyncRecord{
+		{UserID: "usr-1", FriendID: "usr-2", Status: domain.Accepted, SyncVersion: 11},
+	}, nil)
+	mockRepo.On("GetFriendTombstonesBySequence", mock.Anything, int64(10), currentUser.ID, int32(100)).Return([]domain.Tombstone{
+		{EntityID: "usr-3", SyncVersion: 12},
+	}, nil)
+
+	uc := domain.NewUseCase(mockRepo, nil)
+	router := setupHandlerTestRouter(uc, identity)
+
+	req := httptest.NewRequest(http.MethodGet, "/friends/sync?lastVersion=10", nil)
+	rr := httptest.NewRecorder()
+
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	var resp domain.FriendSyncResponse
+	err := json.Unmarshal(rr.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	assert.Equal(t, int64(12), resp.NewVersion)
+	assert.Len(t, resp.Friends, 1)
+	assert.Equal(t, []string{"usr-3"}, resp.RemovedFriendIDs)
+}
+

@@ -710,6 +710,10 @@ definitions:
         type: array
       newVersion:
         type: integer
+      removedFriendIds:
+        items:
+          type: string
+        type: array
     type: object
   User.FriendWithStatus:
     properties:

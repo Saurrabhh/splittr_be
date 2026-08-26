@@ -3257,6 +3257,12 @@ const docTemplate = `{
                 },
                 "newVersion": {
                     "type": "integer"
+                },
+                "removedFriendIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },

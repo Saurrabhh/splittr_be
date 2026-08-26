@@ -495,3 +495,33 @@ func (r *DBRepository) SyncFriendsBySequence(ctx context.Context, lastVersion in
 	}
 	return records, nil
 }
+
+// GetFriendTombstonesBySequence retrieves deleted friendship tombstones after lastVersion for a user.
+func (r *DBRepository) GetFriendTombstonesBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]domain.Tombstone, error) {
+	parsedUserID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid uuid: %w", err)
+	}
+
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+
+	rows, err := q.GetFriendTombstonesBySequence(ctx, dbgen.GetFriendTombstonesBySequenceParams{
+		UserID:      parsedUserID,
+		SyncVersion: lastVersion,
+		Limit:       limit,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get friend tombstones: %w", err)
+	}
+
+	tombstones := make([]domain.Tombstone, 0, len(rows))
+	for _, row := range rows {
+		tombstones = append(tombstones, domain.Tombstone{
+			EntityID:    row.EntityID.String(),
+			SyncVersion: row.SyncVersion,
+		})
+	}
+	return tombstones, nil
+}
+

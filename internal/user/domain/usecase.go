@@ -406,13 +406,14 @@ func (u *UseCase) UpdateUserSettings(ctx context.Context, userID string, autoAcc
 	return settings, nil
 }
 
-// FriendSyncResponse contains updated friends for offline sync.
+// FriendSyncResponse contains updated friends and removed friend IDs for offline sync.
 type FriendSyncResponse struct {
-	NewVersion int64                  `json:"newVersion"`
-	Friends    []FriendshipSyncRecord `json:"friends"`
+	NewVersion       int64                  `json:"newVersion"`
+	Friends          []FriendshipSyncRecord `json:"friends"`
+	RemovedFriendIDs []string               `json:"removedFriendIds"`
 } // @name User.FriendSyncResponse
 
-// SyncFriends retrieves friendship changes after lastVersion for a user.
+// SyncFriends retrieves friendship changes and tombstones after lastVersion for a user.
 func (u *UseCase) SyncFriends(ctx context.Context, lastVersion int64, userID string, limit int32) (*FriendSyncResponse, error) {
 	if limit <= 0 || limit > 500 {
 		limit = 100
@@ -427,6 +428,15 @@ func (u *UseCase) SyncFriends(ctx context.Context, lastVersion int64, userID str
 		}
 	}
 
+	tombstones, err := u.repo.GetFriendTombstonesBySequence(ctx, lastVersion, userID, limit)
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "Failed to get friend tombstones",
+			Err:     err,
+		}
+	}
+
 	var maxVersion int64 = lastVersion
 	for _, r := range records {
 		if r.SyncVersion > maxVersion {
@@ -434,13 +444,25 @@ func (u *UseCase) SyncFriends(ctx context.Context, lastVersion int64, userID str
 		}
 	}
 
+	removedIDs := make([]string, 0, len(tombstones))
+	for _, ts := range tombstones {
+		if ts.SyncVersion > maxVersion {
+			maxVersion = ts.SyncVersion
+		}
+		removedIDs = append(removedIDs, ts.EntityID)
+	}
+
 	if records == nil {
 		records = []FriendshipSyncRecord{}
 	}
+	if removedIDs == nil {
+		removedIDs = []string{}
+	}
 
 	return &FriendSyncResponse{
-		NewVersion: maxVersion,
-		Friends:    records,
+		NewVersion:       maxVersion,
+		Friends:          records,
+		RemovedFriendIDs: removedIDs,
 	}, nil
 }
 

@@ -26,6 +26,7 @@ type Repository interface {
 	ListFriends(ctx context.Context, userID string, limit int32, lastTime *time.Time, lastID *string) ([]User, error)
 	ListFriendsByStatus(ctx context.Context, userID string, status FriendshipStatus) ([]FriendWithStatus, error)
 	SyncFriendsBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]FriendshipSyncRecord, error)
+	GetFriendTombstonesBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]Tombstone, error)
 }
 
 type FriendshipSyncRecord struct {
@@ -37,3 +38,10 @@ type FriendshipSyncRecord struct {
 	UpdatedAt    time.Time        `json:"updatedAt"`
 	SyncVersion  int64            `json:"syncVersion"`
 } // @name User.FriendshipSyncRecord
+
+// Tombstone represents a deleted entity for sync.
+type Tombstone struct {
+	EntityID    string
+	SyncVersion int64
+}
+

@@ -123,6 +123,15 @@ func (m *mockUserRepository) SyncFriendsBySequence(ctx context.Context, lastVers
 	return args.Get(0).([]domain.FriendshipSyncRecord), args.Error(1)
 }
 
+func (m *mockUserRepository) GetFriendTombstonesBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]domain.Tombstone, error) {
+	args := m.Called(ctx, lastVersion, userID, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Tombstone), args.Error(1)
+}
+
+
 // --- RegisterUser Tests ---
 
 func TestRegisterUser_Success(t *testing.T) {
