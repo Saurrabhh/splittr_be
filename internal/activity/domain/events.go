@@ -130,7 +130,7 @@ func NewMemberLeftEvent(memberID string, payload MemberPayload) Event {
 func NewMemberKickedEvent(memberID string, payload MemberPayload) Event {
 	payload.Type = EntityTypeMember
 	return event{
-		actionType:  ActionTypeMemberRemoved,
+		actionType:  ActionTypeMemberKicked,
 		entityType:  EntityTypeMember,
 		entityID:    memberID,
 		description: "removed a member from the group",

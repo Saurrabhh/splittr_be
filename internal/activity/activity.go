@@ -45,7 +45,6 @@ const (
 	ActionTypeGroupUpdated      = domain.ActionTypeGroupUpdated
 	ActionTypeGroupArchived     = domain.ActionTypeGroupArchived
 	ActionTypeMemberJoined      = domain.ActionTypeMemberJoined
-	ActionTypeMemberRemoved     = domain.ActionTypeMemberRemoved
 )
 
 // Type-safe Event factory functions

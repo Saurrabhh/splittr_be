@@ -26,5 +26,4 @@ const (
 	ActionTypeGroupUpdated      ActionType = "GROUP_UPDATED"
 	ActionTypeGroupArchived     ActionType = "GROUP_ARCHIVED"
 	ActionTypeMemberJoined      ActionType = "MEMBER_JOINED"
-	ActionTypeMemberRemoved     ActionType = "MEMBER_KICKED"
 )

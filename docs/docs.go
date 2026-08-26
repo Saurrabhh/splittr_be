@@ -2243,8 +2243,7 @@ const docTemplate = `{
                 "GROUP_CREATED",
                 "GROUP_UPDATED",
                 "GROUP_ARCHIVED",
-                "MEMBER_JOINED",
-                "MEMBER_KICKED"
+                "MEMBER_JOINED"
             ],
             "x-enum-varnames": [
                 "ActionTypeExpenseCreated",
@@ -2256,8 +2255,7 @@ const docTemplate = `{
                 "ActionTypeGroupCreated",
                 "ActionTypeGroupUpdated",
                 "ActionTypeGroupArchived",
-                "ActionTypeMemberJoined",
-                "ActionTypeMemberRemoved"
+                "ActionTypeMemberJoined"
             ]
         },
         "Activity.Activity": {
