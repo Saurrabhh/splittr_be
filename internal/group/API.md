@@ -88,22 +88,36 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
 - **Description**: Retrieve a cursor-paginated list of active groups the requesting user belongs to.
 - **Query Parameters**:
   - `limit` (int, optional): Page size (default 20, max 100).
-  - `cursor` (string, optional): Cursor token from previous response.
+  - `cursor` (string, optional): Opaque URL-safe Base64 cursor token from previous response.
 - **Response** (`200 OK`):
   ```json
   {
     "data": [
       {
-        "group": { ... },
-        "members": [ { ... } ]
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "name": "Japan Trip 2026",
+        "description": "Tokyo & Kyoto group expenses",
+        "requireAdminApproval": true,
+        "createdAt": "2026-08-02T12:00:00Z",
+        "updatedAt": "2026-08-02T12:00:00Z",
+        "members": [
+          {
+            "groupId": "550e8400-e29b-41d4-a716-446655440000",
+            "userId": "usr-member-uuid",
+            "role": "ADMIN",
+            "status": "ACTIVE",
+            "name": "Saurabh Yadav"
+          }
+        ]
       }
     ],
     "pagination": {
-      "nextCursor": "eyJMYXN0VGltZSI...",
+      "nextCursor": "MjAyNi0wOC0wMlQxMjowMDowMFpfNTUwZTg0MDAtZTI5Yi00MWQ0LWE3MTYtNDQ2NjU1NDQwMDAw",
       "hasMore": true
     }
   }
   ```
+
 - **Errors**: `401 Unauthorized`, `500 Internal Server Error`.
 
 ---
@@ -297,7 +311,7 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
 ### 14. Sync Groups
 - **GET** `/groups/sync?lastVersion={int64}&limit={int}`
 - **Authentication**: Required (`BearerAuth`)
-- **Description**: Retrieve active and archived groups modified after a given sequence version for offline sync.
+- **Description**: Retrieve active and archived groups modified after a given sequence version for offline sync. `updated` groups include their active member roster. `removedGroupIds` includes both archived groups and groups the user was evicted/removed from (via tombstones).
 - **Query Parameters**:
   - `lastVersion` (int64, optional): Last sequence version stored locally. Default: 0.
   - `limit` (int, optional): Max items to return. Default: 100.
@@ -305,11 +319,31 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
   ```json
   {
     "newVersion": 150,
-    "updated": [ { ... } ],
+    "updated": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "name": "Japan Trip 2026",
+        "description": "Tokyo & Kyoto group expenses",
+        "requireAdminApproval": true,
+        "createdAt": "2026-08-02T12:00:00Z",
+        "updatedAt": "2026-08-02T12:00:00Z",
+        "syncVersion": 150,
+        "members": [
+          {
+            "groupId": "550e8400-e29b-41d4-a716-446655440000",
+            "userId": "usr-member-uuid",
+            "role": "ADMIN",
+            "status": "ACTIVE",
+            "name": "Saurabh Yadav"
+          }
+        ]
+      }
+    ],
     "removedGroupIds": [ "550e8400-e29b-41d4-a716-446655440000" ]
   }
   ```
 - **Errors**: `401 Unauthorized`, `500 Internal Server Error`.
+
 
 ---
 

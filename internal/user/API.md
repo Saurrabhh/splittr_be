@@ -102,7 +102,7 @@ The User module manages authentication identity mapping (Firebase UID to local u
 
 ### 7. List Friends
 - **GET** `/friends?limit={int}&cursor={string}&status={ACCEPTED|PENDING|BLOCKED}`
-- **Description**: Retrieve friends list. Defaults to cursor-paginated list of accepted friends. If `status` query parameter is supplied, returns matching friends with status metadata (`actionUserId`, `status`).
+- **Description**: Retrieve friends list. Defaults to cursor-paginated list of accepted friends using URL-safe Base64 cursor tokens. If `status` query parameter is supplied, returns matching friends with status metadata (`actionUserId`, `status`).
 - **Response** (`200 OK`): Paginated or array list of friends.
 
 ### 8. Update Friendship Status (Accept / Decline / Block)
@@ -131,12 +131,12 @@ The User module manages authentication identity mapping (Firebase UID to local u
 
 ### 9. Remove Friend
 - **DELETE** `/friends/{friendId}`
-- **Description**: Remove a friendship link.
+- **Description**: Remove a friendship link. Generates tombstones to propagate deletion to offline clients via delta sync.
 - **Response** (`204 No Content`).
 
 ### 10. Sync Friends
 - **GET** `/friends/sync?lastVersion={int64}&limit={int}`
-- **Description**: Retrieve friendship changes (including status and `actionUserId`) modified after a given sequence version for offline sync.
+- **Description**: Retrieve friendship changes (including status and `actionUserId`) and removed friend tombstones modified after a given sequence version for offline sync.
 - **Response** (`200 OK`): `FriendSyncResponse`
   ```json
   {
@@ -150,6 +150,8 @@ The User module manages authentication identity mapping (Firebase UID to local u
         "createdAt": "2026-08-09T20:00:00Z",
         "syncVersion": 150
       }
-    ]
+    ],
+    "removedFriendIds": [ "usr-uuid-3" ]
   }
   ```
+
