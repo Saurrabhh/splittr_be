@@ -113,8 +113,8 @@ type Group struct {
 	CreatedAt            pgtype.Timestamptz
 	UpdatedAt            pgtype.Timestamptz
 	ArchivedAt           pgtype.Timestamptz
-	IconUrl              pgtype.Text
 	SyncVersion          int64
+	IconUrl              pgtype.Text
 }
 
 type GroupMember struct {

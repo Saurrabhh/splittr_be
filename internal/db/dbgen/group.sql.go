@@ -589,15 +589,30 @@ type SyncGroupsBySequenceParams struct {
 	Limit       int32
 }
 
-func (q *Queries) SyncGroupsBySequence(ctx context.Context, arg SyncGroupsBySequenceParams) ([]Group, error) {
+type SyncGroupsBySequenceRow struct {
+	ID                   uuid.UUID
+	Name                 string
+	Description          pgtype.Text
+	InviteCode           pgtype.Text
+	InviteCodeExpiresAt  pgtype.Timestamptz
+	RequireAdminApproval bool
+	CreatedBy            pgtype.UUID
+	CreatedAt            pgtype.Timestamptz
+	UpdatedAt            pgtype.Timestamptz
+	ArchivedAt           pgtype.Timestamptz
+	IconUrl              pgtype.Text
+	SyncVersion          int64
+}
+
+func (q *Queries) SyncGroupsBySequence(ctx context.Context, arg SyncGroupsBySequenceParams) ([]SyncGroupsBySequenceRow, error) {
 	rows, err := q.db.Query(ctx, syncGroupsBySequence, arg.SyncVersion, arg.UserID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Group
+	var items []SyncGroupsBySequenceRow
 	for rows.Next() {
-		var i Group
+		var i SyncGroupsBySequenceRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,

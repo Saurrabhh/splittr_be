@@ -63,7 +63,7 @@ func uuidToPg(s *string, u uuid.UUID) pgtype.UUID {
 	return pgtype.UUID{Bytes: u, Valid: true}
 }
 
-func toGroupsFromSyncBySequence(rows []dbgen.Group) []domain.Group {
+func toGroupsFromSyncBySequence(rows []dbgen.SyncGroupsBySequenceRow) []domain.Group {
 	groups := make([]domain.Group, 0, len(rows))
 	for _, r := range rows {
 		g := mapGroupFields(r.ID, r.Name, r.Description, r.InviteCode, r.InviteCodeExpiresAt, r.RequireAdminApproval, r.CreatedBy, r.CreatedAt, r.UpdatedAt, r.ArchivedAt, r.IconUrl)
