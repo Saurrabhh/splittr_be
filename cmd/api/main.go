@@ -15,7 +15,10 @@ import (
 // @description     Backend API service for Splittr bill splitting.
 // @BasePath        /v1
 //
-// @securitydefinitions.bearerauth BearerAuth
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
 func main() {
 	// Configure logging
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))

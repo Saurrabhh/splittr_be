@@ -2220,4 +2220,10 @@ paths:
       summary: Update user settings
       tags:
       - users
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
