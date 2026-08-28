@@ -14,6 +14,7 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/storage"
 	"github.com/Saurrabhh/splittr_be/internal/storage/cloudinary"
+	"github.com/Saurrabhh/splittr_be/internal/sync"
 	"github.com/Saurrabhh/splittr_be/internal/user"
 )
 
@@ -50,6 +51,7 @@ type dependencies struct {
 	activityHandler     *activity.Handler
 	notificationHandler *notification.Handler
 	appConfigHandler    *appconfig.Handler
+	syncHandler         *sync.Handler
 }
 
 // initDependencies bootstraps and wires all application dependencies.
@@ -109,6 +111,10 @@ func initDependencies(ctx context.Context, app *Application) (*dependencies, err
 	expenseUseCase := expense.NewUseCase(expenseRepo, tm, groupUseCase, activityUseCase, notificationSenderAdapter{notificationUseCase})
 	expenseHandler := expense.NewHandler(expenseUseCase)
 
+	// Unified Sync wiring
+	syncUseCase := sync.NewUseCase(userUseCase, groupUseCase, expenseUseCase)
+	syncHandler := sync.NewHandler(syncUseCase)
+
 	return &dependencies{
 		authMiddleware:      authMiddleware,
 		userHandler:         userHandler,
@@ -117,5 +123,6 @@ func initDependencies(ctx context.Context, app *Application) (*dependencies, err
 		activityHandler:     activityHandler,
 		notificationHandler: notificationHandler,
 		appConfigHandler:    appConfigHandler,
+		syncHandler:         syncHandler,
 	}, nil
 }

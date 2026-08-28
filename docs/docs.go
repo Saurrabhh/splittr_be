@@ -351,57 +351,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/expenses/sync": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Retrieve active and deleted expenses modified after a given sequence version.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "expenses"
-                ],
-                "summary": "Sync expenses",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Last received sequence version",
-                        "name": "lastVersion",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Maximum items to return (default 100)",
-                        "name": "limit",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/Expense.ExpenseSyncResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/Common.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/Common.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/expenses/{id}": {
             "get": {
                 "security": [
@@ -697,57 +646,6 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/Common.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/Common.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/Common.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/friends/sync": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Retrieve friendship changes modified after a given sequence version.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "friends"
-                ],
-                "summary": "Sync friends",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Last received sequence version",
-                        "name": "lastVersion",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Maximum items to return (default 100)",
-                        "name": "limit",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/User.FriendSyncResponse"
                         }
                     },
                     "401": {
@@ -1087,57 +985,6 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/Common.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/Common.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/groups/sync": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Retrieve active and archived groups modified after a given sequence version.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "groups"
-                ],
-                "summary": "Sync groups",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Last received sequence version",
-                        "name": "lastVersion",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Maximum items to return (default 100)",
-                        "name": "limit",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/Group.GroupSyncResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/Common.ErrorResponse"
                         }
@@ -1992,6 +1839,69 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sync": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve delta updates and tombstones for friends, groups, and expenses after given sequence versions in a single round-trip.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sync"
+                ],
+                "summary": "Unified batch sync",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Last received friends sequence version",
+                        "name": "friendsVersion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Last received groups sequence version",
+                        "name": "groupsVersion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Last received expenses sequence version",
+                        "name": "expensesVersion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Maximum items per entity category (default 100)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Sync.SyncResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/Common.ErrorResponse"
                         }
@@ -3058,14 +2968,14 @@ const docTemplate = `{
         "Group.GroupSyncResponse": {
             "type": "object",
             "properties": {
-                "newVersion": {
-                    "type": "integer"
-                },
-                "removedGroupIds": {
+                "deletedIds": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
+                },
+                "newVersion": {
+                    "type": "integer"
                 },
                 "updated": {
                     "type": "array",
@@ -3372,6 +3282,20 @@ const docTemplate = `{
                 }
             }
         },
+        "Sync.SyncResponse": {
+            "type": "object",
+            "properties": {
+                "expenses": {
+                    "$ref": "#/definitions/Expense.ExpenseSyncResponse"
+                },
+                "friends": {
+                    "$ref": "#/definitions/User.FriendSyncResponse"
+                },
+                "groups": {
+                    "$ref": "#/definitions/Group.GroupSyncResponse"
+                }
+            }
+        },
         "User.AddFriendRequest": {
             "type": "object",
             "properties": {
@@ -3386,19 +3310,19 @@ const docTemplate = `{
         "User.FriendSyncResponse": {
             "type": "object",
             "properties": {
-                "friends": {
+                "deletedIds": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/User.FriendshipSyncRecord"
+                        "type": "string"
                     }
                 },
                 "newVersion": {
                     "type": "integer"
                 },
-                "removedFriendIds": {
+                "updated": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/User.FriendshipSyncRecord"
                     }
                 }
             }

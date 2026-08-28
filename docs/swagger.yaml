@@ -507,12 +507,12 @@ definitions:
     type: object
   Group.GroupSyncResponse:
     properties:
-      newVersion:
-        type: integer
-      removedGroupIds:
+      deletedIds:
         items:
           type: string
         type: array
+      newVersion:
+        type: integer
       updated:
         items:
           $ref: '#/definitions/Group.Group'
@@ -716,6 +716,15 @@ definitions:
       pagination:
         $ref: '#/definitions/Meta'
     type: object
+  Sync.SyncResponse:
+    properties:
+      expenses:
+        $ref: '#/definitions/Expense.ExpenseSyncResponse'
+      friends:
+        $ref: '#/definitions/User.FriendSyncResponse'
+      groups:
+        $ref: '#/definitions/Group.GroupSyncResponse'
+    type: object
   User.AddFriendRequest:
     properties:
       friendEmail:
@@ -725,15 +734,15 @@ definitions:
     type: object
   User.FriendSyncResponse:
     properties:
-      friends:
+      deletedIds:
         items:
-          $ref: '#/definitions/User.FriendshipSyncRecord'
+          type: string
         type: array
       newVersion:
         type: integer
-      removedFriendIds:
+      updated:
         items:
-          type: string
+          $ref: '#/definitions/User.FriendshipSyncRecord'
         type: array
     type: object
   User.FriendWithStatus:
@@ -1183,39 +1192,6 @@ paths:
       summary: Settle balance
       tags:
       - expenses
-  /expenses/sync:
-    get:
-      description: Retrieve active and deleted expenses modified after a given sequence
-        version.
-      parameters:
-      - description: Last received sequence version
-        in: query
-        name: lastVersion
-        type: integer
-      - description: Maximum items to return (default 100)
-        in: query
-        name: limit
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/Expense.ExpenseSyncResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/Common.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/Common.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Sync expenses
-      tags:
-      - expenses
   /friends:
     get:
       description: Get friends list. Use optional status parameter to filter by ACCEPTED,
@@ -1361,38 +1337,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Update friendship status
-      tags:
-      - friends
-  /friends/sync:
-    get:
-      description: Retrieve friendship changes modified after a given sequence version.
-      parameters:
-      - description: Last received sequence version
-        in: query
-        name: lastVersion
-        type: integer
-      - description: Maximum items to return (default 100)
-        in: query
-        name: limit
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/User.FriendSyncResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/Common.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/Common.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Sync friends
       tags:
       - friends
   /groups:
@@ -1981,39 +1925,6 @@ paths:
       summary: Get group preview
       tags:
       - groups
-  /groups/sync:
-    get:
-      description: Retrieve active and archived groups modified after a given sequence
-        version.
-      parameters:
-      - description: Last received sequence version
-        in: query
-        name: lastVersion
-        type: integer
-      - description: Maximum items to return (default 100)
-        in: query
-        name: limit
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/Group.GroupSyncResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/Common.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/Common.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Sync groups
-      tags:
-      - groups
   /notifications:
     get:
       description: Get a cursor-paginated list of notifications for the current user.
@@ -2126,6 +2037,47 @@ paths:
       summary: Mark notification as read
       tags:
       - notifications
+  /sync:
+    get:
+      description: Retrieve delta updates and tombstones for friends, groups, and
+        expenses after given sequence versions in a single round-trip.
+      parameters:
+      - description: Last received friends sequence version
+        in: query
+        name: friendsVersion
+        type: integer
+      - description: Last received groups sequence version
+        in: query
+        name: groupsVersion
+        type: integer
+      - description: Last received expenses sequence version
+        in: query
+        name: expensesVersion
+        type: integer
+      - description: Maximum items per entity category (default 100)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Sync.SyncResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Unified batch sync
+      tags:
+      - sync
   /users:
     post:
       consumes:

@@ -44,6 +44,7 @@ func (app *Application) routes(deps *dependencies) http.Handler {
 			deps.expenseHandler.RegisterRoutes(r)
 			deps.activityHandler.RegisterRoutes(r)
 			deps.notificationHandler.RegisterRoutes(r)
+			deps.syncHandler.RegisterRoutes(r)
 		})
 	})
 

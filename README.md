@@ -37,6 +37,7 @@ A Go-based backend service for **Splittr**, a bill-splitting application. This s
 │   ├── group/                # Group bill splitting workspace and member logic
 │   ├── notification/         # Notification tray database operations and endpoints
 │   ├── response/             # Standardized API JSON error and success responses
+│   ├── sync/                 # Unified batch delta synchronization engine
 │   └── user/                 # User domain business logic (handler, usecase, repository)
 ├── env/                      # Environment-specific configuration files (.env)
 ├── .air.toml                 # Air tool configuration for local hot reload
@@ -142,9 +143,10 @@ Authorization: Bearer <FIREBASE_ID_TOKEN>
 
 ### Core API Groups
 - ⚙️ **App Config (`/v1/app-config`)**: App startup remote config, force-update rules, maintenance status, expense categories, currencies, limits, feature flags, legal URLs (supports optional auth & ETag caching).
-- 👤 **Users & Friends (`/v1/users`, `/v1/friends`)**: Register profile, fetch current user info, upload avatar image (`POST /v1/users/me/avatar`), search & add friends, remove friendships, delta sync (`GET /v1/friends/sync`).
-- 👥 **Groups (`/v1/groups`)**: Create & join bill splitting groups via 7-day expirable invite codes, upload optional group icon (`POST /v1/groups/{id}/icon`), optional admin approval workflow (`requireAdminApproval`), member status filtering (`GET /groups/{id}/members?status=PENDING`), join request decision (`POST /groups/{id}/members/{userId}/decision`), invite code reset (`POST /groups/{id}/invite-code/reset`), and delta sync with active members (`GET /v1/groups/sync`).
-- 💸 **Expenses & Balances (`/v1/expenses`, `/v1/balances`)**: Create splits (equal/exact/percentage), settle debts, fetch global or group-simplified balances, delta sync (`GET /v1/expenses/sync`).
+- 👤 **Users & Friends (`/v1/users`, `/v1/friends`)**: Register profile, fetch current user info, upload avatar image (`POST /v1/users/me/avatar`), search & add friends, remove friendships.
+- 👥 **Groups (`/v1/groups`)**: Create & join bill splitting groups via 7-day expirable invite codes, upload optional group icon (`POST /v1/groups/{id}/icon`), optional admin approval workflow (`requireAdminApproval`), member status filtering (`GET /groups/{id}/members?status=PENDING`), join request decision (`POST /groups/{id}/members/{userId}/decision`), and invite code reset (`POST /groups/{id}/invite-code/reset`).
+- 💸 **Expenses & Balances (`/v1/expenses`, `/v1/balances`)**: Create splits (equal/exact/percentage), settle debts, and fetch global or group-simplified balances.
+- 🔄 **Unified Sync (`/v1/sync`)**: Single batch endpoint synchronizing friends, groups, and expenses in one round-trip.
 - 📊 **Activities (`/v1/activities`)**: Browse group activity logs and audit trails.
 - 🔔 **Notifications (`/v1/notifications`)**: Retrieve personal notifications, mark items as read.
 
@@ -160,8 +162,9 @@ Splittr is designed for high-performance offline-first mobile applications (e.g.
 - **N+1 Sentinel Probing**: Queries `requestedLimit + 1` to compute `hasMore` without executing expensive `COUNT(*)` queries.
 - **Immune to Page Drift**: Adding or deleting items in earlier pages does not shift or skip items in subsequent pages.
 
-### 2. Monotonic Delta Sync with Tombstones (`/sync` Endpoints)
+### 2. Monotonic Delta Sync with Tombstones (`GET /v1/sync`)
 - **Monotonic Watermarking**: Uses `global_sync_seq` with `sync_version BIGINT` auto-bumped on updates via database triggers.
 - **Entity Tombstones**: Dedicated `entity_tombstones` table records deletions, group archives, and membership evictions to guarantee zero zombie/ghost records in local offline cache.
-- **Atomic Local Catch-Up**: Clients pass `lastVersion`, receive `{ newVersion, updated: [...], removed...Ids: [...] }`, and apply updates to local storage in a single transaction.
+- **Unified Batch Round-Trip**: Single `GET /v1/sync?friendsVersion={v1}&groupsVersion={v2}&expensesVersion={v3}` endpoint aggregates changes across friends, groups, and expenses into standardized buckets `{ "newVersion": ..., "updated": [...], "deletedIds": [...] }` in a single network round-trip.
+- **Atomic Local Catch-Up**: Clients pass their respective local domain sequence versions and apply updates to local offline storage within a single local transaction.
 
