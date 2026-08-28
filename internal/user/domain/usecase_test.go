@@ -131,6 +131,12 @@ func (m *mockUserRepository) GetFriendTombstonesBySequence(ctx context.Context, 
 	return args.Get(0).([]domain.Tombstone), args.Error(1)
 }
 
+func (m *mockUserRepository) GetCurrentSyncVersion(ctx context.Context) (int64, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+
 
 // --- RegisterUser Tests ---
 
@@ -294,11 +300,13 @@ func TestSyncFriends_Success(t *testing.T) {
 	mockRepo.On("GetFriendTombstonesBySequence", ctx, int64(10), "usr-1", int32(100)).Return([]domain.Tombstone{
 		{EntityID: "usr-3", SyncVersion: 12},
 	}, nil)
+	mockRepo.On("GetCurrentSyncVersion", ctx).Return(int64(20), nil)
 
 	uc := domain.NewUseCase(mockRepo, nil)
 	resp, err := uc.SyncFriends(ctx, 10, "usr-1", 100)
 	require.NoError(t, err)
 	assert.Equal(t, int64(12), resp.NewVersion)
+	assert.Equal(t, int64(20), resp.CurrentServerVersion)
 	assert.Len(t, resp.Updated, 1)
 	assert.Equal(t, []string{"usr-3"}, resp.DeletedIDs)
 	mockRepo.AssertExpectations(t)

@@ -133,6 +133,12 @@ func (m *mockGroupRepository) GetGroupTombstonesBySequence(ctx context.Context, 
 	return args.Get(0).([]domain.Tombstone), args.Error(1)
 }
 
+func (m *mockGroupRepository) GetCurrentSyncVersion(ctx context.Context) (int64, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+
 
 
 type mockActivityLogger struct {
@@ -449,11 +455,13 @@ func TestSyncGroups_Success(t *testing.T) {
 		{Group: domain.Group{ID: "grp-2", Name: "Flat", SyncVersion: 12, ArchivedAt: &now}},
 	}, nil)
 	mockRepo.On("GetGroupTombstonesBySequence", ctx, int64(10), "usr-1", int32(100)).Return([]domain.Tombstone{}, nil)
+	mockRepo.On("GetCurrentSyncVersion", ctx).Return(int64(20), nil)
 
 	uc := domain.NewUseCase(mockRepo, mockTx, nil, nil, nil)
 	resp, err := uc.SyncGroups(ctx, 10, "usr-1", 100)
 	require.NoError(t, err)
 	assert.Equal(t, int64(12), resp.NewVersion)
+	assert.Equal(t, int64(20), resp.CurrentServerVersion)
 	assert.Len(t, resp.Updated, 1)
 	assert.Equal(t, "grp-1", resp.Updated[0].ID)
 	assert.Equal(t, []string{"grp-2"}, resp.DeletedIDs)

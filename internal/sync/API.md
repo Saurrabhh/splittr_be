@@ -11,6 +11,7 @@ The Sync module provides a single, high-performance batch synchronization endpoi
 {
   "friends": {
     "newVersion": 150,
+    "currentServerVersion": 150,
     "updated": [
       {
         "userId": "usr-1",
@@ -25,6 +26,7 @@ The Sync module provides a single, high-performance batch synchronization endpoi
   },
   "groups": {
     "newVersion": 150,
+    "currentServerVersion": 150,
     "updated": [
       {
         "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -41,6 +43,7 @@ The Sync module provides a single, high-performance batch synchronization endpoi
   },
   "expenses": {
     "newVersion": 150,
+    "currentServerVersion": 150,
     "updated": [
       {
         "id": "exp-1",

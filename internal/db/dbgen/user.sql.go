@@ -104,6 +104,17 @@ func (q *Queries) DeleteFriendship(ctx context.Context, arg DeleteFriendshipPara
 	return err
 }
 
+const getCurrentSyncVersion = `-- name: GetCurrentSyncVersion :one
+SELECT COALESCE(pg_sequence_last_value('global_sync_seq'::regclass), 0)::BIGINT AS current_version
+`
+
+func (q *Queries) GetCurrentSyncVersion(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getCurrentSyncVersion)
+	var current_version int64
+	err := row.Scan(&current_version)
+	return current_version, err
+}
+
 const getFriendTombstonesBySequence = `-- name: GetFriendTombstonesBySequence :many
 SELECT entity_id, sync_version
 FROM entity_tombstones

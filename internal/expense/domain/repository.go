@@ -22,6 +22,7 @@ type Repository interface {
 	SyncExpensesBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]Expense, error)
 	UpdateExpense(ctx context.Context, e *Expense) error
 	DeleteExpenseSplits(ctx context.Context, expenseID string) error
+	GetCurrentSyncVersion(ctx context.Context) (int64, error)
 }
 
 

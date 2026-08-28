@@ -408,9 +408,10 @@ func (u *UseCase) UpdateUserSettings(ctx context.Context, userID string, autoAcc
 
 // FriendSyncResponse contains updated friends and removed friend IDs for offline sync.
 type FriendSyncResponse struct {
-	NewVersion int64                  `json:"newVersion"`
-	Updated    []FriendshipSyncRecord `json:"updated"`
-	DeletedIDs []string               `json:"deletedIds"`
+	NewVersion           int64                  `json:"newVersion"`
+	CurrentServerVersion int64                  `json:"currentServerVersion"`
+	Updated              []FriendshipSyncRecord `json:"updated"`
+	DeletedIDs           []string               `json:"deletedIds"`
 } // @name User.FriendSyncResponse
 
 // SyncFriends retrieves friendship changes and tombstones after lastVersion for a user.
@@ -433,6 +434,15 @@ func (u *UseCase) SyncFriends(ctx context.Context, lastVersion int64, userID str
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: "Failed to get friend tombstones",
+			Err:     err,
+		}
+	}
+
+	currentVersion, err := u.repo.GetCurrentSyncVersion(ctx)
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "Failed to get current sync version",
 			Err:     err,
 		}
 	}
@@ -460,9 +470,10 @@ func (u *UseCase) SyncFriends(ctx context.Context, lastVersion int64, userID str
 	}
 
 	return &FriendSyncResponse{
-		NewVersion: maxVersion,
-		Updated:    records,
-		DeletedIDs: removedIDs,
+		NewVersion:           maxVersion,
+		CurrentServerVersion: currentVersion,
+		Updated:              records,
+		DeletedIDs:           removedIDs,
 	}, nil
 }
 

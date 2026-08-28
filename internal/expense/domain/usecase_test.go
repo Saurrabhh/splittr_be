@@ -113,6 +113,12 @@ func (m *mockExpenseRepository) DeleteExpenseSplits(ctx context.Context, expense
 	return m.Called(ctx, expenseID).Error(0)
 }
 
+func (m *mockExpenseRepository) GetCurrentSyncVersion(ctx context.Context) (int64, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+
 
 func (m *mockExpenseRepository) ListExpenseSplitsByIDs(ctx context.Context, expenseIDs []string) ([]domain.Split, error) {
 
@@ -666,11 +672,13 @@ func TestSyncExpenses_Success(t *testing.T) {
 		{ID: "exp-2", Description: "Lunch", Amount: 100.0, SyncVersion: 12, UpdatedAt: now, DeletedAt: &now},
 	}, nil)
 	mockRepo.On("ListExpenseSplitsByIDs", ctx, []string{"exp-1"}).Return([]domain.Split{}, nil)
+	mockRepo.On("GetCurrentSyncVersion", ctx).Return(int64(20), nil)
 
 	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
 	resp, err := uc.SyncExpenses(ctx, 10, "usr-1", 100)
 	require.NoError(t, err)
 	assert.Equal(t, int64(12), resp.NewVersion)
+	assert.Equal(t, int64(20), resp.CurrentServerVersion)
 	assert.Len(t, resp.Updated, 1)
 	assert.Equal(t, "exp-1", resp.Updated[0].ID)
 	assert.Equal(t, []string{"exp-2"}, resp.DeletedIDs)

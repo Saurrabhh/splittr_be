@@ -528,4 +528,12 @@ func (r *DBRepository) GetGroupTombstonesBySequence(ctx context.Context, lastVer
 	return tombstones, nil
 }
 
+// GetCurrentSyncVersion retrieves the current sequence watermark for sync.
+func (r *DBRepository) GetCurrentSyncVersion(ctx context.Context) (int64, error) {
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+	return q.GetCurrentSyncVersion(ctx)
+}
+
+
 

@@ -27,6 +27,7 @@ type Repository interface {
 	ListFriendsByStatus(ctx context.Context, userID string, status FriendshipStatus) ([]FriendWithStatus, error)
 	SyncFriendsBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]FriendshipSyncRecord, error)
 	GetFriendTombstonesBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]Tombstone, error)
+	GetCurrentSyncVersion(ctx context.Context) (int64, error)
 }
 
 type FriendshipSyncRecord struct {

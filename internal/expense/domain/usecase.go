@@ -785,9 +785,10 @@ func directDebts(pairwise []PairwiseDebt) []Settlement {
 
 // ExpenseSyncResponse contains updated expenses and deleted IDs for offline sync.
 type ExpenseSyncResponse struct {
-	NewVersion int64               `json:"newVersion"`
-	Updated    []ExpenseWithSplits `json:"updated"`
-	DeletedIDs []string            `json:"deletedIds"`
+	NewVersion           int64               `json:"newVersion"`
+	CurrentServerVersion int64               `json:"currentServerVersion"`
+	Updated              []ExpenseWithSplits `json:"updated"`
+	DeletedIDs           []string            `json:"deletedIds"`
 } // @name Expense.ExpenseSyncResponse
 
 // SyncExpenses retrieves expenses updated after lastVersion and categorizes them into active and soft-deleted.
@@ -799,6 +800,11 @@ func (u *UseCase) SyncExpenses(ctx context.Context, lastVersion int64, userID st
 	expenses, err := u.repo.SyncExpensesBySequence(ctx, lastVersion, userID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("sync expenses: %w", err)
+	}
+
+	currentVersion, err := u.repo.GetCurrentSyncVersion(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get current sync version: %w", err)
 	}
 
 	var activeExpenses []Expense
@@ -846,9 +852,10 @@ func (u *UseCase) SyncExpenses(ctx context.Context, lastVersion int64, userID st
 	}
 
 	return &ExpenseSyncResponse{
-		NewVersion: maxVersion,
-		Updated:    updated,
-		DeletedIDs: deletedIDs,
+		NewVersion:           maxVersion,
+		CurrentServerVersion: currentVersion,
+		Updated:              updated,
+		DeletedIDs:           deletedIDs,
 	}, nil
 }
 

@@ -140,6 +140,12 @@ func (m *mockGroupRepository) GetGroupTombstonesBySequence(ctx context.Context, 
 	return args.Get(0).([]domain.Tombstone), args.Error(1)
 }
 
+func (m *mockGroupRepository) GetCurrentSyncVersion(ctx context.Context) (int64, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+
 
 
 type mockActivityLogger struct {

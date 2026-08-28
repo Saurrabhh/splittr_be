@@ -119,6 +119,12 @@ func (m *mockExpenseRepository) DeleteExpenseSplits(ctx context.Context, expense
 	return m.Called(ctx, expenseID).Error(0)
 }
 
+func (m *mockExpenseRepository) GetCurrentSyncVersion(ctx context.Context) (int64, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+
 
 
 func (m *mockExpenseRepository) ListExpenseSplitsByIDs(ctx context.Context, expenseIDs []string) ([]domain.Split, error) {

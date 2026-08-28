@@ -134,6 +134,20 @@ type GroupMember struct {
 	JoinedAt pgtype.Timestamptz
 }
 
+type IdempotencyKey struct {
+	ID              uuid.UUID
+	Key             string
+	UserID          uuid.UUID
+	RequestPath     string
+	RequestMethod   string
+	RequestHash     string
+	ResponseCode    pgtype.Int4
+	ResponseHeaders []byte
+	ResponseBody    []byte
+	CreatedAt       pgtype.Timestamptz
+	LockedAt        pgtype.Timestamptz
+}
+
 type LegalConfig struct {
 	ID                int32
 	TermsOfServiceUrl string

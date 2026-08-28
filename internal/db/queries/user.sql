@@ -112,4 +112,7 @@ SET avatar_url = $2, updated_at = NOW()
 WHERE id = $1
 RETURNING id, firebase_uid, email, phone, name, default_currency, avatar_url, created_at, updated_at;
 
+-- name: GetCurrentSyncVersion :one
+SELECT COALESCE(pg_sequence_last_value('global_sync_seq'::regclass), 0)::BIGINT AS current_version;
+
 

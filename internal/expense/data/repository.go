@@ -456,4 +456,12 @@ func (r *DBRepository) DeleteExpenseSplits(ctx context.Context, expenseID string
 	return nil
 }
 
+// GetCurrentSyncVersion retrieves the current sequence watermark for sync.
+func (r *DBRepository) GetCurrentSyncVersion(ctx context.Context) (int64, error) {
+	client := r.tm.GetTxOrPool(ctx)
+	q := dbgen.New(client)
+	return q.GetCurrentSyncVersion(ctx)
+}
+
+
 

@@ -25,6 +25,7 @@ type Repository interface {
 	SyncGroupsBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]GroupWithMembers, error)
 
 	GetGroupTombstonesBySequence(ctx context.Context, lastVersion int64, userID string, limit int32) ([]Tombstone, error)
+	GetCurrentSyncVersion(ctx context.Context) (int64, error)
 }
 
 // GroupWithMembers wraps a Group entity with its active members.

@@ -138,6 +138,12 @@ func (m *mockUserRepository) GetFriendTombstonesBySequence(ctx context.Context, 
 	return args.Get(0).([]domain.Tombstone), args.Error(1)
 }
 
+func (m *mockUserRepository) GetCurrentSyncVersion(ctx context.Context) (int64, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+
 
 func setupHandlerTestRouter(uc *domain.UseCase, identity *auth.Identity) chi.Router {
 	r := chi.NewRouter()

@@ -1013,9 +1013,10 @@ func (u *UseCase) checkIsAdmin(ctx context.Context, groupID, userID string) (boo
 
 // GroupSyncResponse contains updated groups and removed group IDs for offline sync.
 type GroupSyncResponse struct {
-	NewVersion int64    `json:"newVersion"`
-	Updated    []Group  `json:"updated"`
-	DeletedIDs []string `json:"deletedIds"`
+	NewVersion           int64    `json:"newVersion"`
+	CurrentServerVersion int64    `json:"currentServerVersion"`
+	Updated              []Group  `json:"updated"`
+	DeletedIDs           []string `json:"deletedIds"`
 } // @name Group.GroupSyncResponse
 
 // SyncGroups retrieves groups updated after lastVersion for a user.
@@ -1038,6 +1039,15 @@ func (u *UseCase) SyncGroups(ctx context.Context, lastVersion int64, userID stri
 		return nil, &response.AppError{
 			Type:    response.TypeInternal,
 			Message: "Failed to get group tombstones",
+			Err:     err,
+		}
+	}
+
+	currentVersion, err := u.repo.GetCurrentSyncVersion(ctx)
+	if err != nil {
+		return nil, &response.AppError{
+			Type:    response.TypeInternal,
+			Message: "Failed to get current sync version",
 			Err:     err,
 		}
 	}
@@ -1079,9 +1089,10 @@ func (u *UseCase) SyncGroups(ctx context.Context, lastVersion int64, userID stri
 	}
 
 	return &GroupSyncResponse{
-		NewVersion: maxVersion,
-		Updated:    activeGroups,
-		DeletedIDs: removedIDs,
+		NewVersion:           maxVersion,
+		CurrentServerVersion: currentVersion,
+		Updated:              activeGroups,
+		DeletedIDs:           removedIDs,
 	}, nil
 }
 
