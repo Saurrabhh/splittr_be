@@ -1248,6 +1248,80 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update group details. Admin privileges required.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Update group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Group update payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Group.UpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Group.Group"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/groups/{id}/feed": {
@@ -1685,7 +1759,7 @@ const docTemplate = `{
             }
         },
         "/groups/{id}/members/{userId}/role": {
-            "put": {
+            "patch": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -1804,16 +1878,17 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/notifications/read-all": {
-            "post": {
+            },
+            "patch": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
                 "description": "Mark all unread notifications as read for the current user.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1821,11 +1896,28 @@ const docTemplate = `{
                     "notifications"
                 ],
                 "summary": "Mark all notifications as read",
+                "parameters": [
+                    {
+                        "description": "Bulk update payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Notification.BulkUpdateRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success message",
                         "schema": {
                             "$ref": "#/definitions/Common.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Common.ErrorResponse"
                         }
                     },
                     "401": {
@@ -1843,14 +1935,17 @@ const docTemplate = `{
                 }
             }
         },
-        "/notifications/{id}/read": {
-            "post": {
+        "/notifications/{id}": {
+            "patch": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
                 "description": "Mark a specific notification as read by ID.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1865,6 +1960,15 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Update notification payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Notification.UpdateRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -1994,7 +2098,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
+            "patch": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -2141,7 +2245,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
+            "patch": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -3080,6 +3184,23 @@ const docTemplate = `{
                 }
             }
         },
+        "Group.UpdateRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "requireAdminApproval": {
+                    "type": "boolean"
+                }
+            }
+        },
         "Group.UpdateRoleRequest": {
             "type": "object",
             "properties": {
@@ -3116,6 +3237,14 @@ const docTemplate = `{
                 "AlertTypeJoinRequestRejected"
             ]
         },
+        "Notification.BulkUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "isRead": {
+                    "type": "boolean"
+                }
+            }
+        },
         "Notification.Notification": {
             "type": "object",
             "properties": {
@@ -3148,6 +3277,14 @@ const docTemplate = `{
                 },
                 "userId": {
                     "type": "string"
+                }
+            }
+        },
+        "Notification.UpdateRequest": {
+            "type": "object",
+            "properties": {
+                "isRead": {
+                    "type": "boolean"
                 }
             }
         },

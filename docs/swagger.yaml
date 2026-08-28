@@ -592,6 +592,17 @@ definitions:
       requireAdminApproval:
         type: boolean
     type: object
+  Group.UpdateRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      requireAdminApproval:
+        type: boolean
+    required:
+    - name
+    type: object
   Group.UpdateRoleRequest:
     properties:
       role:
@@ -618,6 +629,11 @@ definitions:
     - AlertTypeJoinRequestPending
     - AlertTypeJoinRequestApproved
     - AlertTypeJoinRequestRejected
+  Notification.BulkUpdateRequest:
+    properties:
+      isRead:
+        type: boolean
+    type: object
   Notification.Notification:
     properties:
       activityId:
@@ -640,6 +656,11 @@ definitions:
         $ref: '#/definitions/Notification.AlertType'
       userId:
         type: string
+    type: object
+  Notification.UpdateRequest:
+    properties:
+      isRead:
+        type: boolean
     type: object
   Page-Activity:
     properties:
@@ -1506,6 +1527,54 @@ paths:
       summary: Get group details
       tags:
       - groups
+    patch:
+      consumes:
+      - application/json
+      description: Update group details. Admin privileges required.
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Group update payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Group.UpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Group.Group'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update group
+      tags:
+      - groups
   /groups/{id}/feed:
     get:
       description: Get a cursor-paginated timeline of events inside a group.
@@ -1790,7 +1859,7 @@ paths:
       tags:
       - groups
   /groups/{id}/members/{userId}/role:
-    put:
+    patch:
       consumes:
       - application/json
       description: Update the role (e.g. ADMIN, MEMBER) of a user inside the group.
@@ -1977,8 +2046,45 @@ paths:
       summary: List notifications
       tags:
       - notifications
-  /notifications/{id}/read:
-    post:
+    patch:
+      consumes:
+      - application/json
+      description: Mark all unread notifications as read for the current user.
+      parameters:
+      - description: Bulk update payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Notification.BulkUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            $ref: '#/definitions/Common.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Common.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mark all notifications as read
+      tags:
+      - notifications
+  /notifications/{id}:
+    patch:
+      consumes:
+      - application/json
       description: Mark a specific notification as read by ID.
       parameters:
       - description: Notification ID
@@ -1986,6 +2092,12 @@ paths:
         name: id
         required: true
         type: string
+      - description: Update notification payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Notification.UpdateRequest'
       produces:
       - application/json
       responses:
@@ -2012,29 +2124,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Mark notification as read
-      tags:
-      - notifications
-  /notifications/read-all:
-    post:
-      description: Mark all unread notifications as read for the current user.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success message
-          schema:
-            $ref: '#/definitions/Common.MessageResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/Common.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/Common.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Mark all notifications as read
       tags:
       - notifications
   /users:
@@ -2096,7 +2185,7 @@ paths:
       summary: Get current user profile
       tags:
       - users
-    put:
+    patch:
       consumes:
       - application/json
       description: Update name or default currency for the current user.
@@ -2189,7 +2278,7 @@ paths:
       summary: Get user settings
       tags:
       - users
-    put:
+    patch:
       consumes:
       - application/json
       description: Update privacy preferences such as autoAcceptFriendRequests.
