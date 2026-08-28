@@ -28,6 +28,10 @@ func WithUser(ctx context.Context, u *User) context.Context {
 	return http.WithUser(ctx, u)
 }
 
+func From(ctx context.Context) *User {
+	return http.From(ctx)
+}
+
 func MustFrom(ctx context.Context) *User {
 	return http.MustFrom(ctx)
 }

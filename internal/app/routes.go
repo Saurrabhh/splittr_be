@@ -45,6 +45,12 @@ func (app *Application) routes(deps *dependencies) http.Handler {
 			deps.activityHandler.RegisterRoutes(r)
 			deps.notificationHandler.RegisterRoutes(r)
 			deps.syncHandler.RegisterRoutes(r)
+
+			// Idempotency middleware on mutation endpoints
+			idem := deps.idempotencyMiddleware.Handler
+			r.With(idem).Post("/expenses", deps.expenseHandler.Create)
+			r.With(idem).Post("/expenses/settle", deps.expenseHandler.Settle)
+			r.With(idem).Post("/groups", deps.groupHandler.Create)
 		})
 	})
 

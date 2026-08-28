@@ -10,6 +10,7 @@ import (
 	"github.com/Saurrabhh/splittr_be/internal/db"
 	"github.com/Saurrabhh/splittr_be/internal/expense"
 	"github.com/Saurrabhh/splittr_be/internal/group"
+	"github.com/Saurrabhh/splittr_be/internal/idempotency"
 	"github.com/Saurrabhh/splittr_be/internal/notification"
 	"github.com/Saurrabhh/splittr_be/internal/pagination"
 	"github.com/Saurrabhh/splittr_be/internal/storage"
@@ -44,7 +45,8 @@ func (a notificationSenderAdapter) CreateAlert(ctx context.Context, userID strin
 
 // dependencies holds all wired repository, usecase, and handler instances.
 type dependencies struct {
-	authMiddleware      *auth.Middleware
+	authMiddleware       *auth.Middleware
+	idempotencyMiddleware *idempotency.Middleware
 	userHandler         *user.Handler
 	groupHandler        *group.Handler
 	expenseHandler      *expense.Handler
@@ -115,8 +117,13 @@ func initDependencies(ctx context.Context, app *Application) (*dependencies, err
 	syncUseCase := sync.NewUseCase(userUseCase, groupUseCase, expenseUseCase)
 	syncHandler := sync.NewHandler(syncUseCase)
 
+	// Idempotency middleware wiring
+	idempotencyRepo := idempotency.NewRepository(app.DB, tm)
+	idempotencyMiddleware := idempotency.NewMiddleware(idempotencyRepo)
+
 	return &dependencies{
-		authMiddleware:      authMiddleware,
+		authMiddleware:       authMiddleware,
+		idempotencyMiddleware: idempotencyMiddleware,
 		userHandler:         userHandler,
 		groupHandler:        groupHandler,
 		expenseHandler:      expenseHandler,
