@@ -1,6 +1,7 @@
 package http_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -123,7 +124,7 @@ func TestHandler_List_InternalServerError(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
 }
 
-// --- POST /notifications/{id}/read Tests ---
+// --- PATCH /notifications/{id} Tests ---
 
 func TestHandler_MarkAsRead_Success(t *testing.T) {
 	mockRepo := new(mockNotificationRepository)
@@ -135,7 +136,9 @@ func TestHandler_MarkAsRead_Success(t *testing.T) {
 	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, currentUser)
 
-	req := httptest.NewRequest(http.MethodPost, "/notifications/"+notifID+"/read", nil)
+	body := `{"isRead": true}`
+	req := httptest.NewRequest(http.MethodPatch, "/notifications/"+notifID, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
 	router.ServeHTTP(rr, req)
@@ -151,39 +154,18 @@ func TestHandler_MarkAsRead_BadRequest(t *testing.T) {
 	mockRepo := new(mockNotificationRepository)
 	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
 
-	// When router matches route, if ID is somehow invalid / validation error returns Bad Request
-	// Note: uc.MarkAsRead(ctx, "", userID) returns validation error
 	uc := domain.NewUseCase(mockRepo)
-	router := chi.NewRouter()
-	h := notifhttp.NewHandler(uc)
-	router.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := user.WithUser(r.Context(), currentUser)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	})
-	// Route registered with custom param or handler call directly to simulate empty ID parameter
-	router.Post("/notifications/{id}/read", h.MarkAsRead)
+	router := setupHandlerTestRouter(uc, currentUser)
 
-	// Custom request targeting handler with empty chi url param (or directly calling handler for empty ID validation)
-	req := httptest.NewRequest(http.MethodPost, "/notifications//read", nil)
+	// Invalid JSON payload returns Bad Request
+	body := `invalid-json`
+	req := httptest.NewRequest(http.MethodPatch, "/notifications/notif-123", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
 	router.ServeHTTP(rr, req)
-	// chi router won't match double slash or will fail to extract param
-	// Let's also test via direct call to handler or route
-	if rr.Code != http.StatusBadRequest {
-		// Test directly via chi context with empty URLParam "id"
-		r := httptest.NewRequest(http.MethodPost, "/notifications/test/read", nil)
-		r = r.WithContext(user.WithUser(r.Context(), currentUser))
-		rctx := chi.NewRouteContext()
-		rctx.URLParams.Add("id", "") // empty ID
-		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 
-		rr2 := httptest.NewRecorder()
-		h.MarkAsRead(rr2, r)
-		assert.Equal(t, http.StatusBadRequest, rr2.Code)
-	}
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
 }
 
 func TestHandler_MarkAsRead_Unauthorized(t *testing.T) {
@@ -191,7 +173,9 @@ func TestHandler_MarkAsRead_Unauthorized(t *testing.T) {
 	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, nil) // Unauthenticated
 
-	req := httptest.NewRequest(http.MethodPost, "/notifications/notif-123/read", nil)
+	body := `{"isRead": true}`
+	req := httptest.NewRequest(http.MethodPatch, "/notifications/notif-123", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
 	router.ServeHTTP(rr, req)
@@ -209,7 +193,9 @@ func TestHandler_MarkAsRead_InternalServerError(t *testing.T) {
 	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, currentUser)
 
-	req := httptest.NewRequest(http.MethodPost, "/notifications/"+notifID+"/read", nil)
+	body := `{"isRead": true}`
+	req := httptest.NewRequest(http.MethodPatch, "/notifications/"+notifID, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
 	router.ServeHTTP(rr, req)
@@ -227,7 +213,9 @@ func TestHandler_MarkAsRead_NotFound(t *testing.T) {
 	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, currentUser)
 
-	req := httptest.NewRequest(http.MethodPost, "/notifications/"+notifID+"/read", nil)
+	body := `{"isRead": true}`
+	req := httptest.NewRequest(http.MethodPatch, "/notifications/"+notifID, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
 	router.ServeHTTP(rr, req)
@@ -235,7 +223,7 @@ func TestHandler_MarkAsRead_NotFound(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, rr.Code)
 }
 
-// --- POST /notifications/read-all Tests ---
+// --- PATCH /notifications Tests ---
 
 func TestHandler_MarkAllAsRead_Success(t *testing.T) {
 	mockRepo := new(mockNotificationRepository)
@@ -246,7 +234,9 @@ func TestHandler_MarkAllAsRead_Success(t *testing.T) {
 	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, currentUser)
 
-	req := httptest.NewRequest(http.MethodPost, "/notifications/read-all", nil)
+	body := `{"isRead": true}`
+	req := httptest.NewRequest(http.MethodPatch, "/notifications", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
 	router.ServeHTTP(rr, req)
@@ -263,7 +253,9 @@ func TestHandler_MarkAllAsRead_Unauthorized(t *testing.T) {
 	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, nil) // Unauthenticated
 
-	req := httptest.NewRequest(http.MethodPost, "/notifications/read-all", nil)
+	body := `{"isRead": true}`
+	req := httptest.NewRequest(http.MethodPatch, "/notifications", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
 	router.ServeHTTP(rr, req)
@@ -280,7 +272,9 @@ func TestHandler_MarkAllAsRead_InternalServerError(t *testing.T) {
 	uc := domain.NewUseCase(mockRepo)
 	router := setupHandlerTestRouter(uc, currentUser)
 
-	req := httptest.NewRequest(http.MethodPost, "/notifications/read-all", nil)
+	body := `{"isRead": true}`
+	req := httptest.NewRequest(http.MethodPatch, "/notifications", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
 	router.ServeHTTP(rr, req)

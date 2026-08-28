@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/Saurrabhh/splittr_be/internal/notification/domain"
@@ -25,8 +26,8 @@ func NewHandler(uc *domain.UseCase) *Handler {
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Route("/notifications", func(r chi.Router) {
 		r.Get("/", h.List)
-		r.Post("/{id}/read", h.MarkAsRead)
-		r.Post("/read-all", h.MarkAllAsRead)
+		r.Patch("/{id}", h.MarkAsRead)
+		r.Patch("/", h.MarkAllAsRead)
 	})
 }
 
@@ -57,14 +58,16 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 // @Summary      Mark notification as read
 // @Description  Mark a specific notification as read by ID.
 // @Tags         notifications
+// @Accept       json
 // @Produce      json
 // @Param        id path string true "Notification ID"
+// @Param        request body UpdateNotificationRequest true "Update notification payload"
 // @Success      200  {object}  response.MessageResponse "Success message"
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      404  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
-// @Router       /notifications/{id}/read [post]
+// @Router       /notifications/{id} [patch]
 // @Security     BearerAuth
 func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
@@ -74,33 +77,36 @@ func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.uc.MarkAsRead(r.Context(), id, currUser.ID)
-	if err != nil {
-		response.HandleError(w, err)
-		return
-	}
-
-	response.JSON(w, http.StatusOK, response.MessageResponse{Message: "notification marked as read"})
+	request.Run(w, r, http.StatusOK, func(ctx context.Context, req UpdateNotificationRequest) (*response.MessageResponse, error) {
+		err := h.uc.MarkAsRead(ctx, id, currUser.ID)
+		if err != nil {
+			return nil, err
+		}
+		return &response.MessageResponse{Message: "notification marked as read"}, nil
+	})
 }
 
 // MarkAllAsRead marks all notifications as read.
 // @Summary      Mark all notifications as read
 // @Description  Mark all unread notifications as read for the current user.
 // @Tags         notifications
+// @Accept       json
 // @Produce      json
+// @Param        request body BulkUpdateNotificationRequest true "Bulk update payload"
 // @Success      200  {object}  response.MessageResponse "Success message"
+// @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
-// @Router       /notifications/read-all [post]
+// @Router       /notifications [patch]
 // @Security     BearerAuth
 func (h *Handler) MarkAllAsRead(w http.ResponseWriter, r *http.Request) {
 	currUser := user.MustFrom(r.Context())
 
-	err := h.uc.MarkAllAsRead(r.Context(), currUser.ID)
-	if err != nil {
-		response.HandleError(w, err)
-		return
-	}
-
-	response.JSON(w, http.StatusOK, response.MessageResponse{Message: "all notifications marked as read"})
+	request.Run(w, r, http.StatusOK, func(ctx context.Context, req BulkUpdateNotificationRequest) (*response.MessageResponse, error) {
+		err := h.uc.MarkAllAsRead(ctx, currUser.ID)
+		if err != nil {
+			return nil, err
+		}
+		return &response.MessageResponse{Message: "all notifications marked as read"}, nil
+	})
 }
