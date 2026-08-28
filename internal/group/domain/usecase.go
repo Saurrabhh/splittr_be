@@ -1013,9 +1013,9 @@ func (u *UseCase) checkIsAdmin(ctx context.Context, groupID, userID string) (boo
 
 // GroupSyncResponse contains updated groups and removed group IDs for offline sync.
 type GroupSyncResponse struct {
-	NewVersion      int64    `json:"newVersion"`
-	Updated         []Group  `json:"updated"`
-	RemovedGroupIDs []string `json:"removedGroupIds"`
+	NewVersion int64    `json:"newVersion"`
+	Updated    []Group  `json:"updated"`
+	DeletedIDs []string `json:"deletedIds"`
 } // @name Group.GroupSyncResponse
 
 // SyncGroups retrieves groups updated after lastVersion for a user.
@@ -1079,9 +1079,9 @@ func (u *UseCase) SyncGroups(ctx context.Context, lastVersion int64, userID stri
 	}
 
 	return &GroupSyncResponse{
-		NewVersion:      maxVersion,
-		Updated:         activeGroups,
-		RemovedGroupIDs: removedIDs,
+		NewVersion: maxVersion,
+		Updated:    activeGroups,
+		DeletedIDs: removedIDs,
 	}, nil
 }
 

@@ -29,7 +29,6 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Post("/", h.Create)
 		r.Post("/settle", h.Settle)
 		r.Get("/", h.List)
-		r.Get("/sync", h.Sync)
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", h.GetDetails)
 			r.Patch("/", h.Update)
@@ -284,47 +283,6 @@ func (h *Handler) GetBalances(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusOK, balances)
-}
-
-// Sync retrieves delta expense updates using a monotonic sequence counter.
-// @Summary      Sync expenses
-// @Description  Retrieve active and deleted expenses modified after a given sequence version.
-// @Tags         expenses
-// @Produce      json
-// @Param        lastVersion query int64 false "Last received sequence version"
-// @Param        limit       query int   false "Maximum items to return (default 100)"
-// @Success      200  {object}  domain.ExpenseSyncResponse
-// @Failure      401  {object}  response.ErrorResponse
-// @Failure      500  {object}  response.ErrorResponse
-// @Router       /expenses/sync [get]
-// @Security     BearerAuth
-func (h *Handler) Sync(w http.ResponseWriter, r *http.Request) {
-	currUser := user.MustFrom(r.Context())
-
-	lastVersionStr := r.URL.Query().Get("lastVersion")
-	var lastVersion int64
-	if lastVersionStr != "" {
-		v, err := strconv.ParseInt(lastVersionStr, 10, 64)
-		if err == nil {
-			lastVersion = v
-		}
-	}
-
-	limitStr := r.URL.Query().Get("limit")
-	var limit int32 = 100
-	if limitStr != "" {
-		if l, err := strconv.ParseInt(limitStr, 10, 32); err == nil && l > 0 {
-			limit = int32(l)
-		}
-	}
-
-	res, err := h.uc.SyncExpenses(r.Context(), lastVersion, currUser.ID, limit)
-	if err != nil {
-		response.HandleError(w, err)
-		return
-	}
-
-	response.JSON(w, http.StatusOK, res)
 }
 
 // Update handles partial updates to an existing expense.

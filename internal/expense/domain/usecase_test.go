@@ -653,3 +653,27 @@ func TestDeleteExpense_NotFound(t *testing.T) {
 	require.ErrorAs(t, err, &appErr)
 	assert.Equal(t, response.TypeNotFound, appErr.Type)
 }
+
+// --- SyncExpenses Tests ---
+
+func TestSyncExpenses_Success(t *testing.T) {
+	mockRepo := new(mockExpenseRepository)
+	ctx := context.Background()
+
+	now := time.Now()
+	mockRepo.On("SyncExpensesBySequence", ctx, int64(10), "usr-1", int32(100)).Return([]domain.Expense{
+		{ID: "exp-1", Description: "Coffee", Amount: 50.0, SyncVersion: 11, UpdatedAt: now},
+		{ID: "exp-2", Description: "Lunch", Amount: 100.0, SyncVersion: 12, UpdatedAt: now, DeletedAt: &now},
+	}, nil)
+	mockRepo.On("ListExpenseSplitsByIDs", ctx, []string{"exp-1"}).Return([]domain.Split{}, nil)
+
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
+	resp, err := uc.SyncExpenses(ctx, 10, "usr-1", 100)
+	require.NoError(t, err)
+	assert.Equal(t, int64(12), resp.NewVersion)
+	assert.Len(t, resp.Updated, 1)
+	assert.Equal(t, "exp-1", resp.Updated[0].ID)
+	assert.Equal(t, []string{"exp-2"}, resp.DeletedIDs)
+	mockRepo.AssertExpectations(t)
+}
+

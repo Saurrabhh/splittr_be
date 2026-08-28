@@ -281,3 +281,26 @@ func TestUpdateUserSettings_Success(t *testing.T) {
 	assert.True(t, settings.AutoAcceptFriendRequests)
 	mockRepo.AssertExpectations(t)
 }
+
+// --- SyncFriends Tests ---
+
+func TestSyncFriends_Success(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+
+	mockRepo.On("SyncFriendsBySequence", ctx, int64(10), "usr-1", int32(100)).Return([]domain.FriendshipSyncRecord{
+		{UserID: "usr-1", FriendID: "usr-2", Status: domain.Accepted, SyncVersion: 11},
+	}, nil)
+	mockRepo.On("GetFriendTombstonesBySequence", ctx, int64(10), "usr-1", int32(100)).Return([]domain.Tombstone{
+		{EntityID: "usr-3", SyncVersion: 12},
+	}, nil)
+
+	uc := domain.NewUseCase(mockRepo, nil)
+	resp, err := uc.SyncFriends(ctx, 10, "usr-1", 100)
+	require.NoError(t, err)
+	assert.Equal(t, int64(12), resp.NewVersion)
+	assert.Len(t, resp.Updated, 1)
+	assert.Equal(t, []string{"usr-3"}, resp.DeletedIDs)
+	mockRepo.AssertExpectations(t)
+}
+

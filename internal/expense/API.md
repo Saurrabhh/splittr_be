@@ -61,12 +61,7 @@ The Expense module manages shared group and individual expenses, splitting logic
 - **Description**: Calculate net balances and recommended settlement transactions for a group or globally.
 - **Response** (`200 OK`): `BalanceResponse`.
 
-### 7. Sync Expenses
-- **GET** `/expenses/sync?lastVersion={int64}&limit={int}`
-- **Description**: Retrieve active and soft-deleted expenses modified after a given sequence version for offline sync.
-- **Response** (`200 OK`): `ExpenseSyncResponse` (`{ "newVersion": 150, "updated": [...], "deletedIds": [...] }`).
-
-### 8. Update Expense
+### 7. Update Expense
 - **PATCH** `/expenses/{id}`
 - **Description**: Partially update description, amount, currency, category, or splits for an expense. Allowed only for the user who created or paid for the expense.
 - **Request Body**:

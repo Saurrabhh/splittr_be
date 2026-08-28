@@ -594,35 +594,6 @@ func TestHandler_GetBalances_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rr.Code)
 }
 
-func TestHandler_SyncExpenses_Success(t *testing.T) {
-	mockRepo := new(mockExpenseRepository)
-	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
-
-	now := time.Now()
-	mockRepo.On("SyncExpensesBySequence", mock.Anything, int64(10), currentUser.ID, int32(100)).Return([]domain.Expense{
-		{ID: "exp-1", Description: "Coffee", Amount: 50.0, SyncVersion: 11, UpdatedAt: now},
-		{ID: "exp-2", Description: "Lunch", Amount: 100.0, SyncVersion: 12, UpdatedAt: now, DeletedAt: &now},
-	}, nil)
-	mockRepo.On("ListExpenseSplitsByIDs", mock.Anything, []string{"exp-1"}).Return([]domain.Split{}, nil)
-
-	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
-	router := setupHandlerTestRouter(uc, currentUser)
-
-	req := httptest.NewRequest(http.MethodGet, "/expenses/sync?lastVersion=10", nil)
-	rr := httptest.NewRecorder()
-
-	router.ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusOK, rr.Code)
-	var resp domain.ExpenseSyncResponse
-	err := json.Unmarshal(rr.Body.Bytes(), &resp)
-	require.NoError(t, err)
-	assert.Equal(t, int64(12), resp.NewVersion)
-	assert.Len(t, resp.Updated, 1)
-	assert.Equal(t, "exp-1", resp.Updated[0].ID)
-	assert.Equal(t, []string{"exp-2"}, resp.DeletedIDs)
-}
-
 func TestHandler_UpdateExpense_Success(t *testing.T) {
 	mockRepo := new(mockExpenseRepository)
 	currentUser := &user.User{ID: "usr-creator"}

@@ -408,9 +408,9 @@ func (u *UseCase) UpdateUserSettings(ctx context.Context, userID string, autoAcc
 
 // FriendSyncResponse contains updated friends and removed friend IDs for offline sync.
 type FriendSyncResponse struct {
-	NewVersion       int64                  `json:"newVersion"`
-	Friends          []FriendshipSyncRecord `json:"friends"`
-	RemovedFriendIDs []string               `json:"removedFriendIds"`
+	NewVersion int64                  `json:"newVersion"`
+	Updated    []FriendshipSyncRecord `json:"updated"`
+	DeletedIDs []string               `json:"deletedIds"`
 } // @name User.FriendSyncResponse
 
 // SyncFriends retrieves friendship changes and tombstones after lastVersion for a user.
@@ -460,9 +460,9 @@ func (u *UseCase) SyncFriends(ctx context.Context, lastVersion int64, userID str
 	}
 
 	return &FriendSyncResponse{
-		NewVersion:       maxVersion,
-		Friends:          records,
-		RemovedFriendIDs: removedIDs,
+		NewVersion: maxVersion,
+		Updated:    records,
+		DeletedIDs: removedIDs,
 	}, nil
 }
 
