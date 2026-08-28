@@ -108,6 +108,7 @@ The Expense module manages shared group and individual expenses, splitting logic
 ### 1. Create Expense
 - **POST** `/expenses`
 - **Authentication**: Required (`BearerAuth`)
+- **Idempotency**: Supported via `X-Idempotency-Key: <UUID>` header. On retry with the same key and identical payload, the cached `201` response is replayed. Retrying with a different payload returns `422`. A concurrent in-flight request with the same key returns `409`.
 - **Description**: Log a new expense and calculate split distribution according to the specified `splitType`.
 - **Request Body (Equal Split)**:
   ```json
@@ -157,14 +158,15 @@ The Expense module manages shared group and individual expenses, splitting logic
     ]
   }
   ```
-- **Response** (`201 Created`): `ExpenseWithSplits` object.
-- **Errors**: `400 Bad Request`, `401 Unauthorized`, `500 Internal Server Error`.
+- **Response** (`201 Created`): `ExpenseWithSplits` object. On idempotency replay: `X-Idempotency-Hit: true` header is present.
+- **Errors**: `400 Bad Request`, `401 Unauthorized`, `409 Conflict` (concurrent request in-flight), `422 Unprocessable Entity` (idempotency key reused with different payload), `500 Internal Server Error`.
 
 ---
 
 ### 2. Settle Up (Record Debt Payment)
 - **POST** `/expenses/settle`
 - **Authentication**: Required (`BearerAuth`)
+- **Idempotency**: Supported via `X-Idempotency-Key: <UUID>` header. Same behavior as Create Expense.
 - **Description**: Record a payment transaction between two users to clear or reduce debt.
 - **Request Body**:
   ```json
@@ -181,8 +183,8 @@ The Expense module manages shared group and individual expenses, splitting logic
   - `groupId` (string, optional): Group context if settling within a specific group.
   - `paidBy` (string, optional): User ID sending the payment (defaults to authenticated user).
   - `receivedBy` (string, required): User ID receiving the payment.
-- **Response** (`201 Created`): `ExpenseWithSplits` object with `isPayment: true`.
-- **Errors**: `400 Bad Request`, `401 Unauthorized`, `500 Internal Server Error`.
+- **Response** (`201 Created`): `ExpenseWithSplits` object with `isPayment: true`. On idempotency replay: `X-Idempotency-Hit: true` header is present.
+- **Errors**: `400 Bad Request`, `401 Unauthorized`, `409 Conflict` (concurrent request in-flight), `422 Unprocessable Entity` (idempotency key reused with different payload), `500 Internal Server Error`.
 
 ---
 

@@ -65,6 +65,7 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
 ### 1. Create Group
 - **POST** `/groups`
 - **Authentication**: Required (`BearerAuth`)
+- **Idempotency**: Supported via `X-Idempotency-Key: <UUID>` header. On retry with the same key and identical payload, the cached `201` response is replayed. Retrying with a different payload returns `422`. A concurrent in-flight request with the same key returns `409`.
 - **Description**: Create a new bill-splitting group. The creator is automatically added as an active `ADMIN`.
 - **Request Body**:
   ```json
@@ -77,8 +78,8 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
   - `name` (string, required): Group name.
   - `description` (string, optional): Group description.
   - `requireAdminApproval` (boolean, optional): If true, new members joining via invite code require admin approval (`PENDING` state).
-- **Response** (`201 Created`): `Group` object.
-- **Errors**: `400 Bad Request`, `401 Unauthorized`, `500 Internal Server Error`.
+- **Response** (`201 Created`): `Group` object. On idempotency replay: `X-Idempotency-Hit: true` header is present.
+- **Errors**: `400 Bad Request`, `401 Unauthorized`, `409 Conflict` (concurrent request in-flight), `422 Unprocessable Entity` (idempotency key reused with different payload), `500 Internal Server Error`.
 
 ---
 
