@@ -133,7 +133,29 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
 
 ---
 
-### 4. Join Group via Invite Code
+### 4. Update Group
+- **PATCH** `/groups/{id}`
+- **Authentication**: Required (`BearerAuth`)
+- **Description**: Update group details (name, description, requireAdminApproval). Admin privileges required.
+- **Path Parameters**:
+  - `id` (string, required): Group UUID.
+- **Request Body**:
+  ```json
+  {
+    "name": "Trip to Japan Updated",
+    "description": "Tokyo & Kyoto group expenses",
+    "requireAdminApproval": true
+  }
+  ```
+  - `name` (string, required): Group name.
+  - `description` (string, optional): Group description.
+  - `requireAdminApproval` (boolean, optional): If true, new members joining via invite code require admin approval.
+- **Response** (`200 OK`): Updated `Group` object.
+- **Errors**: `400 Bad Request`, `401 Unauthorized`, `403 Forbidden` (non-admin), `404 Not Found`, `500 Internal Server Error`.
+
+---
+
+### 5. Join Group via Invite Code
 - **POST** `/groups/join`
 - **Authentication**: Required (`BearerAuth`)
 - **Description**: Join an existing group using an active invite code. If `requireAdminApproval` is enabled, membership status will be `PENDING` until an admin approves it.
@@ -162,7 +184,7 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
 
 ---
 
-### 5. Get Group Preview
+### 6. Get Group Preview
 - **GET** `/groups/preview?inviteCode={string}`
 - **Authentication**: Required (`BearerAuth`)
 - **Description**: Inspect basic group details before joining via invite code.
@@ -173,7 +195,7 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
 
 ---
 
-### 6. List Group Members
+### 7. List Group Members
 - **GET** `/groups/{id}/members?status={ACTIVE|PENDING|REJECTED|ALL}`
 - **Authentication**: Required (`BearerAuth`)
 - **Description**: List members of a group. Querying status other than `ACTIVE` (or omitting status) requires `ADMIN` role.
@@ -184,7 +206,7 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
 
 ---
 
-### 7. Add Group Members Directly (Bulk)
+### 8. Add Group Members Directly (Bulk)
 - **POST** `/groups/{id}/members`
 - **Authentication**: Required (`BearerAuth`)
 - **Description**: Add multiple users directly to the group by User IDs as `ACTIVE` `MEMBER`s. Admin privileges required.
@@ -215,7 +237,7 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
 
 ---
 
-### 8. Remove Member / Leave Group
+### 9. Remove Member / Leave Group
 - **DELETE** `/groups/{id}/members/{userId}`
 - **Authentication**: Required (`BearerAuth`)
 - **Description**: Remove a member from the group (Admin only), or leave the group (if `userId` equals requesting user ID). Sole admin cannot leave without assigning another admin.
@@ -227,8 +249,8 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
 
 ---
 
-### 9. Update Member Role
-- **PUT** `/groups/{id}/members/{userId}/role`
+### 10. Update Member Role
+- **PATCH** `/groups/{id}/members/{userId}/role`
 - **Authentication**: Required (`BearerAuth`)
 - **Description**: Update a member's role (`ADMIN` or `MEMBER`). Admin privileges required.
 - **Request Body**:
@@ -252,7 +274,7 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
 
 ---
 
-### 10. Decide Join Request
+### 11. Decide Join Request
 - **POST** `/groups/{id}/members/{userId}/decision`
 - **Authentication**: Required (`BearerAuth`)
 - **Description**: Approve (`APPROVE`) or reject (`REJECT`) a pending member join request. Admin privileges required.
@@ -278,7 +300,7 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
 
 ---
 
-### 11. Reset Invite Code
+### 12. Reset Invite Code
 - **POST** `/groups/{id}/invite-code/reset`
 - **Authentication**: Required (`BearerAuth`)
 - **Description**: Generate a fresh 8-character invite code (`INV-XXXXXXXX`) with a 7-day expiration timestamp. Admin privileges required.
@@ -287,7 +309,7 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
 
 ---
 
-### 12. Archive Group
+### 13. Archive Group
 - **DELETE** `/groups/{id}`
 - **Authentication**: Required (`BearerAuth`)
 - **Description**: Soft-delete a group (`archivedAt` timestamp set). Admin privileges required.
@@ -296,7 +318,7 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
 
 ---
 
-### 13. Get Group Activity Feed
+### 14. Get Group Activity Feed
 - **GET** `/groups/{id}/feed?limit={int}&cursor={string}`
 - **Authentication**: Required (`BearerAuth`)
 - **Description**: Retrieve a cursor-paginated timeline of events inside the group (expense created, settlements, member joined, etc.). Requester must be an `ACTIVE` member.
@@ -308,7 +330,7 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
 
 ---
 
-### 14. Sync Groups
+### 15. Sync Groups
 - **GET** `/groups/sync?lastVersion={int64}&limit={int}`
 - **Authentication**: Required (`BearerAuth`)
 - **Description**: Retrieve active and archived groups modified after a given sequence version for offline sync. `updated` groups include their active member roster. `removedGroupIds` includes both archived groups and groups the user was evicted/removed from (via tombstones).
@@ -347,7 +369,7 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
 
 ---
 
-### 15. Upload Group Icon
+### 16. Upload Group Icon
 - **POST** `/groups/{id}/icon`
 - **Authentication**: Required (`BearerAuth`)
 - **Content-Type**: `multipart/form-data`
@@ -358,5 +380,6 @@ The Group module manages bill-splitting groups, member rosters, invite codes, ro
   - `file` (file, required): Binary image file.
 - **Response** (`200 OK`): Updated `Group` object.
 - **Errors**: `400 Bad Request` (invalid format/missing file), `401 Unauthorized`, `403 Forbidden` (not an active group member), `500 Internal Server Error`.
+
 
 

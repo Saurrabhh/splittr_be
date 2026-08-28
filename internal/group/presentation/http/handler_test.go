@@ -385,6 +385,53 @@ func TestHandler_GetDetails_Unauthorized(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, rr.Code)
 }
 
+// --- PATCH /groups/{id} Tests ---
+
+func TestHandler_UpdateGroup_Success(t *testing.T) {
+	mockRepo := new(mockGroupRepository)
+	mockAct := new(mockActivityLogger)
+	mockTx := &mockTransactor{}
+	currentUser := &user.User{ID: "usr-creator", Name: "Creator"}
+	groupID := "550e8400-e29b-41d4-a716-446655440000"
+
+	existingGroup := &domain.Group{
+		ID:        groupID,
+		Name:      "Old Group",
+		CreatedBy: &currentUser.ID,
+	}
+	adminMember := &domain.Member{
+		GroupID: groupID,
+		UserID:  currentUser.ID,
+		Role:    domain.MemberRoleAdmin,
+		Status:  domain.MemberStatusActive,
+	}
+
+	mockRepo.On("GetByID", mock.Anything, groupID).Return(existingGroup, nil)
+	mockRepo.On("GetGroupMember", mock.Anything, groupID, currentUser.ID).Return(adminMember, nil)
+	mockRepo.On("Update", mock.Anything, mock.AnythingOfType("*domain.Group")).Return(nil)
+	mockAct.On("LogEvent", mock.Anything, currentUser.ID, &groupID, []string(nil), mock.Anything).Return(nil)
+
+	uc := domain.NewUseCase(mockRepo, mockTx, mockAct, nil, nil)
+	router := setupHandlerTestRouter(uc, currentUser)
+
+	body := `{"name":"Updated Group","description":"New Description","requireAdminApproval":true}`
+	req := httptest.NewRequest(http.MethodPatch, "/groups/"+groupID, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	var resp domain.Group
+	err := json.Unmarshal(rr.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	assert.Equal(t, "Updated Group", resp.Name)
+	require.NotNil(t, resp.Description)
+	assert.Equal(t, "New Description", *resp.Description)
+	assert.True(t, resp.RequireAdminApproval)
+}
+
+
 // --- POST /groups/{id}/members Tests ---
 
 func TestHandler_AddMembers_Success(t *testing.T) {
@@ -622,7 +669,7 @@ func TestHandler_RemoveMember_Unauthorized(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, rr.Code)
 }
 
-// --- PUT /groups/{id}/members/{userId}/role Tests ---
+// --- PATCH /groups/{id}/members/{userId}/role Tests ---
 
 func TestHandler_UpdateMemberRole_Success(t *testing.T) {
 	mockRepo := new(mockGroupRepository)
@@ -652,7 +699,7 @@ func TestHandler_UpdateMemberRole_Success(t *testing.T) {
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	body, _ := json.Marshal(map[string]string{"role": "ADMIN"})
-	req := httptest.NewRequest(http.MethodPut, "/groups/"+groupID+"/members/"+targetUserID+"/role", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPatch, "/groups/"+groupID+"/members/"+targetUserID+"/role", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
@@ -674,7 +721,7 @@ func TestHandler_UpdateMemberRole_BadRequest_InvalidRole(t *testing.T) {
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	body, _ := json.Marshal(map[string]string{"role": "superadmin"})
-	req := httptest.NewRequest(http.MethodPut, "/groups/"+groupID+"/members/usr-target/role", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPatch, "/groups/"+groupID+"/members/usr-target/role", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
@@ -698,7 +745,7 @@ func TestHandler_UpdateMemberRole_Forbidden(t *testing.T) {
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	body, _ := json.Marshal(map[string]string{"role": "ADMIN"})
-	req := httptest.NewRequest(http.MethodPut, "/groups/"+groupID+"/members/usr-target/role", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPatch, "/groups/"+groupID+"/members/usr-target/role", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
@@ -721,7 +768,7 @@ func TestHandler_UpdateMemberRole_NotFound(t *testing.T) {
 	router := setupHandlerTestRouter(uc, currentUser)
 
 	body, _ := json.Marshal(map[string]string{"role": "ADMIN"})
-	req := httptest.NewRequest(http.MethodPut, "/groups/"+groupID+"/members/usr-target/role", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPatch, "/groups/"+groupID+"/members/usr-target/role", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
@@ -736,7 +783,7 @@ func TestHandler_UpdateMemberRole_Unauthorized(t *testing.T) {
 	router := setupHandlerTestRouter(uc, nil)
 
 	body, _ := json.Marshal(map[string]string{"role": "ADMIN"})
-	req := httptest.NewRequest(http.MethodPut, "/groups/grp-1/members/usr-target/role", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPatch, "/groups/grp-1/members/usr-target/role", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 

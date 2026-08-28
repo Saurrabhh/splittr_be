@@ -40,6 +40,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Route("/{id}", func(r chi.Router) {
 
 			r.Get("/", h.GetDetails)
+			r.Patch("/", h.Update)
 			r.Delete("/", h.Archive)
 			r.Get("/feed", h.GetFeed)
 			r.Post("/icon", h.UploadIcon)
@@ -50,7 +51,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 				r.Post("/", h.AddMembers)
 				r.Route("/{userId}", func(r chi.Router) {
 					r.Delete("/", h.RemoveMember)
-					r.Put("/role", h.UpdateMemberRole)
+					r.Patch("/role", h.UpdateMemberRole)
 					r.Post("/decision", h.DecideJoinRequest)
 				})
 			})
@@ -183,6 +184,39 @@ func (h *Handler) GetDetails(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, g)
 }
 
+// Update updates group name, description, and admin approval requirement.
+// @Summary      Update group
+// @Description  Update group details. Admin privileges required.
+// @Tags         groups
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "Group ID"
+// @Param        request body UpdateGroupRequest true "Group update payload"
+// @Success      200  {object}  domain.Group
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      401  {object}  response.ErrorResponse
+// @Failure      403  {object}  response.ErrorResponse
+// @Failure      404  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /groups/{id} [patch]
+// @Security     BearerAuth
+func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
+	groupID, ok := request.URLParam(w, r, "id")
+	if !ok {
+		return
+	}
+	currUser := user.MustFrom(r.Context())
+
+	request.Run(w, r, http.StatusOK, func(ctx context.Context, req UpdateGroupRequest) (*domain.Group, error) {
+		var desc string
+		if req.Description != nil {
+			desc = *req.Description
+		}
+		return h.uc.UpdateGroup(ctx, groupID, req.Name, desc, req.RequireAdminApproval, currUser.ID)
+	})
+}
+
+
 // ListMembers lists group members with optional status filter (PENDING, REJECTED restricted to admins).
 // @Summary      List group members
 // @Description  Retrieve group members. Query status=PENDING or REJECTED requires admin privileges.
@@ -285,7 +319,7 @@ func (h *Handler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
-// @Router       /groups/{id}/members/{userId}/role [put]
+// @Router       /groups/{id}/members/{userId}/role [patch]
 // @Security     BearerAuth
 func (h *Handler) UpdateMemberRole(w http.ResponseWriter, r *http.Request) {
 	groupID, ok := request.URLParam(w, r, "id")

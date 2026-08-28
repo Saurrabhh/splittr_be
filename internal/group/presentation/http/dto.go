@@ -10,6 +10,13 @@ type CreateGroupRequest struct {
 	RequireAdminApproval bool   `json:"requireAdminApproval"`
 } // @name Group.CreateRequest
 
+type UpdateGroupRequest struct {
+	Name                 string  `json:"name" validate:"required"`
+	Description          *string `json:"description"`
+	RequireAdminApproval bool    `json:"requireAdminApproval"`
+} // @name Group.UpdateRequest
+
+
 type JoinGroupRequest struct {
 	InviteCode string `json:"inviteCode" validate:"required"`
 } // @name Group.JoinRequest
