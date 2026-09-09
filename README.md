@@ -35,6 +35,7 @@ A Go-based backend service for **Splittr**, a bill-splitting application. This s
 │   │   └── queries/          # Raw SQL queries compiled by sqlc
 │   ├── expense/              # Expense tracking, splits, settlements, and balances logic
 │   ├── group/                # Group bill splitting workspace and member logic
+│   ├── idempotency/          # Request deduplication and replay caching middleware & storage
 │   ├── notification/         # Notification tray database operations and endpoints
 │   ├── response/             # Standardized API JSON error and success responses
 │   ├── sync/                 # Unified batch delta synchronization engine
@@ -144,9 +145,9 @@ Authorization: Bearer <FIREBASE_ID_TOKEN>
 ### Core API Groups
 - ⚙️ **App Config (`/v1/app-config`)**: App startup remote config, force-update rules, maintenance status, expense categories, currencies, limits, feature flags, legal URLs (supports optional auth & ETag caching).
 - 👤 **Users & Friends (`/v1/users`, `/v1/friends`)**: Register profile, fetch current user info, upload avatar image (`POST /v1/users/me/avatar`), search & add friends, remove friendships.
-- 👥 **Groups (`/v1/groups`)**: Create & join bill splitting groups via 7-day expirable invite codes, upload optional group icon (`POST /v1/groups/{id}/icon`), optional admin approval workflow (`requireAdminApproval`), member status filtering (`GET /groups/{id}/members?status=PENDING`), join request decision (`POST /groups/{id}/members/{userId}/decision`), and invite code reset (`POST /groups/{id}/invite-code/reset`).
-- 💸 **Expenses & Balances (`/v1/expenses`, `/v1/balances`)**: Create splits (equal/exact/percentage), settle debts, and fetch global or group-simplified balances.
-- 🔄 **Unified Sync (`/v1/sync`)**: Single batch endpoint synchronizing friends, groups, and expenses in one round-trip.
+- 👥 **Groups (`/v1/groups`)**: Create & join bill splitting groups via 7-day expirable invite codes, upload optional group icon (`POST /v1/groups/{id}/icon`), optional admin approval workflow (`requireAdminApproval`), member status filtering (`GET /groups/{id}/members?status=PENDING`), join request decision (`POST /groups/{id}/members/{userId}/decision`), invite code reset (`POST /groups/{id}/invite-code/reset`), and mutation deduplication via `X-Idempotency-Key`.
+- 💸 **Expenses & Balances (`/v1/expenses`, `/v1/balances`)**: Create splits (equal/exact/percentage), settle debts, support `X-Idempotency-Key` headers on creation endpoints (`POST /expenses`, `POST /expenses/settle`), and fetch net balances with both `directSettlements` (pairwise debts) and `simplifiedSettlements` (minimal transfers) in a single response.
+- 🔄 **Unified Sync (`/v1/sync`)**: Single batch endpoint synchronizing friends, groups, and expenses with monotonic sequence tracking and sequence heads (`currentServerVersion`).
 - 📊 **Activities (`/v1/activities`)**: Browse group activity logs and audit trails.
 - 🔔 **Notifications (`/v1/notifications`)**: Retrieve personal notifications, mark items as read.
 
@@ -154,7 +155,7 @@ Authorization: Bearer <FIREBASE_ID_TOKEN>
 
 ## ⚡ Offline-First Architecture & Sync Engine
 
-Splittr is designed for high-performance offline-first mobile applications (e.g. Flutter + Isar/Drift) using two complementary synchronization patterns:
+Splittr is designed for high-performance offline-first mobile applications (e.g. Flutter + Isar/Drift) using three complementary patterns:
 
 ### 1. Keyset Cursor Pagination (Feed Endpoints)
 - **Opaque Base64 Tokens**: Encodes `(timestamp, id)` into URL-safe Base64 strings.
@@ -162,9 +163,16 @@ Splittr is designed for high-performance offline-first mobile applications (e.g.
 - **N+1 Sentinel Probing**: Queries `requestedLimit + 1` to compute `hasMore` without executing expensive `COUNT(*)` queries.
 - **Immune to Page Drift**: Adding or deleting items in earlier pages does not shift or skip items in subsequent pages.
 
-### 2. Monotonic Delta Sync with Tombstones (`GET /v1/sync`)
+### 2. Monotonic Delta Sync with Tombstones & Watermark Anchor (`GET /v1/sync`)
 - **Monotonic Watermarking**: Uses `global_sync_seq` with `sync_version BIGINT` auto-bumped on updates via database triggers.
+- **Current Server Version Head**: Returns `currentServerVersion` in every domain sync bucket (`friends`, `groups`, `expenses`) enabling zero-payload cold-start client watermarking.
 - **Entity Tombstones**: Dedicated `entity_tombstones` table records deletions, group archives, and membership evictions to guarantee zero zombie/ghost records in local offline cache.
-- **Unified Batch Round-Trip**: Single `GET /v1/sync?friendsVersion={v1}&groupsVersion={v2}&expensesVersion={v3}` endpoint aggregates changes across friends, groups, and expenses into standardized buckets `{ "newVersion": ..., "updated": [...], "deletedIds": [...] }` in a single network round-trip.
+- **Unified Batch Round-Trip**: Single `GET /v1/sync?friendsVersion={v1}&groupsVersion={v2}&expensesVersion={v3}` endpoint aggregates changes across friends, groups, and expenses into standardized buckets `{ "newVersion": ..., "currentServerVersion": ..., "updated": [...], "deletedIds": [...] }` in a single network round-trip.
 - **Atomic Local Catch-Up**: Clients pass their respective local domain sequence versions and apply updates to local offline storage within a single local transaction.
+
+### 3. Outbox Mutation Deduplication (`X-Idempotency-Key`)
+- **Safe Network Retries**: Clients attach an `X-Idempotency-Key: <UUID>` header to mutation endpoints (`POST /v1/expenses`, `POST /v1/expenses/settle`, `POST /v1/groups`).
+- **Cached Replay**: Repeated requests with the same key and identical payload instantly return the cached response with `X-Idempotency-Hit: true`.
+- **Conflict Protection**: Payload mismatches return `422 Unprocessable Entity` and concurrent in-flight executions return `409 Conflict`.
+
 
