@@ -35,10 +35,11 @@ type NotificationSender interface {
 	CreateAlert(ctx context.Context, userID string, actorID *string, activityID *string, alert notification.Alert) error
 }
 
-// BalanceResponse contains a list of member balances and a list of recommended settlement transactions.
+// BalanceResponse contains a list of member balances, direct pairwise settlements, and simplified settlements.
 type BalanceResponse struct {
-	Balances    []UserBalance `json:"balances"`
-	Settlements []Settlement  `json:"settlements"`
+	Balances              []UserBalance `json:"balances"`
+	DirectSettlements     []Settlement  `json:"directSettlements"`
+	SimplifiedSettlements []Settlement  `json:"simplifiedSettlements"`
 } // @name Expense.BalanceResponse
 
 // UseCase manages business logic for expenses, splits, and balances.
@@ -461,7 +462,7 @@ func (u *UseCase) ListExpenses(ctx context.Context, filterType, filterID, userID
 }
 
 // GetBalances returns direct or group balances and recommended settlements.
-func (u *UseCase) GetBalances(ctx context.Context, groupID *string, userID string, simplified bool) (*BalanceResponse, error) {
+func (u *UseCase) GetBalances(ctx context.Context, groupID *string, userID string) (*BalanceResponse, error) {
 	if groupID != nil && *groupID != "" {
 		_, err := u.groupSvc.GetGroupDetails(ctx, *groupID, userID)
 		if err != nil {
@@ -477,24 +478,19 @@ func (u *UseCase) GetBalances(ctx context.Context, groupID *string, userID strin
 			}
 		}
 
-		var settlements []Settlement
-		if simplified {
-			settlements = simplifyDebts(balances)
-		} else {
-			pairwise, err := u.repo.GetGroupPairwiseDebts(ctx, *groupID)
-			if err != nil {
-				return nil, &response.AppError{
-					Type:    response.TypeInternal,
-					Message: response.ErrLogCalcPairwiseDebts,
-					Err:     err,
-				}
+		pairwise, err := u.repo.GetGroupPairwiseDebts(ctx, *groupID)
+		if err != nil {
+			return nil, &response.AppError{
+				Type:    response.TypeInternal,
+				Message: response.ErrLogCalcPairwiseDebts,
+				Err:     err,
 			}
-			settlements = directDebts(pairwise)
 		}
 
 		return &BalanceResponse{
-			Balances:    balances,
-			Settlements: settlements,
+			Balances:              balances,
+			DirectSettlements:     directDebts(pairwise),
+			SimplifiedSettlements: simplifyDebts(balances),
 		}, nil
 	}
 
@@ -530,8 +526,9 @@ func (u *UseCase) GetBalances(ctx context.Context, groupID *string, userID strin
 	}
 
 	return &BalanceResponse{
-		Balances:    balances,
-		Settlements: settlements,
+		Balances:              balances,
+		DirectSettlements:     settlements,
+		SimplifiedSettlements: settlements,
 	}, nil
 }
 
@@ -665,7 +662,7 @@ func simplifyDebts(balances []UserBalance) []Settlement {
 		}
 	}
 
-	var settlements []Settlement
+	settlements := make([]Settlement, 0)
 
 	for len(debtors) > 0 && len(creditors) > 0 {
 		debtorIdx := findMaxIdx(debtors)
@@ -758,7 +755,7 @@ func directDebts(pairwise []PairwiseDebt) []Settlement {
 		}
 	}
 
-	var settlements []Settlement
+	settlements := make([]Settlement, 0)
 	for key, balCents := range netBalances {
 		p := names[key]
 		if balCents > 0 {

@@ -587,17 +587,23 @@ func TestHandler_GetBalances_Success(t *testing.T) {
 	mockGroupSvc.On("GetGroupDetails", mock.Anything, groupID, currentUser.ID).Return(&group.Group{ID: groupID}, nil)
 	mockRepo.On("GetGroupBalances", mock.Anything, groupID).Return([]domain.UserBalance{
 		{UserID: "usr-1", UserName: "Alice", NetBalance: 50.0},
+		{UserID: "usr-2", UserName: "Bob", NetBalance: -50.0},
+	}, nil)
+	mockRepo.On("GetGroupPairwiseDebts", mock.Anything, groupID).Return([]domain.PairwiseDebt{
+		{DebtorID: "usr-2", DebtorName: "Bob", CreditorID: "usr-1", CreditorName: "Alice", Amount: 50.0},
 	}, nil)
 
 	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, mockGroupSvc, nil, nil)
 	router := setupHandlerTestRouter(uc, currentUser)
 
-	req := httptest.NewRequest(http.MethodGet, "/balances?groupId="+groupID+"&simplified=true", nil)
+	req := httptest.NewRequest(http.MethodGet, "/balances?groupId="+groupID, nil)
 	rr := httptest.NewRecorder()
 
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Contains(t, rr.Body.String(), `"directSettlements"`)
+	assert.Contains(t, rr.Body.String(), `"simplifiedSettlements"`)
 }
 
 func TestHandler_UpdateExpense_Success(t *testing.T) {

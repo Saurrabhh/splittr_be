@@ -282,7 +282,11 @@ definitions:
         items:
           $ref: '#/definitions/Expense.UserBalance'
         type: array
-      settlements:
+      directSettlements:
+        items:
+          $ref: '#/definitions/Expense.Settlement'
+        type: array
+      simplifiedSettlements:
         items:
           $ref: '#/definitions/Expense.Settlement'
         type: array
@@ -310,6 +314,8 @@ definitions:
     type: object
   Expense.ExpenseSyncResponse:
     properties:
+      currentServerVersion:
+        type: integer
       deletedIds:
         items:
           type: string
@@ -507,6 +513,8 @@ definitions:
     type: object
   Group.GroupSyncResponse:
     properties:
+      currentServerVersion:
+        type: integer
       deletedIds:
         items:
           type: string
@@ -734,6 +742,8 @@ definitions:
     type: object
   User.FriendSyncResponse:
     properties:
+      currentServerVersion:
+        type: integer
       deletedIds:
         items:
           type: string
@@ -912,16 +922,13 @@ paths:
       - appConfig
   /balances:
     get:
-      description: Calculate net balances and recommended settlement transactions.
+      description: Calculate net balances, direct pairwise settlements, and simplified
+        settlement transactions.
       parameters:
       - description: Filter by Group ID. If omitted, returns global balances.
         in: query
         name: groupId
         type: string
-      - description: Simplify debts algorithm (true/false)
-        in: query
-        name: simplified
-        type: boolean
       produces:
       - application/json
       responses:

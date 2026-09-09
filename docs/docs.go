@@ -114,7 +114,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Calculate net balances and recommended settlement transactions.",
+                "description": "Calculate net balances, direct pairwise settlements, and simplified settlement transactions.",
                 "produces": [
                     "application/json"
                 ],
@@ -127,12 +127,6 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Filter by Group ID. If omitted, returns global balances.",
                         "name": "groupId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Simplify debts algorithm (true/false)",
-                        "name": "simplified",
                         "in": "query"
                     }
                 ],
@@ -2627,7 +2621,13 @@ const docTemplate = `{
                         "$ref": "#/definitions/Expense.UserBalance"
                     }
                 },
-                "settlements": {
+                "directSettlements": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Expense.Settlement"
+                    }
+                },
+                "simplifiedSettlements": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/Expense.Settlement"
@@ -2670,6 +2670,9 @@ const docTemplate = `{
         "Expense.ExpenseSyncResponse": {
             "type": "object",
             "properties": {
+                "currentServerVersion": {
+                    "type": "integer"
+                },
                 "deletedIds": {
                     "type": "array",
                     "items": {
@@ -2968,6 +2971,9 @@ const docTemplate = `{
         "Group.GroupSyncResponse": {
             "type": "object",
             "properties": {
+                "currentServerVersion": {
+                    "type": "integer"
+                },
                 "deletedIds": {
                     "type": "array",
                     "items": {
@@ -3310,6 +3316,9 @@ const docTemplate = `{
         "User.FriendSyncResponse": {
             "type": "object",
             "properties": {
+                "currentServerVersion": {
+                    "type": "integer"
+                },
                 "deletedIds": {
                     "type": "array",
                     "items": {

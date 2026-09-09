@@ -685,3 +685,57 @@ func TestSyncExpenses_Success(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
+// --- GetBalances Tests ---
+
+func TestGetBalances_Group_Success(t *testing.T) {
+	mockRepo := new(mockExpenseRepository)
+	mockGroupSvc := new(mockGroupService)
+	ctx := context.Background()
+	groupID := "grp-1"
+	userID := "usr-1"
+
+	mockGroupSvc.On("GetGroupDetails", ctx, groupID, userID).Return(&group.Group{ID: groupID}, nil)
+	mockRepo.On("GetGroupBalances", ctx, groupID).Return([]domain.UserBalance{
+		{UserID: "usr-1", UserName: "Alice", NetBalance: 40.0},
+		{UserID: "usr-2", UserName: "Bob", NetBalance: -10.0},
+		{UserID: "usr-3", UserName: "Charlie", NetBalance: -30.0},
+	}, nil)
+	mockRepo.On("GetGroupPairwiseDebts", ctx, groupID).Return([]domain.PairwiseDebt{
+		{DebtorID: "usr-2", DebtorName: "Bob", CreditorID: "usr-1", CreditorName: "Alice", Amount: 10.0},
+		{DebtorID: "usr-3", DebtorName: "Charlie", CreditorID: "usr-1", CreditorName: "Alice", Amount: 30.0},
+	}, nil)
+
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, mockGroupSvc, nil, nil)
+	res, err := uc.GetBalances(ctx, &groupID, userID)
+
+	require.NoError(t, err)
+	assert.NotNil(t, res)
+	assert.Len(t, res.Balances, 3)
+	assert.NotEmpty(t, res.DirectSettlements)
+	assert.NotEmpty(t, res.SimplifiedSettlements)
+	mockRepo.AssertExpectations(t)
+	mockGroupSvc.AssertExpectations(t)
+}
+
+func TestGetBalances_Friends_Success(t *testing.T) {
+	mockRepo := new(mockExpenseRepository)
+	ctx := context.Background()
+	userID := "usr-1"
+
+	mockRepo.On("GetFriendBalances", ctx, userID).Return([]domain.UserBalance{
+		{UserID: "usr-2", UserName: "Bob", NetBalance: 25.0},
+		{UserID: "usr-3", UserName: "Charlie", NetBalance: -15.0},
+	}, nil)
+
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
+	res, err := uc.GetBalances(ctx, nil, userID)
+
+	require.NoError(t, err)
+	assert.NotNil(t, res)
+	assert.Len(t, res.Balances, 2)
+	assert.Len(t, res.DirectSettlements, 2)
+	assert.Len(t, res.SimplifiedSettlements, 2)
+	mockRepo.AssertExpectations(t)
+}
+
+

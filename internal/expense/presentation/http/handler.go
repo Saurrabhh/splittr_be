@@ -253,11 +253,10 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 
 // GetBalances calculates balances either inside a group or globally.
 // @Summary      Get user balances
-// @Description  Calculate net balances and recommended settlement transactions.
+// @Description  Calculate net balances, direct pairwise settlements, and simplified settlement transactions.
 // @Tags         expenses
 // @Produce      json
 // @Param        groupId query string false "Filter by Group ID. If omitted, returns global balances."
-// @Param        simplified query boolean false "Simplify debts algorithm (true/false)"
 // @Success      200  {object}  domain.BalanceResponse
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      401  {object}  response.ErrorResponse
@@ -273,10 +272,7 @@ func (h *Handler) GetBalances(w http.ResponseWriter, r *http.Request) {
 		groupID = &groupIDStr
 	}
 
-	simplifiedStr := r.URL.Query().Get("simplified")
-	simplified, _ := strconv.ParseBool(simplifiedStr)
-
-	balances, err := h.uc.GetBalances(r.Context(), groupID, currUser.ID, simplified)
+	balances, err := h.uc.GetBalances(r.Context(), groupID, currUser.ID)
 	if err != nil {
 		response.HandleError(w, err)
 		return

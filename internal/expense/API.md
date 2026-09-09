@@ -89,7 +89,16 @@ The Expense module manages shared group and individual expenses, splitting logic
       "netBalance": -60.00
     }
   ],
-  "settlements": [
+  "directSettlements": [
+    {
+      "fromUserId": "usr-uuid-2",
+      "fromUserName": "Bob Smith",
+      "toUserId": "usr-uuid-1",
+      "toUserName": "Alice Vance",
+      "amount": 60.00
+    }
+  ],
+  "simplifiedSettlements": [
     {
       "fromUserId": "usr-uuid-2",
       "fromUserName": "Bob Smith",
@@ -277,13 +286,12 @@ The Expense module manages shared group and individual expenses, splitting logic
 
 ---
 
-### 7. Get Balances & Simplified Debts
-- **GET** `/balances?groupId={id}&simplified={bool}`
+### 7. Get Balances & Settlements
+- **GET** `/balances?groupId={id}`
 - **Authentication**: Required (`BearerAuth`)
-- **Description**: Calculate net balances and recommended settlement transactions for a specific group or globally across all user groups and friendships.
+- **Description**: Calculate net balances, direct pairwise settlements, and simplified settlement transactions for a specific group or globally across all user groups and friendships.
 - **Query Parameters**:
-  - `groupId` (string, optional): Group UUID. If omitted, calculates global net balances across all groups and friends.
-  - `simplified` (boolean, optional): Apply debt simplification algorithm (`true`/`false`). Default: `false`.
+  - `groupId` (string, optional): Group UUID. If omitted, calculates global net balances and bilateral settlements across all groups and friends.
 - **Response** (`200 OK`): `BalanceResponse` object.
   ```json
   {
@@ -299,7 +307,16 @@ The Expense module manages shared group and individual expenses, splitting logic
         "netBalance": -60.00
       }
     ],
-    "settlements": [
+    "directSettlements": [
+      {
+        "fromUserId": "usr-uuid-2",
+        "fromUserName": "Bob Smith",
+        "toUserId": "usr-uuid-1",
+        "toUserName": "Alice Vance",
+        "amount": 60.00
+      }
+    ],
+    "simplifiedSettlements": [
       {
         "fromUserId": "usr-uuid-2",
         "fromUserName": "Bob Smith",
