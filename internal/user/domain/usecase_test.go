@@ -312,3 +312,22 @@ func TestSyncFriends_Success(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
+func TestSyncFriends_NoDeletions_ReturnsEmptyDeletedIDs(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	ctx := context.Background()
+
+	mockRepo.On("SyncFriendsBySequence", ctx, int64(10), "usr-1", int32(100)).Return([]domain.FriendshipSyncRecord{
+		{UserID: "usr-1", FriendID: "usr-2", Status: domain.Accepted, SyncVersion: 11},
+	}, nil)
+	mockRepo.On("GetFriendTombstonesBySequence", ctx, int64(10), "usr-1", int32(100)).Return([]domain.Tombstone{}, nil)
+	mockRepo.On("GetCurrentSyncVersion", ctx).Return(int64(20), nil)
+
+	uc := domain.NewUseCase(mockRepo, nil)
+	resp, err := uc.SyncFriends(ctx, 10, "usr-1", 100)
+	require.NoError(t, err)
+	assert.NotNil(t, resp.DeletedIDs)
+	assert.Empty(t, resp.DeletedIDs)
+	assert.Equal(t, []string{}, resp.DeletedIDs)
+	mockRepo.AssertExpectations(t)
+}
+

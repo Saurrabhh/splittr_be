@@ -685,6 +685,26 @@ func TestSyncExpenses_Success(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
+func TestSyncExpenses_NoDeletions_ReturnsEmptyDeletedIDs(t *testing.T) {
+	mockRepo := new(mockExpenseRepository)
+	ctx := context.Background()
+
+	now := time.Now()
+	mockRepo.On("SyncExpensesBySequence", ctx, int64(10), "usr-1", int32(100)).Return([]domain.Expense{
+		{ID: "exp-1", Description: "Coffee", Amount: 50.0, SyncVersion: 11, UpdatedAt: now},
+	}, nil)
+	mockRepo.On("ListExpenseSplitsByIDs", ctx, []string{"exp-1"}).Return([]domain.Split{}, nil)
+	mockRepo.On("GetCurrentSyncVersion", ctx).Return(int64(20), nil)
+
+	uc := domain.NewUseCase(mockRepo, &mockTransactor{}, nil, nil, nil)
+	resp, err := uc.SyncExpenses(ctx, 10, "usr-1", 100)
+	require.NoError(t, err)
+	assert.NotNil(t, resp.DeletedIDs)
+	assert.Empty(t, resp.DeletedIDs)
+	assert.Equal(t, []string{}, resp.DeletedIDs)
+	mockRepo.AssertExpectations(t)
+}
+
 // --- GetBalances Tests ---
 
 func TestGetBalances_Group_Success(t *testing.T) {

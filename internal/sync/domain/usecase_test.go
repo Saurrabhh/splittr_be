@@ -126,3 +126,48 @@ func TestSync_UserSyncError(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "user sync error")
 }
+
+func TestSync_NilDeletedIDs_NormalizedToEmptySlice(t *testing.T) {
+	mockUser := new(mockUserSyncService)
+	mockGroup := new(mockGroupSyncService)
+	mockExpense := new(mockExpenseSyncService)
+	ctx := context.Background()
+	userID := "usr-1"
+
+	mockUser.On("SyncFriends", ctx, int64(0), userID, int32(100)).Return(&userdomain.FriendSyncResponse{
+		NewVersion: 0,
+		Updated:    nil,
+		DeletedIDs: nil,
+	}, nil)
+
+	mockGroup.On("SyncGroups", ctx, int64(0), userID, int32(100)).Return(&groupdomain.GroupSyncResponse{
+		NewVersion: 0,
+		Updated:    nil,
+		DeletedIDs: nil,
+	}, nil)
+
+	mockExpense.On("SyncExpenses", ctx, int64(0), userID, int32(100)).Return(&expensedomain.ExpenseSyncResponse{
+		NewVersion: 0,
+		Updated:    nil,
+		DeletedIDs: nil,
+	}, nil)
+
+	uc := syncdomain.NewUseCase(mockUser, mockGroup, mockExpense)
+	resp, err := uc.Sync(ctx, userID, syncdomain.SyncParams{Limit: 100})
+	require.NoError(t, err)
+
+	assert.NotNil(t, resp.Friends.DeletedIDs)
+	assert.Equal(t, []string{}, resp.Friends.DeletedIDs)
+	assert.NotNil(t, resp.Friends.Updated)
+	assert.Equal(t, []userdomain.FriendshipSyncRecord{}, resp.Friends.Updated)
+
+	assert.NotNil(t, resp.Groups.DeletedIDs)
+	assert.Equal(t, []string{}, resp.Groups.DeletedIDs)
+	assert.NotNil(t, resp.Groups.Updated)
+	assert.Equal(t, []groupdomain.Group{}, resp.Groups.Updated)
+
+	assert.NotNil(t, resp.Expenses.DeletedIDs)
+	assert.Equal(t, []string{}, resp.Expenses.DeletedIDs)
+	assert.NotNil(t, resp.Expenses.Updated)
+	assert.Equal(t, []expensedomain.ExpenseWithSplits{}, resp.Expenses.Updated)
+}

@@ -55,6 +55,25 @@ func (u *UseCase) Sync(ctx context.Context, userID string, p SyncParams) (*SyncR
 		return nil, err
 	}
 
+	if friends.DeletedIDs == nil {
+		friends.DeletedIDs = []string{}
+	}
+	if friends.Updated == nil {
+		friends.Updated = []userdomain.FriendshipSyncRecord{}
+	}
+	if groups.DeletedIDs == nil {
+		groups.DeletedIDs = []string{}
+	}
+	if groups.Updated == nil {
+		groups.Updated = []groupdomain.Group{}
+	}
+	if expenses.DeletedIDs == nil {
+		expenses.DeletedIDs = []string{}
+	}
+	if expenses.Updated == nil {
+		expenses.Updated = []expensedomain.ExpenseWithSplits{}
+	}
+
 	return &SyncResponse{
 		Friends:  *friends,
 		Groups:   *groups,

@@ -805,7 +805,7 @@ func (u *UseCase) SyncExpenses(ctx context.Context, lastVersion int64, userID st
 	}
 
 	var activeExpenses []Expense
-	var deletedIDs []string
+	deletedIDs := make([]string, 0)
 	var maxVersion int64 = lastVersion
 
 	for _, e := range expenses {
@@ -846,6 +846,13 @@ func (u *UseCase) SyncExpenses(ctx context.Context, lastVersion int64, userID st
 				Splits:  s,
 			})
 		}
+	}
+
+	if updated == nil {
+		updated = []ExpenseWithSplits{}
+	}
+	if deletedIDs == nil {
+		deletedIDs = []string{}
 	}
 
 	return &ExpenseSyncResponse{

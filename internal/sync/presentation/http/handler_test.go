@@ -158,3 +158,41 @@ func TestHandler_Sync_InternalServerError(t *testing.T) {
 
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
 }
+
+func TestHandler_Sync_EmptyDeletedIDs_SerializedAsEmptyArray(t *testing.T) {
+	mockUser := new(mockUserSyncService)
+	mockGroup := new(mockGroupSyncService)
+	mockExpense := new(mockExpenseSyncService)
+	currentUser := &user.User{ID: "usr-1", Name: "Alice"}
+
+	mockUser.On("SyncFriends", mock.Anything, int64(0), currentUser.ID, int32(100)).Return(&userdomain.FriendSyncResponse{
+		NewVersion: 0,
+		Updated:    []userdomain.FriendshipSyncRecord{},
+		DeletedIDs: []string{},
+	}, nil)
+
+	mockGroup.On("SyncGroups", mock.Anything, int64(0), currentUser.ID, int32(100)).Return(&groupdomain.GroupSyncResponse{
+		NewVersion: 0,
+		Updated:    []groupdomain.Group{},
+		DeletedIDs: []string{},
+	}, nil)
+
+	mockExpense.On("SyncExpenses", mock.Anything, int64(0), currentUser.ID, int32(100)).Return(&expensedomain.ExpenseSyncResponse{
+		NewVersion: 0,
+		Updated:    []expensedomain.ExpenseWithSplits{},
+		DeletedIDs: []string{},
+	}, nil)
+
+	uc := syncdomain.NewUseCase(mockUser, mockGroup, mockExpense)
+	router := setupHandlerTestRouter(uc, currentUser)
+
+	req := httptest.NewRequest(http.MethodGet, "/sync", nil)
+	rr := httptest.NewRecorder()
+
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	body := rr.Body.String()
+	assert.NotContains(t, body, `"deletedIds":null`)
+	assert.Contains(t, body, `"deletedIds":[]`)
+}

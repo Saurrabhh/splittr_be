@@ -468,3 +468,23 @@ func TestSyncGroups_Success(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
+func TestSyncGroups_NoDeletions_ReturnsEmptyDeletedIDs(t *testing.T) {
+	mockRepo := new(mockGroupRepository)
+	mockTx := &mockTransactor{}
+	ctx := context.Background()
+
+	mockRepo.On("SyncGroupsBySequence", ctx, int64(10), "usr-1", int32(100)).Return([]domain.GroupWithMembers{
+		{Group: domain.Group{ID: "grp-1", Name: "Trip", SyncVersion: 11}},
+	}, nil)
+	mockRepo.On("GetGroupTombstonesBySequence", ctx, int64(10), "usr-1", int32(100)).Return([]domain.Tombstone{}, nil)
+	mockRepo.On("GetCurrentSyncVersion", ctx).Return(int64(20), nil)
+
+	uc := domain.NewUseCase(mockRepo, mockTx, nil, nil, nil)
+	resp, err := uc.SyncGroups(ctx, 10, "usr-1", 100)
+	require.NoError(t, err)
+	assert.NotNil(t, resp.DeletedIDs)
+	assert.Empty(t, resp.DeletedIDs)
+	assert.Equal(t, []string{}, resp.DeletedIDs)
+	mockRepo.AssertExpectations(t)
+}
+
