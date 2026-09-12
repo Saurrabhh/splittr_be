@@ -152,3 +152,36 @@ func TestAppError_ErrorAndUnwrap(t *testing.T) {
 		t.Errorf("unexpected error string for simple error: %q", simpleErr.Error())
 	}
 }
+
+func TestEmailNotVerified(t *testing.T) {
+	w := httptest.NewRecorder()
+	response.EmailNotVerified(w)
+
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected status %d, got %d", http.StatusForbidden, w.Code)
+	}
+
+	contentType := w.Header().Get("Content-Type")
+	if contentType != "application/json" {
+		t.Errorf("expected Content-Type application/json, got %q", contentType)
+	}
+
+	var res map[string]any
+	if err := json.NewDecoder(w.Body).Decode(&res); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if res["code"] != "EMAIL_NOT_VERIFIED" {
+		t.Errorf("expected code EMAIL_NOT_VERIFIED, got %v", res["code"])
+	}
+	if res["errorCode"] != "EMAIL_NOT_VERIFIED" {
+		t.Errorf("expected errorCode EMAIL_NOT_VERIFIED, got %v", res["errorCode"])
+	}
+	if res["statusCode"] != float64(403) {
+		t.Errorf("expected statusCode 403, got %v", res["statusCode"])
+	}
+	if res["message"] != response.MsgEmailNotVerified {
+		t.Errorf("expected message %q, got %v", response.MsgEmailNotVerified, res["message"])
+	}
+}
+

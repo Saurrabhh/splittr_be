@@ -6,9 +6,11 @@ import (
 
 // Identity represents the authenticated user's information.
 type Identity struct {
-	UserID string
-	Email  string
-	Phone  string
+	UserID         string
+	Email          string
+	Phone          string
+	EmailVerified  bool
+	SignInProvider string
 }
 
 // contextKey is the private key type for storing the Identity in the context.

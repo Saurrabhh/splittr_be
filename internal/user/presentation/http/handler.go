@@ -23,7 +23,7 @@ func NewHandler(uc *domain.UseCase) *Handler {
 }
 
 // RegisterRoutes registers endpoints on the router.
-func (h *Handler) RegisterRoutes(r chi.Router, authMiddleware func(http.Handler) http.Handler) {
+func (h *Handler) RegisterRoutes(r chi.Router, authMiddleware func(http.Handler) http.Handler, requireVerifiedEmail func(http.Handler) http.Handler) {
 	r.Route("/users", func(r chi.Router) {
 		r.Use(authMiddleware)
 		r.Post("/", h.Register)
@@ -39,6 +39,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, authMiddleware func(http.Handler)
 
 	r.Route("/friends", func(r chi.Router) {
 		r.Use(authMiddleware)
+		r.Use(requireVerifiedEmail)
 		r.Use(h.UserContext)
 		r.Post("/", h.AddFriend)
 		r.Get("/", h.GetFriends)

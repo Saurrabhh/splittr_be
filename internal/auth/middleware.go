@@ -46,26 +46,7 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		var email string
-		if emailVal, ok := token.Claims["email"]; ok {
-			if emailStr, ok := emailVal.(string); ok {
-				email = emailStr
-			}
-		}
-
-		var phone string
-		if phoneVal, ok := token.Claims["phone_number"]; ok {
-			if phoneStr, ok := phoneVal.(string); ok {
-				phone = phoneStr
-			}
-		}
-
-		identity := &Identity{
-			UserID: token.UID,
-			Email:  email,
-			Phone:  phone,
-		}
-
+		identity := parseIdentity(token)
 		ctx := WithIdentity(r.Context(), identity)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -80,23 +61,63 @@ func (m *Middleware) OptionalAuthenticate(next http.Handler) http.Handler {
 			if len(parts) == 2 && strings.EqualFold(parts[0], "bearer") {
 				token, err := m.verifier.VerifyIDToken(r.Context(), parts[1])
 				if err == nil {
-					var email string
-					if emailVal, ok := token.Claims["email"].(string); ok {
-						email = emailVal
-					}
-					var phone string
-					if phoneVal, ok := token.Claims["phone_number"].(string); ok {
-						phone = phoneVal
-					}
-					identity := &Identity{
-						UserID: token.UID,
-						Email:  email,
-						Phone:  phone,
-					}
+					identity := parseIdentity(token)
 					r = r.WithContext(WithIdentity(r.Context(), identity))
 				}
 			}
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// RequireVerifiedEmail blocks requests from password-authenticated users whose email is not verified.
+func (m *Middleware) RequireVerifiedEmail(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		identity := IdentityFrom(r.Context())
+		if identity != nil && identity.SignInProvider == "password" && !identity.EmailVerified {
+			response.EmailNotVerified(w)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func parseIdentity(token *firebaseAuth.Token) *Identity {
+	var email string
+	if emailVal, ok := token.Claims["email"]; ok {
+		if emailStr, ok := emailVal.(string); ok {
+			email = emailStr
+		}
+	}
+
+	var phone string
+	if phoneVal, ok := token.Claims["phone_number"]; ok {
+		if phoneStr, ok := phoneVal.(string); ok {
+			phone = phoneStr
+		}
+	}
+
+	var emailVerified bool
+	if evVal, ok := token.Claims["email_verified"]; ok {
+		if evBool, ok := evVal.(bool); ok {
+			emailVerified = evBool
+		}
+	}
+
+	signInProvider := token.Firebase.SignInProvider
+	if signInProvider == "" {
+		if fbMap, ok := token.Claims["firebase"].(map[string]interface{}); ok {
+			if p, ok := fbMap["sign_in_provider"].(string); ok {
+				signInProvider = p
+			}
+		}
+	}
+
+	return &Identity{
+		UserID:         token.UID,
+		Email:          email,
+		Phone:          phone,
+		EmailVerified:  emailVerified,
+		SignInProvider: signInProvider,
+	}
 }

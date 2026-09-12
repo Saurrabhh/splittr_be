@@ -159,7 +159,11 @@ func setupHandlerTestRouter(uc *domain.UseCase, identity *auth.Identity) chi.Rou
 		})
 	}
 
-	h.RegisterRoutes(r, authMiddleware)
+	noopRequireVerifiedEmail := func(next http.Handler) http.Handler {
+		return next
+	}
+
+	h.RegisterRoutes(r, authMiddleware, noopRequireVerifiedEmail)
 	return r
 }
 
@@ -369,5 +373,50 @@ func TestHandler_RemoveFriend_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusNoContent, rr.Code)
 }
+
+func TestHandler_RequireVerifiedEmail_Routing(t *testing.T) {
+	mockRepo := new(mockUserRepository)
+	unverifiedIdentity := &auth.Identity{
+		UserID:         "fb-unverified",
+		SignInProvider: "password",
+		EmailVerified:  false,
+	}
+	currentUser := &domain.User{ID: "usr-unverified", FirebaseUID: "fb-unverified", Name: "Bob"}
+	mockRepo.On("GetByFirebaseUID", mock.Anything, "fb-unverified").Return(currentUser, nil)
+
+	uc := domain.NewUseCase(mockRepo, nil)
+	h := userhttp.NewHandler(uc)
+
+	authMw := auth.NewMiddleware(nil)
+	authPass := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r = r.WithContext(auth.WithIdentity(r.Context(), unverifiedIdentity))
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	r := chi.NewRouter()
+	h.RegisterRoutes(r, authPass, authMw.RequireVerifiedEmail)
+
+	// 1. Calling /users/me should be allowed (onboarding flow)
+	reqMe := httptest.NewRequest(http.MethodGet, "/users/me", nil)
+	rrMe := httptest.NewRecorder()
+	r.ServeHTTP(rrMe, reqMe)
+	assert.Equal(t, http.StatusOK, rrMe.Code)
+
+	// 2. Calling /friends should be blocked with 403 EMAIL_NOT_VERIFIED
+	reqFriends := httptest.NewRequest(http.MethodGet, "/friends", nil)
+	rrFriends := httptest.NewRecorder()
+	r.ServeHTTP(rrFriends, reqFriends)
+	assert.Equal(t, http.StatusForbidden, rrFriends.Code)
+
+	var errBody map[string]any
+	err := json.Unmarshal(rrFriends.Body.Bytes(), &errBody)
+	assert.NoError(t, err)
+	assert.Equal(t, "EMAIL_NOT_VERIFIED", errBody["errorCode"])
+	assert.Equal(t, "EMAIL_NOT_VERIFIED", errBody["code"])
+	assert.Equal(t, float64(403), errBody["statusCode"])
+}
+
 
 

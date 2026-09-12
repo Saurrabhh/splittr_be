@@ -2,6 +2,7 @@ package auth_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -98,6 +99,30 @@ func TestMiddleware_Authenticate(t *testing.T) {
 				Phone:  "",
 			},
 		},
+		{
+			name:       "Valid token with sign_in_provider and email_verified",
+			authHeader: "Bearer verified-token",
+			setupVerifier: func(mv *mockTokenVerifier) {
+				mv.On("VerifyIDToken", mock.Anything, "verified-token").Return(&firebaseAuth.Token{
+					UID: "test-user-789",
+					Firebase: firebaseAuth.FirebaseInfo{
+						SignInProvider: "password",
+					},
+					Claims: map[string]interface{}{
+						"email":          "test@example.com",
+						"email_verified": true,
+					},
+				}, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedIdentity: &auth.Identity{
+				UserID:         "test-user-789",
+				Email:          "test@example.com",
+				Phone:          "",
+				EmailVerified:  true,
+				SignInProvider: "password",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -115,6 +140,8 @@ func TestMiddleware_Authenticate(t *testing.T) {
 					assert.Equal(t, tt.expectedIdentity.UserID, identity.UserID)
 					assert.Equal(t, tt.expectedIdentity.Email, identity.Email)
 					assert.Equal(t, tt.expectedIdentity.Phone, identity.Phone)
+					assert.Equal(t, tt.expectedIdentity.EmailVerified, identity.EmailVerified)
+					assert.Equal(t, tt.expectedIdentity.SignInProvider, identity.SignInProvider)
 				} else {
 					assert.Nil(t, identity)
 				}
@@ -139,3 +166,90 @@ func TestMiddleware_Authenticate(t *testing.T) {
 		})
 	}
 }
+
+func TestMiddleware_RequireVerifiedEmail(t *testing.T) {
+	tests := []struct {
+		name           string
+		identity       *auth.Identity
+		expectedStatus int
+	}{
+		{
+			name: "Password provider with email_verified=false is rejected",
+			identity: &auth.Identity{
+				UserID:         "user-1",
+				Email:          "test@example.com",
+				SignInProvider: "password",
+				EmailVerified:  false,
+			},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name: "Password provider with email_verified=true is allowed",
+			identity: &auth.Identity{
+				UserID:         "user-2",
+				Email:          "test@example.com",
+				SignInProvider: "password",
+				EmailVerified:  true,
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name: "Google provider with email_verified=false is allowed",
+			identity: &auth.Identity{
+				UserID:         "user-3",
+				Email:          "test@gmail.com",
+				SignInProvider: "google.com",
+				EmailVerified:  false,
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name: "Apple provider with email_verified=true is allowed",
+			identity: &auth.Identity{
+				UserID:         "user-4",
+				Email:          "test@privaterelay.appleid.com",
+				SignInProvider: "apple.com",
+				EmailVerified:  true,
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "Nil identity passes through to downstream auth guard",
+			identity:       nil,
+			expectedStatus: http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mw := auth.NewMiddleware(nil)
+			nextCalled := false
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				nextCalled = true
+				w.WriteHeader(http.StatusOK)
+			})
+
+			req := httptest.NewRequest("GET", "/protected", nil)
+			if tt.identity != nil {
+				req = req.WithContext(auth.WithIdentity(req.Context(), tt.identity))
+			}
+			rr := httptest.NewRecorder()
+
+			mw.RequireVerifiedEmail(next).ServeHTTP(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+			if tt.expectedStatus == http.StatusOK {
+				assert.True(t, nextCalled)
+			} else {
+				assert.False(t, nextCalled)
+				var body map[string]any
+				err := json.Unmarshal(rr.Body.Bytes(), &body)
+				assert.NoError(t, err)
+				assert.Equal(t, "EMAIL_NOT_VERIFIED", body["errorCode"])
+				assert.Equal(t, "EMAIL_NOT_VERIFIED", body["code"])
+				assert.Equal(t, float64(403), body["statusCode"])
+			}
+		})
+	}
+}
+

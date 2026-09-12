@@ -33,11 +33,12 @@ func (app *Application) routes(deps *dependencies) http.Handler {
 	r.Route("/v1", func(r chi.Router) {
 		// Register domain-specific public/optional routes
 		deps.appConfigHandler.RegisterRoutes(r, deps.authMiddleware.OptionalAuthenticate)
-		deps.userHandler.RegisterRoutes(r, deps.authMiddleware.Authenticate)
+		deps.userHandler.RegisterRoutes(r, deps.authMiddleware.Authenticate, deps.authMiddleware.RequireVerifiedEmail)
 
 		// Authenticated API routes
 		r.Group(func(r chi.Router) {
 			r.Use(deps.authMiddleware.Authenticate)
+			r.Use(deps.authMiddleware.RequireVerifiedEmail)
 			r.Use(deps.userHandler.UserContext)
 
 			deps.groupHandler.RegisterRoutes(r)

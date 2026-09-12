@@ -8,6 +8,7 @@ const (
 	MsgForbidden     = "You don't have permission to perform this action."
 	MsgNotFound      = "We couldn't find the requested resource."
 	MsgInvalidParam  = "A required field or parameter is invalid. Please try again."
+	MsgEmailNotVerified = "Please verify your email address to access this resource."
 )
 
 // Validation & Input Errors (User-Facing)

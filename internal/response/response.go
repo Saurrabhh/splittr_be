@@ -22,8 +22,9 @@ const (
 
 // Domain-specific error codes.
 const (
-	ErrInvalidBody  ErrorCode = "INVALID_BODY"
-	ErrUserNotFound ErrorCode = "USER_NOT_FOUND"
+	ErrInvalidBody      ErrorCode = "INVALID_BODY"
+	ErrUserNotFound     ErrorCode = "USER_NOT_FOUND"
+	ErrEmailNotVerified ErrorCode = "EMAIL_NOT_VERIFIED"
 )
 
 type ErrorType string
@@ -59,6 +60,26 @@ type ErrorResponse struct {
 	Code    ErrorCode `json:"code"`
 	Message string    `json:"message"`
 } // @name Common.ErrorResponse
+
+// AuthErrorResponse represents an authentication error response structure expected by client.
+type AuthErrorResponse struct {
+	Code       ErrorCode `json:"code"`
+	ErrorCode  ErrorCode `json:"errorCode"`
+	StatusCode int       `json:"statusCode"`
+	Message    string    `json:"message"`
+} // @name Common.AuthErrorResponse
+
+// EmailNotVerified sends a 403 Forbidden JSON response for unverified email accounts.
+func EmailNotVerified(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusForbidden)
+	_ = json.NewEncoder(w).Encode(AuthErrorResponse{
+		Code:       ErrEmailNotVerified,
+		ErrorCode:  ErrEmailNotVerified,
+		StatusCode: http.StatusForbidden,
+		Message:    MsgEmailNotVerified,
+	})
+}
 
 // JSON sends a raw JSON response with the given status code.
 func JSON(w http.ResponseWriter, status int, data any) {
